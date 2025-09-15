@@ -1,6 +1,6 @@
 from collections import defaultdict
 from typing import Dict,Type,List,Callable
-from event import Event
+from .event import Event
 
 class EventBus:
     """
