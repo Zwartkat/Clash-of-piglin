@@ -80,15 +80,15 @@ structure_spawn = [[7, 0, 0], [7, 22, 22], [8, 15, 1], [8, 12, 5], [8, 14, 4], [
 # ⚠️ Adapt paths to your images (PNG, JPG, etc.)
 textures = {
     0: None,                   # Empty space → nothing drawn
-    1: "images/Netherrack.png",
-    2: "images/Soul_Sand.png",
-    3: "lava",
-    4: "images/Crimson_Nylium_top.png",
-    5: "images/Warped_Nylium_top.png",
-    6: "images/Nether_Gold_Ore.png", 
-    7: "images/bastion.png",
-    8: "images/Crimson_Fungus.png",
-    9: "images/Warped_Fungus.png"
+    1: "../../assets/images/Netherrack.png",
+    2: "../../assets/images/Soul_Sand.png",
+    3: "../../assets/images/Lava.png",
+    4: "../../assets/images/Crimson_Nylium_top.png",
+    5: "../../assets/images/Warped_Nylium_top.png",
+    6: "../../assets/images/Nether_Gold_Ore.png", 
+    7: "../../assets/images/bastion.png",
+    8: "../../assets/images/Crimson_Fungus.png",
+    9: "../../assets/images/Warped_Fungus.png"
 }
 
 # ----------------------------------------
