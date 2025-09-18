@@ -1,7 +1,7 @@
 import pygame
 import esper
 
-from events import event_bus
+from core import event_bus
 from events.event_move import EventMoveTo
 from systems.mouvement_system import MovementSystem
 from components.position import Position
