@@ -1,6 +1,7 @@
 import esper
 from esper import Processor
-from abc import abstractmethod 
+from abc import abstractmethod
+
 
 class IteratingProcessor(Processor):
     def __init__(self, *components):

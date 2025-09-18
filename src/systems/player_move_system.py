@@ -3,6 +3,7 @@ from components.position import Position
 from components.velocity import Velocity
 from events.event_move import EventMoveTo
 
+
 class PlayerMoveSystem(esper.Processor):
     def __init__(self, event_bus):
         self.event_bus = event_bus
@@ -14,7 +15,7 @@ class PlayerMoveSystem(esper.Processor):
         vel = esper.component_for_entity(event.entity, Velocity)
         dx = event.target_x - pos.x
         dy = event.target_y - pos.y
-        dist = (dx**2 + dy**2)**0.5
+        dist = (dx**2 + dy**2) ** 0.5
         if dist > 0:
             vel.x = (dx / dist) * 50
             vel.y = (dy / dist) * 50
@@ -27,7 +28,7 @@ class PlayerMoveSystem(esper.Processor):
             vel = esper.component_for_entity(entity, Velocity)
             dx = tx - pos.x
             dy = ty - pos.y
-            dist = (dx**2 + dy**2)**0.5
+            dist = (dx**2 + dy**2) ** 0.5
             if dist < 2:  # seuil d'arrêt
                 vel.x = 0
                 vel.y = 0

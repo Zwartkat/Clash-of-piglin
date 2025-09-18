@@ -35,7 +35,7 @@ while running:
             x, y = event.pos
             event_bus_instance.emit(EventMoveTo(entity, x, y))
 
-    world.process(1/60)  # dt = 1/60 pour 60 FPS
+    world.process(1 / 60)  # dt = 1/60 pour 60 FPS
 
     screen.fill((0, 0, 0))  # fond noir
     for ent, pos in world.get_component(Position):
