@@ -1,5 +1,7 @@
+from core.component import Component
 
-class Velocity:
+class Velocity(Component):
+    ''' Composant who represent the velocity of an entity '''
     
     x : float
     y : float
