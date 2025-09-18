@@ -1,5 +1,12 @@
+from core.component import Component
 
-class Position :
+class Position(Component) :
+    ''' 
+    Composant who represent the position of an entity 
+    
+    x : int 
+    y : int
+    '''
     
     x : int 
     y : int
