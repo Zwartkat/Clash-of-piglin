@@ -22,8 +22,8 @@ world.add_component(entity, Position(x=100, y=200))
 world.add_component(entity, Velocity(x=0, y=0))
 
 entity2 = world.create_entity()
-world.add_component(entity2, Position(x=300, y=400))
-world.add_component(entity2, Velocity(x=10, y=100))
+world.add_component(entity2, Position(x=200, y=300))
+world.add_component(entity2, Velocity(x=0, y=0))
 
 # Crée l'EventBus et le système de déplacement joueur
 event_bus_instance = event_bus.EventBus()
