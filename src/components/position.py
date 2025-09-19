@@ -1,4 +1,7 @@
-class Position:
+from core.component import Component
+
+
+class Position(Component):
 
     def __init__(self, x: int = 1, y: int = 1):
         self.x = x
