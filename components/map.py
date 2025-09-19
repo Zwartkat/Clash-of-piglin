@@ -11,11 +11,23 @@ class Map :
                         "Netherrack" : 0}
     can_generate_on_base = ["Red_netherrack", "Blue_netherrack"]
     default_block = "Netherrack"
+    neighbours = [[1,0], [0,-1],[-1,0],[0,1]]#bas,droite,haut, gauche
+    # list_restricted_cases = ["Lava"]
     
     def __init__(self, tab : list[list[Case]] = []):
-        counter += 1
+        Map.counter += 1
         self.tab = tab
-        self.index = counter
+        self.index = Map.counter
+        
+    @classmethod
+    def initFromTab(cls, tab_type: list[list[str]]):
+        tab: list[list[Case]] = []
+        for i, row in enumerate(tab_type):
+            line = []
+            for j, type_str in enumerate(row):
+                line.append(Case(Position(i, j), type_str))
+            tab.append(line)
+        return cls(tab)
         
     @classmethod
     def initFromModel(cls, model):
@@ -35,9 +47,28 @@ class Map :
     def changeCase(self, model : Case) -> None :
         self.tab[model.coordonates.getX()][model.coordonates.getY()] = model
         
+    # def check_path(self, coordonates : Position) -> bool :
+    #     ...
+        
+    def determinateAvailableNeighbour(self, coordonates : Position, size : int, mode : str = "strict") -> list[Case] : #type : str,
+        list_neighbours : list[Case] = []
+        for i in range(len(self.neighbours)) :
+            if mode == "strict" : 
+                if (((coordonates.getX() + self.neighbours[i][0]) <= round(size*0.20) and (coordonates.getY() + self.neighbours[i][1]) <= round(size*0.20)) or ((coordonates.getX() + self.neighbours[i][0]) >= round(size*0.80) and (coordonates.getY() + self.neighbours[i][1]) >= round(size*0.80))) : 
+                    print("neighbour skipped")
+                    continue
+            
+            if (coordonates.getX() + self.neighbours[i][0]) >= 0 and (coordonates.getX() + self.neighbours[i][0]) <= size - 1 and (coordonates.getY()+ self.neighbours[i][1] >= 0) and (coordonates.getY()+ self.neighbours[i][1] <= size-1) :
+                if self.tab[coordonates.getX() + self.neighbours[i][0]][coordonates.getY()+ self.neighbours[i][1]].getType() == self.default_block :
+                    # if type not in self.list_restricted_cases or self.check_path(Position(coordonates.getX() + self.neighbours[i][0], coordonates.getY()+ self.neighbours[i][1])) == True :
+                        list_neighbours.append(self.tab[coordonates.getX() + self.neighbours[i][0]][coordonates.getY()+ self.neighbours[i][1]])
+                        
+                    
+        return list_neighbours
+        
     def generate(self, size : int) -> None : 
         
-        self.tab = []
+        self.tab : list[list[Case]]= []
         for i in range(size) :
             line = []
             for j in range(size) :
@@ -48,24 +79,61 @@ class Map :
         
         for type in Map.list_frequencies : 
             if Map.list_frequencies[type] > 0 :
+                
                 starting_position_found = False
                 while starting_position_found == False : 
-                    starting_position = Position(random.randint(0, size), random.randint(0, size))
+                    starting_position = Position(random.randint(0, size-1), random.randint(0, size-1))
                     if ((not ((starting_position.getX() < round(0.2*size)) and (starting_position.getY() < round(0.2*size))) and not ((round(0.8*size) < starting_position.getX()) and (round(0.8*size) < starting_position.getY()))) or type in Map.can_generate_on_base) :
                         starting_position_found = True
                     
                 self.changeCase(Case(starting_position, type))
-                placed_tiles = 1
+                placed_tiles_number = 1
+                placed_tiles = [Case(starting_position, type)]
                 number_of_tiles_to_place = total_size // (Map.list_frequencies[type])
                 if ((round(size*0.45)<=starting_position.getX()<=round(size*0.55)) and (round(size*0.45)<=starting_position.getY()<=round(size*0.55))) :
-                    while placed_tiles < number_of_lava_tiles :
-                        ...
+                    while placed_tiles_number < number_of_tiles_to_place :
+                        selected_case = placed_tiles[random.randint(0, placed_tiles_number-1)]
+                        list_available_neighbours : list[Case] = self.determinateAvailableNeighbour(selected_case.getPosition(), size, type)
+                        if len(list_available_neighbours) != 0 :
+                            selected_neighbour = list_available_neighbours[random.randint(0, len(list_available_neighbours)-1)]
+                            self.changeCase(Case(selected_neighbour.getPosition(), type))
+                            placed_tiles_number += 1
+                            placed_tiles.append(Case(selected_neighbour.getPosition(), type)) 
+                            print("case placed")                           
                 else :
-                    if (number_of_lava_tiles % 2 == 1) : 
-                        number_of_lava_tiles += 1
-                    while placed_tiles < (number_of_lava_tiles) :
-                        ...
+                    if (number_of_tiles_to_place % 2 == 1) : 
+                        number_of_tiles_to_place += 1
+                    while placed_tiles_number < (number_of_tiles_to_place/2) :
+                        selected_case = placed_tiles[random.randint(0, placed_tiles_number-1)] 
+                        list_available_neighbours = self.determinateAvailableNeighbour(selected_case.getPosition(), size, type)
+                        if len(list_available_neighbours) != 0 :
+                            selected_neighbour = list_available_neighbours[random.randint(0, len(list_available_neighbours)-1)]
+                            self.changeCase(Case(selected_neighbour.getPosition(), type))
+                            placed_tiles_number += 1
+                            placed_tiles.append(Case(selected_neighbour.getPosition(), type)) 
+                            print("case placed")   
+                            
+                    for i in range(placed_tiles_number) :
+                        coordonates_tile = placed_tiles[i].getPosition()
+                        if self.tab[(size-1) - coordonates_tile.getX()][(size-1) - coordonates_tile.getY()].getType() != type :
+                            target = Case(Position((size-1) - coordonates_tile.getX(), (size-1) - coordonates_tile.getY()), type)
+                            self.changeCase(target)
+                            print("symetric case placed")   
+                            
+    def __str__(self) -> str:
+        value = "["
+        for i in range(len(self.tab)) :
+            value += "["
+            for j in range(len(self.tab[i])) :
+                type_case = (self.tab[i][j].getType())[:2]
+                value += f"{type_case},"
+            value += "],\n"
+        value += "]"
+            
+        return value
+                    
                         
 # TODO : 
-# - Implémentation de la méthode de Pacou
-# - Réfléchir à l'implémentation des blocks can_generate_on_base
+# - Implémentation de la méthode path pour être sûr de ne pas générer de blockage
+# - Réfléchir à l'implémentation des blocks can_generate_on_base (plusieurs ilots ?  obligatoires sous les bases ?)
+# - Commentaires
