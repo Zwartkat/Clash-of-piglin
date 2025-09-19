@@ -21,6 +21,10 @@ entity = world.create_entity()
 world.add_component(entity, Position(x=100, y=200))
 world.add_component(entity, Velocity(x=0, y=0))
 
+entity2 = world.create_entity()
+world.add_component(entity2, Position(x=200, y=300))
+world.add_component(entity2, Velocity(x=0, y=0))
+
 # Crée l'EventBus et le système de déplacement joueur
 event_bus_instance = event_bus.EventBus()
 player_move_system = PlayerMoveSystem(event_bus_instance)
@@ -34,6 +38,7 @@ while running:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
             event_bus_instance.emit(EventMoveTo(entity, x, y))
+            event_bus_instance.emit(EventMoveTo(entity2, x, y))
 
     world.process(1 / 60)  # dt = 1/60 pour 60 FPS
 
