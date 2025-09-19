@@ -1,9 +1,8 @@
+from core.component import Component
 from .case import Position, Case
-
 import random
 
-
-class Map:
+class Map(Component):
     counter = 0
     list_frequencies = {
         "Lava": 11,
@@ -14,7 +13,7 @@ class Map:
     }
     can_generate_on_base = ["Red_netherrack", "Blue_netherrack"]
     default_block = "Netherrack"
-    neighbours = [[1, 0], [0, -1], [-1, 0], [0, 1]]  # bas,droite,haut, gauche
+    neighbours = [[1, 0], [0, -1], [-1, 0], [0, 1]]  # bas,droite,haut,gauche
     # list_restricted_cases = ["Lava"]
 
     def __init__(self, tab: list[list[Case]] = []):
@@ -105,102 +104,140 @@ class Map:
 
         for type in Map.list_frequencies:
             if Map.list_frequencies[type] > 0:
+                
+                done = False
+                while not done :
+                    
+                        starting_position_found = False
+                        while starting_position_found == False:
+                            starting_position = Position(
+                                random.randint(0, size - 1), random.randint(0, size - 1)
+                            )
+                            if self.tab[starting_position.getX()][starting_position.getY()].getType() == Map.default_block :
+                                if (
+                                    not (
+                                        (starting_position.getX() < round(0.2 * size))
+                                        and (starting_position.getY() < round(0.2 * size))
+                                    )
+                                    and not (
+                                        (round(0.8 * size) < starting_position.getX())
+                                        and (round(0.8 * size) < starting_position.getY())
+                                    )
+                                ) or type in Map.can_generate_on_base:
+                                    starting_position_found = True
 
-                starting_position_found = False
-                while starting_position_found == False:
-                    starting_position = Position(
-                        random.randint(0, size - 1), random.randint(0, size - 1)
-                    )
-                    if (
-                        not (
-                            (starting_position.getX() < round(0.2 * size))
-                            and (starting_position.getY() < round(0.2 * size))
-                        )
-                        and not (
-                            (round(0.8 * size) < starting_position.getX())
-                            and (round(0.8 * size) < starting_position.getY())
-                        )
-                    ) or type in Map.can_generate_on_base:
-                        starting_position_found = True
-
-                self.changeCase(Case(starting_position, type))
-                placed_tiles_number = 1
-                placed_tiles = [Case(starting_position, type)]
-                number_of_tiles_to_place = total_size // (Map.list_frequencies[type])
-                if (
-                    round(size * 0.45) <= starting_position.getX() <= round(size * 0.55)
-                ) and (
-                    round(size * 0.45) <= starting_position.getY() <= round(size * 0.55)
-                ):
-                    while placed_tiles_number < number_of_tiles_to_place:
-                        selected_case = placed_tiles[
-                            random.randint(0, placed_tiles_number - 1)
-                        ]
-                        list_available_neighbours: list[Case] = (
-                            self.determinateAvailableNeighbour(
-                                selected_case.getPosition(), size, type
-                            )
-                        )
-                        if len(list_available_neighbours) != 0:
-                            selected_neighbour = list_available_neighbours[
-                                random.randint(0, len(list_available_neighbours) - 1)
-                            ]
-                            self.changeCase(
-                                Case(selected_neighbour.getPosition(), type)
-                            )
-                            placed_tiles_number += 1
-                            placed_tiles.append(
-                                Case(selected_neighbour.getPosition(), type)
-                            )
-                            print("case placed")
-                else:
-                    if number_of_tiles_to_place % 2 == 1:
-                        number_of_tiles_to_place += 1
-                    while placed_tiles_number < (number_of_tiles_to_place / 2):
-                        selected_case = placed_tiles[
-                            random.randint(0, placed_tiles_number - 1)
-                        ]
-                        list_available_neighbours = self.determinateAvailableNeighbour(
-                            selected_case.getPosition(), size, type
-                        )
-                        if len(list_available_neighbours) != 0:
-                            selected_neighbour = list_available_neighbours[
-                                random.randint(0, len(list_available_neighbours) - 1)
-                            ]
-                            self.changeCase(
-                                Case(selected_neighbour.getPosition(), type)
-                            )
-                            placed_tiles_number += 1
-                            placed_tiles.append(
-                                Case(selected_neighbour.getPosition(), type)
-                            )
-                            print("case placed")
-
-                    for i in range(placed_tiles_number):
-                        coordonates_tile = placed_tiles[i].getPosition()
+                        self.changeCase(Case(starting_position, type))
+                        placed_tiles_number = 1
+                        placed_tiles = [Case(starting_position, type)]
+                        number_of_tiles_to_place = total_size // (Map.list_frequencies[type])
                         if (
-                            self.tab[(size - 1) - coordonates_tile.getX()][
-                                (size - 1) - coordonates_tile.getY()
-                            ].getType()
-                            != type
+                            round(size * 0.45) <= starting_position.getX() <= round(size * 0.55)
+                        ) and (
+                            round(size * 0.45) <= starting_position.getY() <= round(size * 0.55)
                         ):
-                            target = Case(
-                                Position(
-                                    (size - 1) - coordonates_tile.getX(),
-                                    (size - 1) - coordonates_tile.getY(),
-                                ),
-                                type,
-                            )
-                            self.changeCase(target)
-                            print("symetric case placed")
+                            while placed_tiles_number < number_of_tiles_to_place:
+                                
+                                candidates = [
+                                    case for case in placed_tiles
+                                    if self.determinateAvailableNeighbour(case.getPosition(), size, type)
+                                ]
+                                if not candidates:
+                                    print(f"No more available neighbours for type {type}, alterring placement.")
+                                    break  # Prevent infinite loop
+
+                                selected_case = random.choice(candidates)    
+                                
+                                # selected_case = placed_tiles[
+                                #     random.randint(0, placed_tiles_number - 1)
+                                # ]
+                                # print("Selected Case : ", selected_case)
+                                list_available_neighbours: list[Case] = (
+                                    self.determinateAvailableNeighbour(
+                                        selected_case.getPosition(), size, type
+                                    )
+                                )
+                                
+                                if len(list_available_neighbours) != 0:
+                                    # print("Available neighbours : ", list_available_neighbours)
+                                    selected_neighbour = list_available_neighbours[
+                                        random.randint(0, len(list_available_neighbours) - 1)
+                                    ]
+                                    # print("Selected neighbour : ", selected_case)
+                                    self.changeCase(
+                                        Case(selected_neighbour.getPosition(), type)
+                                    )
+                                    placed_tiles_number += 1
+                                    placed_tiles.append(
+                                        Case(selected_neighbour.getPosition(), type)
+                                    )
+                                    # print("case placed")
+                                    
+                            done = True
+                                    
+                        else:
+                            if number_of_tiles_to_place % 2 == 1:
+                                number_of_tiles_to_place += 1
+                            while placed_tiles_number < (number_of_tiles_to_place / 2):
+                                
+                                candidates = [
+                                    case for case in placed_tiles
+                                    if self.determinateAvailableNeighbour(case.getPosition(), size, type)
+                                ]
+                                if not candidates:
+                                    print(f"No more available neighbours for type {type}, alterring placement.")
+                                    break  # Prevent infinite loop
+
+                                selected_case = random.choice(candidates)
+                                
+                                # selected_case = placed_tiles[
+                                #     random.randint(0, placed_tiles_number - 1)
+                                # ]
+                                # print("Selected Case (Sym): ", selected_case)
+                                list_available_neighbours = self.determinateAvailableNeighbour(
+                                    selected_case.getPosition(), size, type
+                                )
+                                if len(list_available_neighbours) != 0:
+                                    # print("Available neighbours (Sym): ", list_available_neighbours)
+                                    selected_neighbour = list_available_neighbours[
+                                        random.randint(0, len(list_available_neighbours) - 1)
+                                    ]
+                                    self.changeCase(
+                                        Case(selected_neighbour.getPosition(), type)
+                                    )
+                                    placed_tiles_number += 1
+                                    placed_tiles.append(
+                                        Case(selected_neighbour.getPosition(), type)
+                                    )
+                                    # print("case placed (Sym)")
+
+                                    for i in range(placed_tiles_number):
+                                        coordonates_tile = placed_tiles[i].getPosition()
+                                        if (
+                                            self.tab[(size - 1) - coordonates_tile.getX()][
+                                                (size - 1) - coordonates_tile.getY()
+                                            ].getType()
+                                            != type
+                                        ):
+                                            target = Case(
+                                                Position(
+                                                    (size - 1) - coordonates_tile.getX(),
+                                                    (size - 1) - coordonates_tile.getY(),
+                                                ),
+                                                type,
+                                            )
+                                            self.changeCase(target)
+                                            # print("symetric case placed")
+                            
+                            done = True
+
 
     def __str__(self) -> str:
         value = "["
         for i in range(len(self.tab)):
             value += "["
             for j in range(len(self.tab[i])):
-                type_case = (self.tab[i][j].getType())[:2]
-                value += f"{type_case},"
+                type_case = (self.tab[i][j].getType())#[:2]
+                value += f"\"{type_case}\","
             value += "],\n"
         value += "]"
 
@@ -210,4 +247,5 @@ class Map:
 # TODO :
 # - Implémentation de la méthode path pour être sûr de ne pas générer de blockage
 # - Réfléchir à l'implémentation des blocks can_generate_on_base (plusieurs ilots ?  obligatoires sous les bases ?)
+# - Retirer les sécurités de generate
 # - Commentaires
