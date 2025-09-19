@@ -1,5 +1,6 @@
 import esper
 from events.buy_event import BuyEvent
+from components.cost import Cost
 
 
 class EconomySystem(esper.Processor):
@@ -10,11 +11,13 @@ class EconomySystem(esper.Processor):
     def buy(self, event):
         player = event.player
         entity = event.entity
-        if player.money >= entity.cost:
-            player.money -= entity.cost
+        cost = esper.component_for_entity(entity, Cost)
+
+        if player.money >= cost.value:
+            player.money -= cost.value
             player.entities.append(entity)
             print(
-                f"Vous avez acheté {entity} pour {entity.cost}. Il vous reste: {player.money} pépites d'or"
+                f"Vous avez acheté {entity} pour {cost.value}. Il vous reste: {player.money} pépites d'or"
             )
         else:
-            print(f"Il vous manqua {entity.cost - player.money} pour acheter {entity}")
+            print(f"Il vous manqua {cost.value - player.money} pour acheter {entity}")
