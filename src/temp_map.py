@@ -624,3 +624,14 @@ tab = [
         "Blue_netherrack",
     ],
 ]
+
+tab_case = [[f'Case("{val}")' for val in row] for row in tab]
+
+# affichage formaté
+print("tab = [")
+for row in tab_case:
+    print("    [")
+    for val in row:
+        print(f"        {val},")
+    print("    ],")
+print("]")

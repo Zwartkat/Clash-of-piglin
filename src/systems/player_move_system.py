@@ -29,7 +29,7 @@ class PlayerMoveSystem(IteratingProcessor):
             dx = tx - pos.x
             dy = ty - pos.y
             dist = (dx**2 + dy**2) ** 0.5
-            if dist < 2:  # seuil d'arrêt
+            if dist < 10:  # seuil d'arrêt
                 vel.x = 0
                 vel.y = 0
                 del self.target[ent]
