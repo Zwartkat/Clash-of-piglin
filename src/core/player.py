@@ -10,6 +10,7 @@ class Player(object):
         self.event_bus = event_bus
 
     def buy_entity(self, list_components:list):
-        entity = self.player_entities.append(create(list_components))
+        entity = create(list_components)
+        self.player_entities.append(entity)
         self.event_bus.emit(BuyEvent(self, entity))
 
