@@ -2,6 +2,7 @@ import pygame
 import esper
 import os
 from components.collider import Collider
+from components.team import PLAYER_TEAM, Team
 from core import event_bus
 from events.event_move import EventMoveTo
 from systems.collision_system import CollisionSystem
@@ -89,13 +90,27 @@ world.add_processor(CollisionSystem(game_map))
 entity = world.create_entity()
 world.add_component(entity, Position(x=100, y=200))
 world.add_component(entity, Velocity(x=0, y=0))
+world.add_component(entity, Team(PLAYER_TEAM))
 
 entity2 = world.create_entity()
 world.add_component(entity2, Position(x=200, y=300))
 world.add_component(entity2, Velocity(x=0, y=0))
+world.add_component(entity2, Team(PLAYER_TEAM))
+
+entity3 = world.create_entity()
+world.add_component(entity3, Position(x=300, y=400))
+world.add_component(entity3, Velocity(x=0, y=0))
+world.add_component(entity3, Team(PLAYER_TEAM))
+
+entity4 = world.create_entity()
+world.add_component(entity4, Position(x=400, y=500))
+world.add_component(entity4, Velocity(x=0, y=0))
+world.add_component(entity4, Team(PLAYER_TEAM))
 
 world.add_component(entity, Collider(width=20, height=20, collision_type="player"))
 world.add_component(entity2, Collider(width=20, height=20, collision_type="player"))
+world.add_component(entity3, Collider(width=20, height=20, collision_type="player"))
+world.add_component(entity4, Collider(width=20, height=20, collision_type="player"))
 
 # Crée l'EventBus et le système de déplacement joueur
 event_bus_instance = event_bus.EventBus()
@@ -110,8 +125,9 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
-            event_bus_instance.emit(EventMoveTo(entity, x, y))
-            event_bus_instance.emit(EventMoveTo(entity2, x, y))
+            for ent, (pos, vel, team) in world.get_components(Position, Velocity, Team):
+                if team.team_id == PLAYER_TEAM:
+                    event_bus_instance.emit(EventMoveTo(ent, x, y))
 
     world.process(1 / 60)  # dt = 1/60 pour 60 FPS
 
