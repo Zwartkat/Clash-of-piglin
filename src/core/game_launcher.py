@@ -15,6 +15,9 @@ from components.case import Case
 from components.map import Map
 from components.selection import Selection
 from systems.selection_system import SelectionSystem
+from components.effects import OnTerrain
+from systems.terrain_effect_system import TerrainEffectSystem
+from systems.unit_factory import UnitFactory
 
 TILE_SIZE = 32
 
@@ -74,6 +77,7 @@ def draw_map(screen, game_map, sprites):
 
 
 def main(screen: pygame.Surface):
+    pygame.init()
     map_width = 24 * TILE_SIZE
     map_height = 24 * TILE_SIZE
     screen = pygame.display.set_mode((map_width, map_height))
@@ -87,38 +91,21 @@ def main(screen: pygame.Surface):
     # Crée le monde Esper
     world = esper
     world.add_processor(MovementSystem())
+    world.add_processor(TerrainEffectSystem(game_map))
     world.add_processor(CollisionSystem(game_map))
     selection_system = SelectionSystem()
     # Crée l'entité et ses composants
-    entity = world.create_entity()
-    world.add_component(entity, Position(x=100, y=200))
-    world.add_component(entity, Velocity(x=0, y=0))
-    world.add_component(entity, Team(PLAYER_TEAM))
+    sword_positions = [(200, 200), (230, 200), (160, 200)]
+    sword_squad = UnitFactory.create_squad("piglin_sword", sword_positions, PLAYER_TEAM)
 
-    entity2 = world.create_entity()
-    world.add_component(entity2, Position(x=200, y=300))
-    world.add_component(entity2, Velocity(x=0, y=0))
-    world.add_component(entity2, Team(PLAYER_TEAM))
+    # Escouade d'Arbalétriers
+    crossbow_positions = [(200, 300), (230, 300), (260, 300)]
+    crossbow_squad = UnitFactory.create_squad(
+        "piglin_crossbow", crossbow_positions, PLAYER_TEAM
+    )
 
-    entity3 = world.create_entity()
-    world.add_component(entity3, Position(x=300, y=400))
-    world.add_component(entity3, Velocity(x=0, y=0))
-    world.add_component(entity3, Team(PLAYER_TEAM))
-
-    entity4 = world.create_entity()
-    world.add_component(entity4, Position(x=400, y=500))
-    world.add_component(entity4, Velocity(x=0, y=0))
-    world.add_component(entity4, Team(PLAYER_TEAM))
-
-    world.add_component(entity, Collider(width=20, height=20, collision_type="player"))
-    world.add_component(entity2, Collider(width=20, height=20, collision_type="player"))
-    world.add_component(entity3, Collider(width=20, height=20, collision_type="player"))
-    world.add_component(entity4, Collider(width=20, height=20, collision_type="player"))
-
-    world.add_component(entity, Selection(False))
-    world.add_component(entity2, Selection(False))
-    world.add_component(entity3, Selection(False))
-    world.add_component(entity4, Selection(False))
+    # Ghast solitaire
+    ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_TEAM)
 
     # Crée l'EventBus et le système de déplacement joueur
     event_bus_instance = event_bus.EventBus()
@@ -139,7 +126,6 @@ def main(screen: pygame.Surface):
                     selected_entities = selection_system.get_selected_entities(world)
                     if selected_entities:
                         x, y = event.pos
-                        # Utiliser la formation pour les entités sélectionnées
                         from systems.troop_system import (
                             FormationSystem,
                             TROOP_GRID,
