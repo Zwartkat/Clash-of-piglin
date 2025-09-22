@@ -1,0 +1,12 @@
+game_name: "Clash of Piglin"
+version: "1.0.0"
+
+menu_buttons : ["Play", "Options", "Quit"]
+
+assets_path:
+  logo: "assets/images/logo.png"
+  background: "assets/images/background2.jpg"
+  font: "assets/fonts/Minecraftia-Regular.ttf"
+
+textures:
+  lava: "assets/images/lava.png"
