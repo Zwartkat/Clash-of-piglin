@@ -24,11 +24,13 @@ class CombatSystem(IteratingProcessor):
             return False
 
     def process_entity(self, ent, dt, attack, target, pos, team) -> None:
-        if self.can_attack(ent, dt, attack, target, pos):
-            target_health = esper.component_for_entity(target, Health)
-            target_health.remaining -= attack.damage
-            attack.last_attack = dt
-            if target_health.remaining <= 0:
-                target_health.remaining = 0
-                self.event_bus.emit(DeathEvent(team, target))
+        target_team = esper.component_for_entity(target, Team)
+        if team.team_id != target_team.team_id:
+            if self.can_attack(ent, dt, attack, target, pos):
+                target_health = esper.component_for_entity(target, Health)
+                target_health.remaining -= attack.damage
+                attack.last_attack = dt
+                if target_health.remaining <= 0:
+                    target_health.remaining = 0
+                    self.event_bus.emit(DeathEvent(team, target))
 

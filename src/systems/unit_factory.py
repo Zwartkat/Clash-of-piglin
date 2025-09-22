@@ -2,6 +2,7 @@ from components.position import Position
 from components.velocity import Velocity
 from components.collider import Collider
 from components.team import Team
+from components.attack import Attack
 from components.selection import Selection
 from components.effects import OnTerrain
 from components.health import Health
@@ -29,6 +30,11 @@ class UnitFactory:
             ),
             Team(team_id),
             Health(stats["health"]),
+            Attack(
+                damage=stats["attack"]["damage"],
+                range=stats["attack"]["range"],
+                attack_speed=stats["attack"]["attack_speed"]
+            ),
             UnitType(unit_type, stats["name"]),
             OnTerrain(),
             Selection(False),
