@@ -4,7 +4,7 @@ from core.component import Component
 class Cost(Component):
     """Composant who represent the cost of an entity"""
 
-    value: int
+    amount: int
 
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, amount):
+        self.amount = amount
