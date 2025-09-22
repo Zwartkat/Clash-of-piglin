@@ -7,8 +7,10 @@ class Attack(Component):
     damage: int
     range: int
     attack_speed: float = 1.0
+    last_attack: int = 0
 
-    def __init__(self, damage: int, range: int, attack_speed: float):
+    def __init__(self, damage: int, range: int, attack_speed: float, last_attack: int):
         self.damage = damage
         self.range = range
         self.attack_speed = attack_speed
+        self.last_attack = last_attack
