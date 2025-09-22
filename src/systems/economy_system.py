@@ -2,10 +2,12 @@ import esper
 from events.buy_event import BuyEvent
 from events.death_event import DeathEvent
 from components.cost import Cost
+from core.iterator_system import IteratingProcessor
 
 
-class EconomySystem(esper.Processor):
+class EconomySystem(IteratingProcessor):
     def __init__(self, event_bus) -> None:
+        super().__init__()
         self.event_bus = event_bus
         event_bus.subscribe(BuyEvent, self.buy)
         event_bus.subscribe(DeathEvent, self.reward_money)

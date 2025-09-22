@@ -2,7 +2,7 @@ import esper
 from components.health import Health
 from components.structure import Structure
 from systems.entity_factory import EntityFactory
-from event_bus import EventBus
+from core.event_bus import EventBus
 from events.buy_event import BuyEvent
 
 
