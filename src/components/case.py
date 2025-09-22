@@ -1,7 +1,8 @@
 from .position import Position
+from core.component import Component
 
 
-class Case:
+class Case(Component):
 
     types_of_cases = [
         "Lava",
