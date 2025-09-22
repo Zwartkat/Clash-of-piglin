@@ -15,20 +15,20 @@ class EconomySystem(esper.Processor):
         entity = event.entity
         cost = esper.component_for_entity(entity, Cost)
 
-        if player.money >= cost.value:
-            player.money -= cost.value
+        if player.money >= cost.amount:
+            player.money -= cost.amount
             player.entities.append(entity)
             print(
-                f"Vous avez acheté {entity} pour {cost.value}. Il vous reste: {player.money} pépites d'or"
+                f"Vous avez acheté {entity} pour {cost.amount}. Il vous reste: {player.money} pépites d'or"
             )
         else:
-            print(f"Il vous manqua {cost.value - player.money} pour acheter {entity}")
+            print(f"Il vous manqua {cost.amount - player.money} pour acheter {entity}")
 
     def reward_money(self, event):
         player = event.player
         entity = event.entity
         reward = esper.component_for_entity(entity, Cost)
 
-        player.money += int(reward.value / 10)  # 10% du prix de l'entité
+        player.money += int(reward.amount / 10)  # 10% du prix de l'entité
 
-        print(f"Vous avez tué {entity} et gagné {int(reward.value / 10)} pepites d'or")
+        print(f"Vous avez tué {entity} et gagné {int(reward.amount / 10)} pepites d'or")
