@@ -98,6 +98,7 @@ def handle_click(pos: Tuple[int]):
                 pass
             elif menu_items[selected] == menu_items[2]:  # Quit
                 return False
+        return True
 
 
 running = True
@@ -108,5 +109,4 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             running = handle_click(event.pos)
-
 pygame.quit()
