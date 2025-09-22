@@ -13,6 +13,8 @@ from systems.player_move_system import PlayerMoveSystem
 from temp_map import tab
 from components.case import Case
 from components.map import Map
+from components.selection import Selection
+from systems.selection_system import SelectionSystem
 
 TILE_SIZE = 32
 
@@ -82,10 +84,12 @@ game_map = Map()
 game_map.setTab(tab)
 sprites = load_terrain_sprites()
 
+
 # Crée le monde Esper
 world = esper
 world.add_processor(MovementSystem())
 world.add_processor(CollisionSystem(game_map))
+selection_system = SelectionSystem()
 # Crée l'entité et ses composants
 entity = world.create_entity()
 world.add_component(entity, Position(x=100, y=200))
@@ -112,11 +116,16 @@ world.add_component(entity2, Collider(width=20, height=20, collision_type="playe
 world.add_component(entity3, Collider(width=20, height=20, collision_type="player"))
 world.add_component(entity4, Collider(width=20, height=20, collision_type="player"))
 
+world.add_component(entity, Selection(False))
+world.add_component(entity2, Selection(False))
+world.add_component(entity3, Selection(False))
+world.add_component(entity4, Selection(False))
+
 # Crée l'EventBus et le système de déplacement joueur
 event_bus_instance = event_bus.EventBus()
-world.add_processor(MovementSystem())
 world.add_processor(PlayerMoveSystem(event_bus_instance))
-world.add_processor(CollisionSystem(game_map))
+
+mouse_pressed = False
 
 running = True
 while running:
@@ -124,10 +133,49 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            x, y = event.pos
-            for ent, (pos, vel, team) in world.get_components(Position, Velocity, Team):
-                if team.team_id == PLAYER_TEAM:
-                    event_bus_instance.emit(EventMoveTo(ent, x, y))
+            if event.button == 1:  # Clic gauche - sélection
+                mouse_pressed = True
+                selection_system.handle_mouse_down(event.pos, world)
+            elif event.button == 3:  # Clic droit - donner ordre aux sélectionnées
+                selected_entities = selection_system.get_selected_entities(world)
+                if selected_entities:
+                    x, y = event.pos
+                    # Utiliser la formation pour les entités sélectionnées
+                    from systems.troop_system import (
+                        FormationSystem,
+                        TROOP_GRID,
+                        TROOP_CIRCLE,
+                    )
+
+                    positions = FormationSystem.calculate_formation_positions(
+                        selected_entities,
+                        x,
+                        y,
+                        spacing=35,
+                        formation_type=TROOP_GRID,  # you can change to TROOP_CIRCLE if needed
+                    )
+
+                    for i, ent in enumerate(selected_entities):
+                        if i < len(positions):
+                            target_x, target_y = positions[i]
+                            event_bus_instance.emit(
+                                EventMoveTo(ent, target_x, target_y)
+                            )
+                else:
+                    # Si rien n'est sélectionné, bouger toutes les unités comme avant
+                    x, y = event.pos
+                    for ent, (pos, vel, team) in world.get_components(
+                        Position, Velocity, Team
+                    ):
+                        if team.team_id == PLAYER_TEAM:
+                            event_bus_instance.emit(EventMoveTo(ent, x, y))
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:  # Relâcher clic gauche
+                mouse_pressed = False
+                selection_system.handle_mouse_up(event.pos, world)
+        elif event.type == pygame.MOUSEMOTION:
+            if mouse_pressed:
+                selection_system.handle_mouse_motion(event.pos, world)
 
     world.process(1 / 60)  # dt = 1/60 pour 60 FPS
 
@@ -136,25 +184,8 @@ while running:
     # Dessiner la map d'abord
     draw_map(screen, game_map, sprites)
 
-    # Puis dessine les entités par-dessus
-    for ent, pos in world.get_component(Position):
-        # Récupérer le collider pour connaître la taille
-        collider = world.component_for_entity(ent, Collider)
-
-        if collider:
-            # Calculer la position du rectangle (coin supérieur gauche)
-            rect_x = int(pos.x - collider.width / 2)
-            rect_y = int(pos.y - collider.height / 2)
-
-            # Dessiner un rectangle rouge de la taille de l'hitbox
-            rect = pygame.Rect(rect_x, rect_y, collider.width, collider.height)
-            pygame.draw.rect(screen, (255, 0, 0), rect)
-
-        else:
-            # Fallback si pas de collider (dessiner un petit carré)
-            pygame.draw.rect(
-                screen, (255, 0, 0), (int(pos.x - 5), int(pos.y - 5), 10, 10)
-            )
+    # Le SelectionSystem gère maintenant TOUT l'affichage des entités
+    selection_system.draw_selections(screen, world)
 
     pygame.display.flip()
     clock.tick(60)
