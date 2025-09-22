@@ -4,6 +4,8 @@ from components.position import Position
 from components.selection import Selection
 from components.team import PLAYER_TEAM, Team
 from components.collider import Collider
+from config.unit_stats import UNIT_COLORS
+from components.stats import UnitType
 
 
 class SelectionSystem:
@@ -49,7 +51,6 @@ class SelectionSystem:
 
     def select_entity_at_point(self, mouse_pos, world):
         self.clear_selection(world)
-
         closest_entity = None
         closest_distance = float("inf")
 
@@ -59,9 +60,8 @@ class SelectionSystem:
                 dy = mouse_pos[1] - pos.y
                 distance = (dx**2 + dy**2) ** 0.5
 
-                collider = esper.component_for_entity(ent, Collider)
-
-                if collider:
+                if esper.has_component(ent, Collider):
+                    collider = esper.component_for_entity(ent, Collider)
                     rect_x = pos.x - collider.width / 2
                     rect_y = pos.y - collider.height / 2
                     rect = pygame.Rect(rect_x, rect_y, collider.width, collider.height)
@@ -71,11 +71,11 @@ class SelectionSystem:
                         closest_distance = distance
 
         if closest_entity:
-            selection = esper.component_for_entity(closest_entity, Selection)
-            if not selection:
-                esper.add_component(closest_entity, Selection(True))
-            else:
+            if esper.has_component(closest_entity, Selection):
+                selection = esper.component_for_entity(closest_entity, Selection)
                 selection.is_selected = True
+            else:
+                esper.add_component(closest_entity, Selection(True))
 
     def select_entities_in_rect(self, world):
         if not self.selection_rect:
@@ -86,11 +86,11 @@ class SelectionSystem:
         for ent, (pos, team) in esper.get_components(Position, Team):
             if team.team_id == PLAYER_TEAM:
                 if self.selection_rect.collidepoint(pos.x, pos.y):
-                    selection = esper.component_for_entity(ent, Selection)
-                    if not selection:
-                        esper.add_component(ent, Selection(True))
-                    else:
+                    if esper.has_component(ent, Selection):
+                        selection = esper.component_for_entity(ent, Selection)
                         selection.is_selected = True
+                    else:
+                        esper.add_component(ent, Selection(True))
 
     def clear_selection(self, world):
         for ent, selection in esper.get_component(Selection):
@@ -114,15 +114,21 @@ class SelectionSystem:
             screen.blit(overlay, (self.selection_rect.x, self.selection_rect.y))
 
     def draw_selections(self, screen, world):
-        entities_count = 0
         for ent, pos in esper.get_component(Position):
-            entities_count += 1
-            team = esper.component_for_entity(ent, Team)
-            selection = esper.component_for_entity(ent, Selection)
-            collider = esper.component_for_entity(ent, Collider)
+            if not esper.has_component(ent, Team):
+                continue
 
-            if team and team.team_id == PLAYER_TEAM:
-                if collider:
+            team = esper.component_for_entity(ent, Team)
+            if team.team_id != PLAYER_TEAM:
+                continue
+
+            if esper.has_component(ent, UnitType):
+                unit_type_comp = esper.component_for_entity(ent, UnitType)
+                color = UNIT_COLORS.get(unit_type_comp.unit_type, (255, 255, 255))
+                pygame.draw.circle(screen, color, (int(pos.x), int(pos.y)), 12)
+            else:
+                if esper.has_component(ent, Collider):
+                    collider = esper.component_for_entity(ent, Collider)
                     rect_x = int(pos.x - collider.width / 2)
                     rect_y = int(pos.y - collider.height / 2)
                     rect = pygame.Rect(rect_x, rect_y, collider.width, collider.height)
@@ -131,10 +137,15 @@ class SelectionSystem:
                     pygame.draw.rect(
                         screen, (255, 0, 0), (int(pos.x - 5), int(pos.y - 5), 10, 10)
                     )
-                if selection and selection.is_selected:
+
+            if esper.has_component(ent, Selection):
+                selection = esper.component_for_entity(ent, Selection)
+                if selection.is_selected:
                     self.draw_diamond(screen, pos, (255, 165, 0))
                 else:
                     self.draw_diamond(screen, pos, (0, 100, 255))
+            else:
+                self.draw_diamond(screen, pos, (0, 100, 255))
 
         self.draw_selection_rect(screen)
 
