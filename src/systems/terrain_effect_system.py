@@ -2,6 +2,7 @@ import esper
 from components.position import Position
 from components.effects import Slowed, OnTerrain
 from components.collider import Collider
+from components.stats import UnitType
 from core.iterator_system import IteratingProcessor
 from config.terrain_config import TERRAIN_PROPERTIES
 
@@ -14,6 +15,11 @@ class TerrainEffectSystem(IteratingProcessor):
         self.game_map = game_map
 
     def process_entity(self, ent, dt, pos, on_terrain):
+        if esper.has_component(ent, Collider):
+            collider = esper.component_for_entity(ent, Collider)
+            if collider.collision_type == "flying":
+                return
+
         current_terrain = self.get_terrain_at_position(pos)
 
         if current_terrain != on_terrain.terrain_type:

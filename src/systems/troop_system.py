@@ -12,7 +12,6 @@ class FormationSystem(IteratingProcessor):
     def calculate_formation_positions(
         entities, target_x, target_y, spacing=30, formation_type=TROOP_GRID
     ):
-        """Calculate positions for entities based on formation type."""
         num_entities = len(entities)
 
         if num_entities == 0:

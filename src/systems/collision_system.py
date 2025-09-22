@@ -27,7 +27,6 @@ class CollisionSystem(IteratingProcessor):
             self.check_terrain_wall_collision(ent, pos, collider)
 
     def check_terrain_wall_collision(self, ent, pos, collider):
-        """Vérifie les collisions avec les terrains qui agissent comme des murs"""
         left = pos.x - collider.width // 2
         right = pos.x + collider.width // 2
         top = pos.y - collider.height // 2
@@ -44,7 +43,6 @@ class CollisionSystem(IteratingProcessor):
                     self.resolve_terrain_collision(ent, pos, collider, tile_x, tile_y)
 
     def is_tile_blocking(self, tile_x, tile_y, collision_type):
-        """Vérifie si une tile bloque le passage"""
         if (
             tile_x < 0
             or tile_x >= len(self.game_map.tab[0])
@@ -60,7 +58,6 @@ class CollisionSystem(IteratingProcessor):
         return not can_cross.get(terrain_type, True)
 
     def resolve_terrain_collision(self, ent, pos, collider, tile_x, tile_y):
-        """Résout la collision avec un terrain bloquant"""
         tile_left = tile_x * TILE_SIZE
         tile_right = (tile_x + 1) * TILE_SIZE
         tile_top = tile_y * TILE_SIZE

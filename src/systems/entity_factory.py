@@ -11,5 +11,4 @@ class EntityFactory:
         entity = esper.create_entity()
         for component in components:
             esper.add_component(entity, component)
-        print(f"Entité créée : {entity}")
         return entity

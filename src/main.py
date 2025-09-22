@@ -17,6 +17,7 @@ from components.selection import Selection
 from systems.selection_system import SelectionSystem
 from components.effects import OnTerrain
 from systems.terrain_effect_system import TerrainEffectSystem
+from systems.unit_factory import UnitFactory
 
 TILE_SIZE = 32
 
@@ -94,16 +95,17 @@ world.add_processor(TerrainEffectSystem(game_map))
 world.add_processor(CollisionSystem(game_map))
 selection_system = SelectionSystem()
 # Crée l'entité et ses composants
-entities = [(400, 200), (200, 300), (300, 400), (400, 500)]
+sword_positions = [(200, 200), (230, 200), (160, 200)]
+sword_squad = UnitFactory.create_squad("piglin_sword", sword_positions, PLAYER_TEAM)
 
-for x, y in entities:
-    entity = world.create_entity()
-    world.add_component(entity, Position(x=x, y=y))
-    world.add_component(entity, Velocity(x=0, y=0))
-    world.add_component(entity, Team(PLAYER_TEAM))
-    world.add_component(entity, Collider(width=20, height=20, collision_type="player"))
-    world.add_component(entity, Selection(False))
-    world.add_component(entity, OnTerrain())
+# Escouade d'Arbalétriers
+crossbow_positions = [(200, 300), (230, 300), (260, 300)]
+crossbow_squad = UnitFactory.create_squad(
+    "piglin_crossbow", crossbow_positions, PLAYER_TEAM
+)
+
+# Ghast solitaire
+ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_TEAM)
 
 # Crée l'EventBus et le système de déplacement joueur
 event_bus_instance = event_bus.EventBus()
@@ -124,7 +126,6 @@ while running:
                 selected_entities = selection_system.get_selected_entities(world)
                 if selected_entities:
                     x, y = event.pos
-                    # Utiliser la formation pour les entités sélectionnées
                     from systems.troop_system import (
                         FormationSystem,
                         TROOP_GRID,

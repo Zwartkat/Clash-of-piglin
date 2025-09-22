@@ -47,6 +47,16 @@ COLLISION_TYPE_RULES = {
         },
         "speed_bonus": 1.0,
     },
+    "flying": {
+        "can_cross": {
+            "Lava": True,
+            "Netherrack": True,
+            "Blue_netherrack": True,
+            "Red_netherrack": True,
+            "Soulsand": True,
+        },
+        "speed_bonus": 1.0,
+    },
 }
 
 COLLISION_CONFIG = {
