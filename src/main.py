@@ -161,14 +161,7 @@ while running:
                             event_bus_instance.emit(
                                 EventMoveTo(ent, target_x, target_y)
                             )
-                else:
-                    # Si rien n'est sélectionné, bouger toutes les unités comme avant
-                    x, y = event.pos
-                    for ent, (pos, vel, team) in world.get_components(
-                        Position, Velocity, Team
-                    ):
-                        if team.team_id == PLAYER_TEAM:
-                            event_bus_instance.emit(EventMoveTo(ent, x, y))
+
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:  # Relâcher clic gauche
                 mouse_pressed = False
