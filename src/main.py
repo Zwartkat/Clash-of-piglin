@@ -15,6 +15,8 @@ from components.case import Case
 from components.map import Map
 from components.selection import Selection
 from systems.selection_system import SelectionSystem
+from components.effects import OnTerrain
+from systems.terrain_effect_system import TerrainEffectSystem
 
 TILE_SIZE = 32
 
@@ -88,38 +90,20 @@ sprites = load_terrain_sprites()
 # Crée le monde Esper
 world = esper
 world.add_processor(MovementSystem())
+world.add_processor(TerrainEffectSystem(game_map))
 world.add_processor(CollisionSystem(game_map))
 selection_system = SelectionSystem()
 # Crée l'entité et ses composants
-entity = world.create_entity()
-world.add_component(entity, Position(x=100, y=200))
-world.add_component(entity, Velocity(x=0, y=0))
-world.add_component(entity, Team(PLAYER_TEAM))
+entities = [(400, 200), (200, 300), (300, 400), (400, 500)]
 
-entity2 = world.create_entity()
-world.add_component(entity2, Position(x=200, y=300))
-world.add_component(entity2, Velocity(x=0, y=0))
-world.add_component(entity2, Team(PLAYER_TEAM))
-
-entity3 = world.create_entity()
-world.add_component(entity3, Position(x=300, y=400))
-world.add_component(entity3, Velocity(x=0, y=0))
-world.add_component(entity3, Team(PLAYER_TEAM))
-
-entity4 = world.create_entity()
-world.add_component(entity4, Position(x=400, y=500))
-world.add_component(entity4, Velocity(x=0, y=0))
-world.add_component(entity4, Team(PLAYER_TEAM))
-
-world.add_component(entity, Collider(width=20, height=20, collision_type="player"))
-world.add_component(entity2, Collider(width=20, height=20, collision_type="player"))
-world.add_component(entity3, Collider(width=20, height=20, collision_type="player"))
-world.add_component(entity4, Collider(width=20, height=20, collision_type="player"))
-
-world.add_component(entity, Selection(False))
-world.add_component(entity2, Selection(False))
-world.add_component(entity3, Selection(False))
-world.add_component(entity4, Selection(False))
+for x, y in entities:
+    entity = world.create_entity()
+    world.add_component(entity, Position(x=x, y=y))
+    world.add_component(entity, Velocity(x=0, y=0))
+    world.add_component(entity, Team(PLAYER_TEAM))
+    world.add_component(entity, Collider(width=20, height=20, collision_type="player"))
+    world.add_component(entity, Selection(False))
+    world.add_component(entity, OnTerrain())
 
 # Crée l'EventBus et le système de déplacement joueur
 event_bus_instance = event_bus.EventBus()
