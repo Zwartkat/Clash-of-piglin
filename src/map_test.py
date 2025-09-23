@@ -2,10 +2,14 @@ from components.case import Case
 from components.position import Position
 from components.map import Map
 
-
 if __name__ == "__main__":
     pos = Position(1, 2)
     case = Case(pos, "Netherrack")
+        
+    map = Map()
+    map.generate(24)
+    print(map)
+    
     # tab = [
     #     [
     #         "Blue_netherrack",
@@ -633,8 +637,4 @@ if __name__ == "__main__":
     #     ],
     # ]
     # map = Map.initFromTab(tab)
-    map = Map()
-    map.generate(24)
-    print(map)
-    # map.changeCase(Case(Position(1, 1)))
     # print(map)
