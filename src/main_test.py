@@ -1,4 +1,8 @@
-from components.map import Position, Case, Map
+
+from components.case import Case
+from components.map import Map
+from components.position import Position
+
 
 if __name__ == "__main__":
     pos = Position(1, 2)
