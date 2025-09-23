@@ -2,7 +2,7 @@ UNIT_STATS = {
     "piglin_sword": {
         "name": "Piglin Épéiste",
         "health": 100,
-        "attack": {"damage": 10, "range": 100,"attack_speed" : 1},
+        "attack": {"damage": 10, "range": 100, "attack_speed": 1},
         "speed": 80,
         "collision_type": "player",
         "size": {"width": 20, "height": 20},
@@ -12,7 +12,7 @@ UNIT_STATS = {
     "piglin_crossbow": {
         "name": "Piglin Arbalétrier",
         "health": 75,
-        "attack": {"damage": 10, "range": 100,"attack_speed" : 1},
+        "attack": {"damage": 10, "range": 100, "attack_speed": 1},
         "speed": 100,
         "collision_type": "player",
         "size": {"width": 18, "height": 18},
@@ -22,7 +22,7 @@ UNIT_STATS = {
     "ghast": {
         "name": "Ghast",
         "health": 150,
-        "attack": {"damage": 10, "range": 100,"attack_speed" : 1},
+        "attack": {"damage": 10, "range": 100, "attack_speed": 1},
         "speed": 300,
         "collision_type": "flying",
         "size": {"width": 32, "height": 32},

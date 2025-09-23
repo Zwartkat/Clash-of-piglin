@@ -34,7 +34,7 @@ class UnitFactory:
                 damage=stats["attack"]["damage"],
                 range=stats["attack"]["range"],
                 attack_speed=stats["attack"]["attack_speed"],
-                last_attack=0
+                last_attack=0,
             ),
             UnitType(unit_type, stats["name"]),
             OnTerrain(),

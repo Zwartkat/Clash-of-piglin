@@ -1,4 +1,3 @@
-
 from components.case import Case
 from components.map import Map
 from components.position import Position
@@ -8,11 +7,11 @@ if __name__ == "__main__":
     pos = Position(1, 2)
     print(pos)
     case = Case(pos, "Netherrack")
-        
+
     map = Map()
     map.generate(24)
     print(map)
-    
+
     # tab = [
     #     [
     #         "Blue_netherrack",

@@ -8,13 +8,11 @@ from core.entity import Entity
 
 class Bastion(Entity):
 
-    def __init__(self):
+    def __init__(self, number: int):
         super().__init__(
             components=[
                 Structure(),
-                Health(health=150),
-                Cost(value=650),
+                Health(health=1000),
                 Position(x=0, y=0),
-                Attack(damage=0, range=3, attack_speed=0),
             ]
         )

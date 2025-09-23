@@ -10,6 +10,7 @@ from systems.mouvement_system import MovementSystem
 from components.position import Position
 from components.velocity import Velocity
 from systems.player_move_system import PlayerMoveSystem
+from systems.render_system import RenderSystem
 from temp_map import tab
 from components.case import Case
 from components.map import Map
@@ -18,6 +19,8 @@ from systems.selection_system import SelectionSystem
 from components.effects import OnTerrain
 from systems.terrain_effect_system import TerrainEffectSystem
 from systems.unit_factory import UnitFactory
+
+from systems.entity_factory import EntityFactory
 
 TILE_SIZE = 32
 
@@ -39,8 +42,10 @@ def load_terrain_sprites():
         full_path = os.path.join(asset_path, filename)
         if os.path.exists(full_path):
             sprite = pygame.image.load(full_path)
-            sprite = pygame.transform.scale(sprite, (TILE_SIZE, TILE_SIZE))
-            sprites[terrain_type] = sprite
+            if terrain_type != "Lava":
+                sprite = pygame.transform.scale(sprite, (TILE_SIZE, TILE_SIZE))
+                sprites[terrain_type] = sprite
+
         else:
             print(f"Warning: Image not found: {full_path}")
             sprite = pygame.Surface((TILE_SIZE, TILE_SIZE))
@@ -57,20 +62,25 @@ def load_terrain_sprites():
     return sprites
 
 
+from components.case import Case
+
+
 def draw_map(screen, game_map, sprites):
     """Dessine la map à l'écran avec les vraies images"""
     printed_types = set()  # Pour éviter de spam la console
 
     for y in range(len(game_map.tab)):
         for x in range(len(game_map.tab[y])):
-            tile_type = game_map.tab[y][x]
+            tile_type: Case = game_map.tab[y][x]
 
             # Récupérer le sprite correspondant
-            sprite = sprites.get(tile_type, sprites.get("Netherrack"))
+            sprite = sprites.get(tile_type.type, sprites.get("Netherrack"))
 
-            # Position de la tile
-            pos_x = x * TILE_SIZE
-            pos_y = y * TILE_SIZE
+            if tile_type.type != "Lava":
+
+                # Position de la tile
+                pos_x = x * TILE_SIZE
+                pos_y = y * TILE_SIZE
 
             # Dessiner le sprite
             screen.blit(sprite, (pos_x, pos_y))
@@ -85,16 +95,19 @@ def main(screen: pygame.Surface):
 
     # Charger la map et les sprites
     game_map = Map()
-    game_map.setTab(tab)
+    # game_map.setTab(tab)
+    game_map.generate(24)
     sprites = load_terrain_sprites()
 
-    # Crée le monde Esper
-    world = esper
-    world.add_processor(MovementSystem())
-    world.add_processor(TerrainEffectSystem(game_map))
-    world.add_processor(CollisionSystem(game_map))
-    selection_system = SelectionSystem()
-    # Crée l'entité et ses composants
+    for y in range(len(game_map.tab)):
+        for x in range(len(game_map.tab[y])):
+            tile_type = game_map.tab[y][x]
+
+            if tile_type.type == "Lava":
+                case = Case(Position(x * TILE_SIZE, y * TILE_SIZE), "Lava")
+                EntityFactory.create(*case.get_all_components())
+
+        # Crée l'entité et ses composants
     sword_positions = [(200, 200), (230, 200), (160, 200)]
     sword_squad = UnitFactory.create_squad("piglin_sword", sword_positions, PLAYER_TEAM)
 
@@ -104,8 +117,21 @@ def main(screen: pygame.Surface):
         "piglin_crossbow", crossbow_positions, PLAYER_TEAM
     )
 
+    from entities.crossbowman import Crossbowman
+
+    EntityFactory.create(*Crossbowman().get_all_components())
+    print(Crossbowman().get_all_components())
     # Ghast solitaire
     ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_TEAM)
+
+    # Crée le monde Esper
+    world = esper
+    world.add_processor(MovementSystem())
+    world.add_processor(TerrainEffectSystem(game_map))
+    world.add_processor(CollisionSystem(game_map))
+    selection_system = SelectionSystem()
+
+    render = RenderSystem(screen)
 
     # Crée l'EventBus et le système de déplacement joueur
     event_bus_instance = event_bus.EventBus()
@@ -155,17 +181,19 @@ def main(screen: pygame.Surface):
                 if mouse_pressed:
                     selection_system.handle_mouse_motion(event.pos, world)
 
-        world.process(1 / 60)  # dt = 1/60 pour 60 FPS
+        clock.tick(20)
+
+        dt = clock.get_time() / 1000.0
+
+        world.process(dt)  # dt = 1/60 pour 60 FPS
 
         screen.fill((0, 0, 0))  # fond noir
-
         # Dessiner la map d'abord
         draw_map(screen, game_map, sprites)
 
         # Le SelectionSystem gère maintenant TOUT l'affichage des entités
         selection_system.draw_selections(screen, world)
-
+        render.process(dt)
         pygame.display.flip()
-        clock.tick(60)
 
     pygame.quit()
