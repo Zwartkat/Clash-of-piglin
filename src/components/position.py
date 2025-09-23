@@ -1,4 +1,7 @@
-class Position:
+from core.component import Component
+
+
+class Position(Component):
 
     def __init__(self, x: int = 1, y: int = 1):
         '''Creates a Case from a X and a Y, or from default values if empty.'''

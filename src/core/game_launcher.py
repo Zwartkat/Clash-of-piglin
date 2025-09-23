@@ -1,0 +1,171 @@
+import pygame
+import esper
+import os
+from components.collider import Collider
+from components.team import PLAYER_TEAM, Team
+from core import event_bus
+from events.event_move import EventMoveTo
+from systems.collision_system import CollisionSystem
+from systems.mouvement_system import MovementSystem
+from components.position import Position
+from components.velocity import Velocity
+from systems.player_move_system import PlayerMoveSystem
+from temp_map import tab
+from components.case import Case
+from components.map import Map
+from components.selection import Selection
+from systems.selection_system import SelectionSystem
+from components.effects import OnTerrain
+from systems.terrain_effect_system import TerrainEffectSystem
+from systems.unit_factory import UnitFactory
+
+TILE_SIZE = 32
+
+
+def load_terrain_sprites():
+    """Charge tous les sprites de terrain"""
+    sprites = {}
+    asset_path = "assets/images/"
+
+    terrain_files = {
+        "Netherrack": "Netherrack.png",
+        "Blue_netherrack": "Blue_netherrack.png",
+        "Red_netherrack": "Red_netherrack.png",
+        "Lava": "Lava_long.png",
+        "Soulsand": "Soul_Sand.png",
+    }
+
+    for terrain_type, filename in terrain_files.items():
+        full_path = os.path.join(asset_path, filename)
+        if os.path.exists(full_path):
+            sprite = pygame.image.load(full_path)
+            sprite = pygame.transform.scale(sprite, (TILE_SIZE, TILE_SIZE))
+            sprites[terrain_type] = sprite
+        else:
+            print(f"Warning: Image not found: {full_path}")
+            sprite = pygame.Surface((TILE_SIZE, TILE_SIZE))
+            fallback_colors = {
+                "Netherrack": (139, 69, 19),
+                "Blue_netherrack": (100, 150, 255),
+                "Red_netherrack": (255, 100, 100),
+                "Lava": (255, 100, 0),
+                "Soulsand": (101, 67, 33),
+            }
+            sprite.fill(fallback_colors.get(terrain_type, (128, 128, 128)))
+            sprites[terrain_type] = sprite
+
+    return sprites
+
+
+def draw_map(screen, game_map, sprites):
+    """Dessine la map à l'écran avec les vraies images"""
+    printed_types = set()  # Pour éviter de spam la console
+
+    for y in range(len(game_map.tab)):
+        for x in range(len(game_map.tab[y])):
+            tile_type = game_map.tab[y][x]
+
+            # Récupérer le sprite correspondant
+            sprite = sprites.get(tile_type, sprites.get("Netherrack"))
+
+            # Position de la tile
+            pos_x = x * TILE_SIZE
+            pos_y = y * TILE_SIZE
+
+            # Dessiner le sprite
+            screen.blit(sprite, (pos_x, pos_y))
+
+
+def main(screen: pygame.Surface):
+    pygame.init()
+    map_width = 24 * TILE_SIZE
+    map_height = 24 * TILE_SIZE
+    screen = pygame.display.set_mode((map_width, map_height))
+    clock = pygame.time.Clock()
+
+    # Charger la map et les sprites
+    game_map = Map()
+    game_map.setTab(tab)
+    sprites = load_terrain_sprites()
+
+    # Crée le monde Esper
+    world = esper
+    world.add_processor(MovementSystem())
+    world.add_processor(TerrainEffectSystem(game_map))
+    world.add_processor(CollisionSystem(game_map))
+    selection_system = SelectionSystem()
+    # Crée l'entité et ses composants
+    sword_positions = [(200, 200), (230, 200), (160, 200)]
+    sword_squad = UnitFactory.create_squad("piglin_sword", sword_positions, PLAYER_TEAM)
+
+    # Escouade d'Arbalétriers
+    crossbow_positions = [(200, 300), (230, 300), (260, 300)]
+    crossbow_squad = UnitFactory.create_squad(
+        "piglin_crossbow", crossbow_positions, PLAYER_TEAM
+    )
+
+    # Ghast solitaire
+    ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_TEAM)
+
+    # Crée l'EventBus et le système de déplacement joueur
+    event_bus_instance = event_bus.EventBus()
+    world.add_processor(PlayerMoveSystem(event_bus_instance))
+
+    mouse_pressed = False
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Clic gauche - sélection
+                    mouse_pressed = True
+                    selection_system.handle_mouse_down(event.pos, world)
+                elif event.button == 3:  # Clic droit - donner ordre aux sélectionnées
+                    selected_entities = selection_system.get_selected_entities(world)
+                    if selected_entities:
+                        x, y = event.pos
+                        from systems.troop_system import (
+                            FormationSystem,
+                            TROOP_GRID,
+                            TROOP_CIRCLE,
+                        )
+
+                        positions = FormationSystem.calculate_formation_positions(
+                            selected_entities,
+                            x,
+                            y,
+                            spacing=35,
+                            formation_type=TROOP_GRID,  # you can change to TROOP_CIRCLE if needed
+                        )
+
+                        for i, ent in enumerate(selected_entities):
+                            if i < len(positions):
+                                target_x, target_y = positions[i]
+                                event_bus_instance.emit(
+                                    EventMoveTo(ent, target_x, target_y)
+                                )
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:  # Relâcher clic gauche
+                    mouse_pressed = False
+                    selection_system.handle_mouse_up(event.pos, world)
+            elif event.type == pygame.MOUSEMOTION:
+                if mouse_pressed:
+                    selection_system.handle_mouse_motion(event.pos, world)
+
+        world.process(1 / 60)  # dt = 1/60 pour 60 FPS
+
+        screen.fill((0, 0, 0))  # fond noir
+
+        # Dessiner la map d'abord
+        draw_map(screen, game_map, sprites)
+
+        # Le SelectionSystem gère maintenant TOUT l'affichage des entités
+        selection_system.draw_selections(screen, world)
+
+        pygame.display.flip()
+        clock.tick(60)
+
+    pygame.quit()

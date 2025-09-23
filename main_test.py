@@ -1,9 +1,8 @@
-from components.case import Case
-from components.position import Position
-from components.map import Map
+from components.map import Position, Case, Map
 
 if __name__ == "__main__":
     pos = Position(1, 2)
+    print(pos)
     case = Case(pos, "Netherrack")
         
     map = Map()

@@ -1,8 +1,11 @@
 import esper
 from components.position import Position
+from components.team import PLAYER_TEAM, Team
 from components.velocity import Velocity
 from events.event_move import EventMoveTo
 from core.iterator_system import IteratingProcessor
+from systems.troop_system import TROOP_CIRCLE, TROOP_GRID, FormationSystem
+from components.selection import Selection
 
 
 class PlayerMoveSystem(IteratingProcessor):
@@ -11,17 +14,22 @@ class PlayerMoveSystem(IteratingProcessor):
         self.event_bus = event_bus
         self.event_bus.subscribe(EventMoveTo, self.on_move)
         self.target = {}
+        self.last_group_order = None
 
     def on_move(self, event):
         pos = esper.component_for_entity(event.entity, Position)
         vel = esper.component_for_entity(event.entity, Velocity)
-        dx = event.target_x - pos.x
-        dy = event.target_y - pos.y
-        dist = (dx**2 + dy**2) ** 0.5
-        if dist > 0:
-            vel.x = (dx / dist) * 50
-            vel.y = (dy / dist) * 50
-            self.target[event.entity] = (event.target_x, event.target_y)
+
+        if pos and vel:
+            dx = event.target_x - pos.x
+            dy = event.target_y - pos.y
+            dist = (dx**2 + dy**2) ** 0.5
+
+            if dist > 0:
+                speed = 100
+                vel.x = (dx / dist) * speed
+                vel.y = (dy / dist) * speed
+                self.target[event.entity] = (event.target_x, event.target_y)
 
     def process_entity(self, ent, dt, pos, vel):
         if ent in self.target:
@@ -29,7 +37,15 @@ class PlayerMoveSystem(IteratingProcessor):
             dx = tx - pos.x
             dy = ty - pos.y
             dist = (dx**2 + dy**2) ** 0.5
-            if dist < 2:  # seuil d'arrêt
+            if dist < 5:
                 vel.x = 0
                 vel.y = 0
                 del self.target[ent]
+
+                selection = esper.component_for_entity(ent, Selection)
+                if selection:
+                    selection.is_selected = False
+            else:
+                speed = 100
+                vel.x = (dx / dist) * speed
+                vel.y = (dy / dist) * speed

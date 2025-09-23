@@ -1,17 +1,23 @@
 import pygame
 import esper
 import os
+from components.collider import Collider
+from components.team import PLAYER_TEAM, Team
 from core import event_bus
 from events.event_move import EventMoveTo
+from systems.collision_system import CollisionSystem
 from systems.mouvement_system import MovementSystem
 from components.position import Position
 from components.velocity import Velocity
 from systems.player_move_system import PlayerMoveSystem
 from temp_map import tab
-
-# Import des classes Map depuis le répertoire components (comme dans test_map_display)
 from components.case import Case
 from components.map import Map
+from components.selection import Selection
+from systems.selection_system import SelectionSystem
+from components.effects import OnTerrain
+from systems.terrain_effect_system import TerrainEffectSystem
+from systems.unit_factory import UnitFactory
 
 TILE_SIZE = 32
 
@@ -21,11 +27,10 @@ def load_terrain_sprites():
     sprites = {}
     asset_path = "assets/images/"
 
-    # Mapping CORRIGÉ avec les bonnes images
     terrain_files = {
         "Netherrack": "Netherrack.png",
-        "Blue_netherrack": "Blue_netherrack.png",  # ← Corrigé !
-        "Red_netherrack": "Red_netherrack.png",  # ← Corrigé !
+        "Blue_netherrack": "Blue_netherrack.png",
+        "Red_netherrack": "Red_netherrack.png",
         "Lava": "Lava_long.png",
         "Soulsand": "Soul_Sand.png",
     }
@@ -55,6 +60,8 @@ def load_terrain_sprites():
 
 def draw_map(screen, game_map, sprites):
     """Dessine la map à l'écran avec les vraies images"""
+    printed_types = set()  # Pour éviter de spam la console
+
     for y in range(len(game_map.tab)):
         for x in range(len(game_map.tab[y])):
             tile_type = game_map.tab[y][x]
@@ -71,9 +78,8 @@ def draw_map(screen, game_map, sprites):
 
 
 pygame.init()
-# Correction : 24x24 au lieu de 25x25
-map_width = 24 * TILE_SIZE  # 24 * 32 = 768
-map_height = 24 * TILE_SIZE  # 24 * 32 = 768
+map_width = 24 * TILE_SIZE
+map_height = 24 * TILE_SIZE
 screen = pygame.display.set_mode((map_width, map_height))
 clock = pygame.time.Clock()
 
@@ -85,20 +91,27 @@ sprites = load_terrain_sprites()
 # Crée le monde Esper
 world = esper
 world.add_processor(MovementSystem())
-
+world.add_processor(TerrainEffectSystem(game_map))
+world.add_processor(CollisionSystem(game_map))
+selection_system = SelectionSystem()
 # Crée l'entité et ses composants
-entity = world.create_entity()
-world.add_component(entity, Position(x=100, y=200))
-world.add_component(entity, Velocity(x=0, y=0))
+sword_positions = [(200, 200), (230, 200), (160, 200)]
+sword_squad = UnitFactory.create_squad("piglin_sword", sword_positions, PLAYER_TEAM)
 
-entity2 = world.create_entity()
-world.add_component(entity2, Position(x=200, y=300))
-world.add_component(entity2, Velocity(x=0, y=0))
+# Escouade d'Arbalétriers
+crossbow_positions = [(200, 300), (230, 300), (260, 300)]
+crossbow_squad = UnitFactory.create_squad(
+    "piglin_crossbow", crossbow_positions, PLAYER_TEAM
+)
+
+# Ghast solitaire
+ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_TEAM)
 
 # Crée l'EventBus et le système de déplacement joueur
 event_bus_instance = event_bus.EventBus()
-player_move_system = PlayerMoveSystem(event_bus_instance)
-world.add_processor(player_move_system)
+world.add_processor(PlayerMoveSystem(event_bus_instance))
+
+mouse_pressed = False
 
 running = True
 while running:
@@ -106,9 +119,41 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            x, y = event.pos
-            event_bus_instance.emit(EventMoveTo(entity, x, y))
-            event_bus_instance.emit(EventMoveTo(entity2, x, y))
+            if event.button == 1:  # Clic gauche - sélection
+                mouse_pressed = True
+                selection_system.handle_mouse_down(event.pos, world)
+            elif event.button == 3:  # Clic droit - donner ordre aux sélectionnées
+                selected_entities = selection_system.get_selected_entities(world)
+                if selected_entities:
+                    x, y = event.pos
+                    from systems.troop_system import (
+                        FormationSystem,
+                        TROOP_GRID,
+                        TROOP_CIRCLE,
+                    )
+
+                    positions = FormationSystem.calculate_formation_positions(
+                        selected_entities,
+                        x,
+                        y,
+                        spacing=35,
+                        formation_type=TROOP_GRID,  # you can change to TROOP_CIRCLE if needed
+                    )
+
+                    for i, ent in enumerate(selected_entities):
+                        if i < len(positions):
+                            target_x, target_y = positions[i]
+                            event_bus_instance.emit(
+                                EventMoveTo(ent, target_x, target_y)
+                            )
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:  # Relâcher clic gauche
+                mouse_pressed = False
+                selection_system.handle_mouse_up(event.pos, world)
+        elif event.type == pygame.MOUSEMOTION:
+            if mouse_pressed:
+                selection_system.handle_mouse_motion(event.pos, world)
 
     world.process(1 / 60)  # dt = 1/60 pour 60 FPS
 
@@ -117,9 +162,8 @@ while running:
     # Dessiner la map d'abord
     draw_map(screen, game_map, sprites)
 
-    # Puis dessiner les entités par-dessus
-    for ent, pos in world.get_component(Position):
-        pygame.draw.circle(screen, (255, 0, 0), (int(pos.x), int(pos.y)), 10)
+    # Le SelectionSystem gère maintenant TOUT l'affichage des entités
+    selection_system.draw_selections(screen, world)
 
     pygame.display.flip()
     clock.tick(60)

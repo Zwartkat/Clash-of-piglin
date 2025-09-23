@@ -1,4 +1,7 @@
-class Collider:
+from core.component import Component
+
+
+class Collider(Component):
     def __init__(self, width, height, collision_type="unit"):
         self.width = width
         self.height = height

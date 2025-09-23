@@ -9,9 +9,12 @@ from core.entity import Entity
 class Brute(Entity):
 
     def __init__(self):
-        super().__init__(components=[])
-        Attack(damage=15, range=1, attack_speed=1.0)
-        Health(health=100)
-        Velocity(x=0, y=0, speed=20)
-        Position(x=0, y=0)
-        Cost(value=350)
+        super().__init__(
+            components=[
+                Attack(damage=15, range=1, attack_speed=1.0),
+                Health(health=100),
+                Velocity(x=0, y=0, speed=20),
+                Position(x=0, y=0),
+                Cost(value=350),
+            ]
+        )
