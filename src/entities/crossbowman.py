@@ -6,6 +6,7 @@ from components.cost import Cost
 from components.sprite import Sprite
 from components.selection import Selection
 from components.collider import Collider
+from config.constants import Animation, Direction
 from core.entity import Entity
 from components.stats import UnitType
 from components.team import Team, PLAYER_1_TEAM
@@ -20,7 +21,7 @@ class Crossbowman(Entity):
             components=[
                 Attack(damage=20, range=3, attack_speed=2.0),
                 Health(health=90),
-                Velocity(x=0, y=0, speed=20),
+                Velocity(x=0, y=0, speed=40),
                 Position(x=10, y=10),
                 Cost(amount=425),
                 Selection(),
@@ -32,14 +33,14 @@ class Crossbowman(Entity):
                     24,
                     24,
                     {
-                        "idle": {
-                            "down": [0, 1, 2, 3],
-                            "up": [3],
-                            "left": [2],
-                            "right": [1],
+                        Animation.IDLE: {
+                            Direction.DOWN: [0, 1, 2, 3],
+                            Direction.UP: [3],
+                            Direction.LEFT: [2],
+                            Direction.RIGHT: [1],
                         }
                     },
-                    0.1,
+                    0.5,
                 ),
             ]
         )

@@ -63,9 +63,6 @@ def load_terrain_sprites():
     return sprites
 
 
-from components.case import Case
-
-
 def draw_map(screen, game_map, sprites):
     """Dessine la map à l'écran avec les vraies images"""
     printed_types = set()  # Pour éviter de spam la console
@@ -88,7 +85,6 @@ def draw_map(screen, game_map, sprites):
 
 
 def main(screen: pygame.Surface):
-    pygame.init()
     map_width = 24 * TILE_SIZE
     map_height = 24 * TILE_SIZE
     screen = pygame.display.set_mode((map_width, map_height))
@@ -134,7 +130,7 @@ def main(screen: pygame.Surface):
     world.add_processor(CollisionSystem(game_map))
     selection_system = SelectionSystem(PlayerManager())
 
-    render = RenderSystem(screen)
+    render = RenderSystem(screen, game_map.tab, sprites)
 
     # Crée l'EventBus et le système de déplacement joueur
     event_bus_instance = event_bus.EventBus()
@@ -184,19 +180,16 @@ def main(screen: pygame.Surface):
                 if mouse_pressed:
                     selection_system.handle_mouse_motion(event.pos, world)
 
-        clock.tick(60)
+        clock.tick(100)
 
-        dt = clock.get_time() / 1000.0
+        dt = clock.get_time() / 1000
 
         world.process(dt)  # dt = 1/60 pour 60 FPS
 
-        screen.fill((0, 0, 0))  # fond noir
-        # Dessiner la map d'abord
-        draw_map(screen, game_map, sprites)
-
-        # Le SelectionSystem gère maintenant TOUT l'affichage des entités
-        selection_system.draw_selections(screen, world)
+        # draw_map(screen,game_map,sprites)
+        render.show_map()
         render.process(dt)
+        selection_system.draw_selections(screen, world)
         pygame.display.flip()
 
     pygame.quit()

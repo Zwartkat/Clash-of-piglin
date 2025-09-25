@@ -1,5 +1,7 @@
+from config.constants import Animation, Direction
 from .position import Position
 from core.component import Component
+from components.collider import Collider
 
 from core.entity import Entity
 from components.sprite import Sprite
@@ -30,8 +32,14 @@ class Case(Entity):
                     "assets/images/lava.png",
                     160,
                     160,
-                    {"idle": {"down": list(range(1, 20)) + list(range(19, 0, -1))}},
-                    0.05,
+                    {
+                        Animation.NONE: {
+                            Direction.NONE: list(range(1, 20)) + list(range(19, 0, -1))
+                        }
+                    },
+                    0.06,
+                    default_animation=Animation.NONE,
+                    default_direction=Direction.NONE,
                 ),
                 coordonates,
             )
