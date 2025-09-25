@@ -1,6 +1,5 @@
 import esper
 from components.position import Position
-from components.team import PLAYER_TEAM, Team
 from components.velocity import Velocity
 from events.event_move import EventMoveTo
 from core.iterator_system import IteratingProcessor
