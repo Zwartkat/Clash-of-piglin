@@ -170,10 +170,10 @@ class SelectionSystem:
 
     def draw_diamond(self, screen, pos, color):
         diamond_points = [
-            (int(pos.x), int(pos.y - 15)),  # Top
-            (int(pos.x + 8), int(pos.y - 7)),  # right
+            (int(pos.x), int(pos.y - 5)),  # Top
+            (int(pos.x + 2), int(pos.y - 3)),  # right
             (int(pos.x), int(pos.y + 1)),  # bottom
-            (int(pos.x - 8), int(pos.y - 7)),  # left
+            (int(pos.x - 2), int(pos.y - 3)),  # left
         ]
 
         pygame.draw.polygon(screen, color, diamond_points)

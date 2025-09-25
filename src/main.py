@@ -45,6 +45,7 @@ def load_terrain_sprites():
             sprites[terrain_type] = sprite
         else:
             print(f"Warning: Image not found: {full_path}")
+            # Créer un rectangle coloré de fallback
             sprite = pygame.Surface((TILE_SIZE, TILE_SIZE))
             fallback_colors = {
                 "Netherrack": (139, 69, 19),

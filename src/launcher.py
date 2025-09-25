@@ -93,12 +93,17 @@ def handle_click(pos: Tuple[int]):
         if rect.collidepoint(pos):
             selected = i
             if menu_items[selected] == menu_items[0]:  # Play
+                print("Play")
                 return game_manager.main(screen)
             elif menu_items[selected] == menu_items[1]:  # Options
+                print("Options menu not implemented yet.")
                 pass
             elif menu_items[selected] == menu_items[2]:  # Quit
-                return False
-        return True
+                print("Quit")
+                pygame.quit()
+                exit()
+        else:
+            return True
 
 
 running = True
@@ -108,5 +113,6 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            print(running)
             running = handle_click(event.pos)
 pygame.quit()
