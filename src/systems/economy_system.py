@@ -8,14 +8,15 @@ from components.squad import Squad
 from core.iterator_system import IteratingProcessor
 
 
-class EconomySystem(IteratingProcessor):
+class EconomySystem(esper.Processor):
     def __init__(self, event_bus) -> None:
-        super().__init__(Money)
+        super().__init__()
         self.event_bus = event_bus
         event_bus.subscribe(BuyEvent, self.buy)
         event_bus.subscribe(DeathEvent, self.reward_money)
 
         self.creation_time = pygame.time.get_ticks()
+        self.generation_speed = 0.133  # Valeur de base pour 0-1 minute
 
     def buy(self, event):
         player = event.player
@@ -49,22 +50,23 @@ class EconomySystem(IteratingProcessor):
 
         print(f"Vous avez tué {entity} et gagné {reward} pepites d'or")
 
-    def process_entity(self, ent, dt, money):
+    def process(self, dt):
 
+        # Récupération du temps écoulé
         time_elapsed = pygame.time.get_ticks() - self.creation_time
 
         # Changement de la vitesse de génération en fonction du temps
-        if time_elapsed < 120000:
-            money.generation_speed = 0.167
-        elif time_elapsed < 180000:
-            money.generation_speed = 0.2
-        elif time_elapsed < 240000:
-            money.generation_speed = 0.25
-        else:
-            money.generation_speed = 0.3
+        if 60000 < time_elapsed < 120000:
+            self.generation_speed = 0.167
+        elif 120000 < time_elapsed < 180000:
+            self.generation_speed = 0.2
+        elif 180000 < time_elapsed < 240000:
+            self.generation_speed = 0.25
+        elif time_elapsed > 240000:
+            self.generation_speed = 0.3
 
-        # Ajout de l'argent au compte
-        money.amount += money.generation_speed
+        # Ajout de la thune aux comptes des joueurs
+        for ent, money in esper.get_component(Money):
+            money.amount += self.generation_speed
 
-        print("entité n°", ent, ":", int(money.amount))
-        print("time elapsed:", time_elapsed, "ms")
+            print("entité n°", ent, ":", int(money.amount))
