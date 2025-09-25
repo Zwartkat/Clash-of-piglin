@@ -1,4 +1,5 @@
 import esper
+import pygame
 from events.buy_event import BuyEvent
 from events.death_event import DeathEvent
 from components.cost import Cost
@@ -12,6 +13,8 @@ class EconomySystem(IteratingProcessor):
         self.event_bus = event_bus
         event_bus.subscribe(BuyEvent, self.buy)
         event_bus.subscribe(DeathEvent, self.reward_money)
+
+        self.creation_time = pygame.time.get_ticks()
 
     def buy(self, event):
         player = event.player
@@ -42,16 +45,22 @@ class EconomySystem(IteratingProcessor):
 
         print(f"Vous avez tué {entity} et gagné {reward} pepites d'or")
 
-    def process_entity(self, ent, dt: int, money):
-        if dt < 60000:
-            money.amount += 0.133
-        elif dt < 120000:
-            money.amount += 0.167
-        elif dt < 180000:
-            money.amount += 0.2
-        elif dt < 240000:
-            money.amount += 0.25
-        else:
-            money.amount += 0.3
+    def process_entity(self, ent, dt, money):
 
-        print(ent, ":", int(money.amount))
+        time_elapsed = pygame.time.get_ticks() - self.creation_time
+
+        # Changement de la vitesse de génération en fonction du temps
+        if time_elapsed < 120000:
+            money.generation_speed = 0.167
+        elif time_elapsed < 180000:
+            money.generation_speed = 0.2
+        elif time_elapsed < 240000:
+            money.generation_speed = 0.25
+        else:
+            money.generation_speed = 0.3
+
+        # Ajout de l'argent au compte
+        money.amount += money.generation_speed
+
+        print("entité n°", ent, ":", int(money.amount))
+        print("time elapsed:", time_elapsed)
