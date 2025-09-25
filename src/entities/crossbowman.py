@@ -8,7 +8,7 @@ from components.selection import Selection
 from components.collider import Collider
 from core.entity import Entity
 from components.stats import UnitType
-from components.team import Team, PLAYER_TEAM
+from components.team import Team, PLAYER_1_TEAM
 
 from config.unit_stats import UNIT_STATS
 
@@ -25,7 +25,7 @@ class Crossbowman(Entity):
                 Cost(amount=425),
                 Selection(),
                 Collider(24, 24, "player"),
-                Team(PLAYER_TEAM),
+                Team(PLAYER_1_TEAM),
                 UnitType("piglin_crossbow", UNIT_STATS["piglin_crossbow"]["name"]),
                 Sprite(
                     "assets/sprites/spritesheet-piglin.png",

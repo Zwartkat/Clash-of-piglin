@@ -2,13 +2,14 @@ import pygame
 import esper
 import os
 from components.collider import Collider
-from components.team import PLAYER_TEAM, Team
+from components.team import PLAYER_1_TEAM, Team
 from core import event_bus
 from events.event_move import EventMoveTo
 from systems.collision_system import CollisionSystem
 from systems.mouvement_system import MovementSystem
 from components.position import Position
 from components.velocity import Velocity
+from systems.player_manager import PlayerManager
 from systems.player_move_system import PlayerMoveSystem
 from systems.render_system import RenderSystem
 from temp_map import tab
@@ -109,12 +110,14 @@ def main(screen: pygame.Surface):
 
         # Crée l'entité et ses composants
     sword_positions = [(200, 200), (230, 200), (160, 200)]
-    sword_squad = UnitFactory.create_squad("piglin_sword", sword_positions, PLAYER_TEAM)
+    sword_squad = UnitFactory.create_squad(
+        "piglin_sword", sword_positions, PLAYER_1_TEAM
+    )
 
     # Escouade d'Arbalétriers
     crossbow_positions = [(200, 300), (230, 300), (260, 300)]
     crossbow_squad = UnitFactory.create_squad(
-        "piglin_crossbow", crossbow_positions, PLAYER_TEAM
+        "piglin_crossbow", crossbow_positions, PLAYER_1_TEAM
     )
 
     from entities.crossbowman import Crossbowman
@@ -122,14 +125,14 @@ def main(screen: pygame.Surface):
     EntityFactory.create(*Crossbowman().get_all_components())
     print(Crossbowman().get_all_components())
     # Ghast solitaire
-    ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_TEAM)
+    ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_1_TEAM)
 
     # Crée le monde Esper
     world = esper
     world.add_processor(MovementSystem())
     world.add_processor(TerrainEffectSystem(game_map))
     world.add_processor(CollisionSystem(game_map))
-    selection_system = SelectionSystem()
+    selection_system = SelectionSystem(PlayerManager())
 
     render = RenderSystem(screen)
 
@@ -181,7 +184,7 @@ def main(screen: pygame.Surface):
                 if mouse_pressed:
                     selection_system.handle_mouse_motion(event.pos, world)
 
-        clock.tick(20)
+        clock.tick(60)
 
         dt = clock.get_time() / 1000.0
 
