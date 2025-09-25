@@ -37,14 +37,15 @@ class EconomySystem(IteratingProcessor):
         player = event.player
         entity = event.entity
         entity_cost = esper.component_for_entity(entity, Cost)
+        money = esper.component_for_entity(player, Money)
         reward = int(entity_cost.amount / 10)  # 10% du prix de l'entité
 
         if (
-            player.money + reward >= 1500
-        ):  # cap de thunes (à définir quelque part peut etre un fichier de constante)
-            player.money = 1500
+            money.amount + reward >= 1500
+        ):  # cap de thunes (à définir quelque part peut etre un fichier de constantes)
+            money.amount = 1500
         else:
-            player.money += reward
+            money.amount += reward
 
         print(f"Vous avez tué {entity} et gagné {reward} pepites d'or")
 
