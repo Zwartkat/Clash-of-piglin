@@ -20,6 +20,7 @@ from components.effects import OnTerrain
 from systems.terrain_effect_system import TerrainEffectSystem
 from systems.player_manager import PlayerManager
 from systems.unit_factory import UnitFactory
+from ui.hud import Hud
 
 TILE_SIZE = 32
 
@@ -60,12 +61,40 @@ def load_terrain_sprites():
     return sprites
 
 
+# def load_hud_sprites():
+#     """Charge tous les sprites utilisés par le hud."""
+#     sprites = {}
+#     asset_path = "assets/images/"
+
+#     sprites_files = {"Gold_nugget": "Gold_nugget.png", "Clock": "Clock.png"}
+
+#     for sprite_type, filename in sprites_files.items():
+#         full_path = os.path.join(asset_path, filename)
+#         if os.path.exists(full_path):
+#             sprite = pygame.image.load(full_path)
+#             sprite = pygame.transform.scale(sprite, (TILE_SIZE, TILE_SIZE))
+#             sprites[sprite_type] = sprite
+#         else:
+#             print(f"Warning: Image not found: {full_path}")
+#             # Créer un rectangle coloré de fallback
+#             sprite = pygame.Surface((TILE_SIZE, TILE_SIZE))
+#             fallback_color = (255, 255, 255)
+#             sprite.fill(fallback_color)
+#             sprites[sprite_type] = sprite
+
+#     return sprites
+
+
 def draw_map(screen, game_map, sprites):
     """Dessine la map à l'écran avec les vraies images"""
     for y in range(len(game_map.tab)):
         for x in range(len(game_map.tab[y])):
             tile_type = game_map.tab[y][x]
+
+            # Récupérer le sprite correspondant
             sprite = sprites.get(tile_type, sprites.get("Netherrack"))
+
+            # Position de la tile
             pos_x = x * TILE_SIZE
             pos_y = y * TILE_SIZE
             screen.blit(sprite, (pos_x, pos_y))
@@ -86,14 +115,38 @@ def display_current_player(screen, player_manager):
         instruction_text, True, (255, 255, 255)
     )
     screen.blit(instruction_surface, (10, 50))
+    
+def add_hud(screen, time, offset: tuple[int]):
+    """Ajoute/met à jour le hud de la fenêtre."""
+
+    hud = Hud(time)
+    hud.makeHud(screen, offset)
+    # pygame.font.init()
+    # font = pygame.font.SysFont(None, 32)  # None for default font, 32 for size
+
+    # time_text: str = "Timer : "
+    # money_text: str = "You currently have {money} gold."
+
+    # text_surface_timer = font.render(time_text, True, (255, 255, 255))  # White color
+    # time_surface = font.render(str(time), True, (255, 255, 255))
+    # text_surface_money = font.render(money_text, True, (255, 255, 255))  # White color
+    # money_surface = font.render(str(money), True, (255, 255, 255))
+
+    # screen.blit(sprites.get("Clock"), (offset[0], offset[1]))
+    # screen.blit(text_surface_timer, (offset[0], offset[1] + 50))
+    # screen.blit(time_surface, (offset[0], offset[1] + 100))
+    # screen.blit(sprites.get("Gold_nugget"), (offset[0], offset[1] + 150))
+    # screen.blit(text_surface_money, (offset[0], offset[1] + 200))
+    # screen.blit(money_surface, (offset[0], offset[1] + 250))
 
 
 pygame.init()
 map_width = 24 * TILE_SIZE
 map_height = 24 * TILE_SIZE
-screen = pygame.display.set_mode((map_width, map_height))
-pygame.display.set_caption("Clash of Piglin - 2 Joueurs")
+hud_width = 0.4*map_width
 clock = pygame.time.Clock()
+screen = pygame.display.set_mode((map_width + hud_width, map_height)) #map_width + hud_width, 
+pygame.display.set_caption("Clash of Piglin - 2 Joueurs")
 
 # Charger la map et les sprites
 game_map = Map()
@@ -102,6 +155,9 @@ sprites = load_terrain_sprites()
 
 # Créer le gestionnaire de joueurs
 player_manager = PlayerManager()
+
+# Creer le hud et charger ses textures
+# sprites_hud = load_hud_sprites()
 
 # Crée le monde Esper
 world = esper
@@ -208,6 +264,10 @@ while running:
     draw_map(screen, game_map, sprites)
 
     # Dessiner les entités (avec couleurs d'équipe)
+    # ajoute le hud
+    add_hud(screen, clock.get_time(), (map_width, 0))
+
+    # Le SelectionSystem gère maintenant TOUT l'affichage des entités
     selection_system.draw_selections(screen, world)
 
     # Afficher le joueur actuel
