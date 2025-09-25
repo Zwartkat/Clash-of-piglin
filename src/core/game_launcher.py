@@ -10,6 +10,8 @@ from systems.mouvement_system import MovementSystem
 from components.position import Position
 from components.velocity import Velocity
 from systems.player_manager import PlayerManager
+from components.money import Money
+from components.squad import Squad
 from systems.player_move_system import PlayerMoveSystem
 from systems.render_system import RenderSystem
 from temp_map import tab
@@ -20,6 +22,7 @@ from systems.selection_system import SelectionSystem
 from components.effects import OnTerrain
 from systems.terrain_effect_system import TerrainEffectSystem
 from systems.unit_factory import UnitFactory
+from systems.economy_system import EconomySystem
 
 from systems.entity_factory import EntityFactory
 
@@ -139,6 +142,10 @@ def main(screen: pygame.Surface):
     # Crée l'EventBus et le système de déplacement joueur
     event_bus_instance = event_bus.EventBus()
     world.add_processor(PlayerMoveSystem(event_bus_instance))
+    world.add_processor(EconomySystem(event_bus_instance))
+
+    # Création d'un player avec ses thunes et sa team
+    EntityFactory.create(Money(600), Squad(sword_squad + crossbow_squad + [ghast]))
 
     mouse_pressed = False
 

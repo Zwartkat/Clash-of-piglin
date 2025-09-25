@@ -2,12 +2,13 @@ import esper
 from events.buy_event import BuyEvent
 from events.death_event import DeathEvent
 from components.cost import Cost
+from components.money import Money
 from core.iterator_system import IteratingProcessor
 
 
 class EconomySystem(IteratingProcessor):
     def __init__(self, event_bus) -> None:
-        super().__init__()
+        super().__init__(Money)
         self.event_bus = event_bus
         event_bus.subscribe(BuyEvent, self.buy)
         event_bus.subscribe(DeathEvent, self.reward_money)
@@ -40,3 +41,17 @@ class EconomySystem(IteratingProcessor):
             player.money += reward
 
         print(f"Vous avez tué {entity} et gagné {reward} pepites d'or")
+
+    def process_entity(self, ent, dt: int, money):
+        if dt < 60000:
+            money.amount += 0.133
+        elif dt < 120000:
+            money.amount += 0.167
+        elif dt < 180000:
+            money.amount += 0.2
+        elif dt < 240000:
+            money.amount += 0.25
+        else:
+            money.amount += 0.3
+
+        print(ent, ":", int(money.amount))
