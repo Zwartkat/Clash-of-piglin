@@ -4,6 +4,7 @@ from events.buy_event import BuyEvent
 from events.death_event import DeathEvent
 from components.cost import Cost
 from components.money import Money
+from components.squad import Squad
 from core.iterator_system import IteratingProcessor
 
 
@@ -20,15 +21,17 @@ class EconomySystem(IteratingProcessor):
         player = event.player
         entity = event.entity
         cost = esper.component_for_entity(entity, Cost)
+        money = esper.component_for_entity(player, Money)
+        squad = esper.component_for_entity(player, Squad)
 
-        if player.money >= cost.amount:
-            player.money -= cost.amount
-            player.entities.append(entity)
+        if money.amount >= cost.amount:
+            money.amount -= cost.amount
+            squad.troops.append(entity)
             print(
-                f"Vous avez acheté {entity} pour {cost.amount}. Il vous reste: {player.money} pépites d'or"
+                f"Vous avez acheté {entity} pour {cost.amount}. Il vous reste: {money.amount} pépites d'or"
             )
         else:
-            print(f"Il vous manqua {cost.amount - player.money} pour acheter {entity}")
+            print(f"Il vous manqua {cost.amount - money.amount} pour acheter {entity}")
 
     def reward_money(self, event):
         player = event.player
@@ -63,4 +66,4 @@ class EconomySystem(IteratingProcessor):
         money.amount += money.generation_speed
 
         print("entité n°", ent, ":", int(money.amount))
-        print("time elapsed:", time_elapsed)
+        print("time elapsed:", time_elapsed, "ms")
