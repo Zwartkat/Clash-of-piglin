@@ -67,6 +67,9 @@ class EconomySystem(esper.Processor):
 
         # Ajout de la thune aux comptes des joueurs
         for ent, money in esper.get_component(Money):
-            money.amount += self.generation_speed
+            if money.amount + self.generation_speed >= 1500:  # Cap
+                money.amount = 1500
+            else:
+                money.amount += self.generation_speed
 
             print("entité n°", ent, ":", int(money.amount))
