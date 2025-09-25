@@ -92,7 +92,7 @@ def draw_map(screen, game_map, sprites):
             tile_type = game_map.tab[y][x]
 
             # Récupérer le sprite correspondant
-            sprite = sprites.get(tile_type, sprites.get("Netherrack"))
+            sprite = sprites.get(tile_type.type, sprites.get("Netherrack"))
 
             # Position de la tile
             pos_x = x * TILE_SIZE
