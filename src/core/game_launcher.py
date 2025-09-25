@@ -117,9 +117,12 @@ def main(screen: pygame.Surface):
     )
 
     from entities.crossbowman import Crossbowman
+    from entities.brute import Brute
+    from entities.ghast import Ghast
 
     EntityFactory.create(*Crossbowman().get_all_components())
-    print(Crossbowman().get_all_components())
+    EntityFactory.create(*Ghast().get_all_components())
+    EntityFactory.create(*Brute().get_all_components())
     # Ghast solitaire
     ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_1_TEAM)
 

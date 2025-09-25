@@ -21,7 +21,7 @@ class Crossbowman(Entity):
             components=[
                 Attack(damage=20, range=3, attack_speed=2.0),
                 Health(health=90),
-                Velocity(x=0, y=0, speed=40),
+                Velocity(x=0, y=0, speed=80),
                 Position(x=10, y=10),
                 Cost(amount=425),
                 Selection(),
