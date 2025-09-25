@@ -74,7 +74,7 @@ class Sprite:
         if animation_name in self.animations:
             self.current_animation = animation_name
             self.current_direction = direction
-            self.current_frame_index = self.animations[animation_name][direction][0]
+            self.current_frame_index = 0
 
     def update(self, delta_time: float) -> None:
         """

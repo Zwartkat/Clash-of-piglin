@@ -34,10 +34,10 @@ class Crossbowman(Entity):
                     24,
                     {
                         Animation.IDLE: {
-                            Direction.DOWN: [0, 1, 2, 3],
+                            Direction.DOWN: [1],
                             Direction.UP: [3],
                             Direction.LEFT: [2],
-                            Direction.RIGHT: [1],
+                            Direction.RIGHT: [0],
                         }
                     },
                     0.5,

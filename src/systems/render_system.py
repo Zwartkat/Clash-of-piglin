@@ -1,8 +1,12 @@
 from components.case import Case
-from config.constants import Animation
+from config.constants import Animation, Direction
+from core.event_bus import EventBus
 from core.iterator_system import IteratingProcessor
 from components.sprite import Sprite
 from components.position import Position
+from components.velocity import Velocity
+
+from events.event_move import EventMoveTo
 
 import esper
 import pygame
@@ -56,5 +60,28 @@ class RenderSystem(IteratingProcessor):
             x = position.x
             if sprite.current_animation != Animation.NONE:
                 x = position.x - (frame.get_width() / 2)
+                frame = pygame.transform.scale(frame, (64, 64))
 
             self.screen.blit(frame, (x, position.y))
+
+    def animate_move(self, event: EventMoveTo):
+        if esper.has_component(event.entity, Velocity) and esper.has_component(
+            event.entity, Sprite
+        ):
+            velocity: Velocity = esper.component_for_entity(event.entity, Velocity)
+            sprite: Sprite = esper.component_for_entity(event.entity, Sprite)
+
+            direction: Direction = sprite.current_direction
+
+            if abs(velocity.x) > abs(velocity.y):
+                if velocity.x > 0:
+                    direction = Direction.RIGHT
+                else:
+                    direction = Direction.LEFT
+            else:
+                if velocity.y > 0:
+                    direction = Direction.DOWN
+                else:
+                    direction = Direction.UP
+
+            sprite.set_animation(sprite.current_animation, direction)

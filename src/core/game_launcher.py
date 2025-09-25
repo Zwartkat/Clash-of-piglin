@@ -133,11 +133,13 @@ def main(screen: pygame.Surface):
     world.add_processor(CollisionSystem(game_map))
     selection_system = SelectionSystem(PlayerManager())
 
-    render = RenderSystem(screen, game_map.tab, sprites)
-
     # Crée l'EventBus et le système de déplacement joueur
     event_bus_instance = event_bus.EventBus()
     world.add_processor(PlayerMoveSystem(event_bus_instance))
+
+    render = RenderSystem(screen, game_map.tab, sprites)
+
+    event_bus_instance.subscribe(EventMoveTo, render.animate_move)
 
     mouse_pressed = False
 
