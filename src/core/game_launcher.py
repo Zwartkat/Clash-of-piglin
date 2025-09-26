@@ -85,6 +85,8 @@ def draw_map(screen, game_map, sprites):
 
 
 def main(screen: pygame.Surface):
+
+    dt = 0.05
     map_width = 24 * TILE_SIZE
     map_height = 24 * TILE_SIZE
     screen = pygame.display.set_mode((map_width, map_height))
@@ -187,7 +189,7 @@ def main(screen: pygame.Surface):
 
         clock.tick(100)
 
-        dt = clock.get_time() / 1000
+        dt = min(clock.get_time() / 1000, dt)
 
         world.process(dt)  # dt = 1/60 pour 60 FPS
 

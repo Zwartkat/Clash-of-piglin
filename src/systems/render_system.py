@@ -84,4 +84,4 @@ class RenderSystem(IteratingProcessor):
                 else:
                     direction = Direction.UP
 
-            sprite.set_animation(sprite.current_animation, direction)
+            sprite.set_animation(Animation.WALK, direction)

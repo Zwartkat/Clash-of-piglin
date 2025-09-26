@@ -35,13 +35,19 @@ class Ghast(Entity):
                     24,
                     {
                         Animation.IDLE: {
-                            Direction.DOWN: [0],
-                            Direction.UP: [2],
-                            Direction.LEFT: [3],
-                            Direction.RIGHT: [1],
-                        }
+                            Direction.DOWN: [0, 4],
+                            Direction.UP: [2, 6],
+                            Direction.LEFT: [3, 7],
+                            Direction.RIGHT: [1, 5],
+                        },
+                        Animation.WALK: {
+                            Direction.DOWN: [0, 8],
+                            Direction.UP: [2, 10],
+                            Direction.LEFT: [3, 11],
+                            Direction.RIGHT: [1, 9],
+                        },
                     },
-                    0.05,
+                    0.5,
                 ),
             ]
         )
