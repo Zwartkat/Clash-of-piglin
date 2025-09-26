@@ -101,7 +101,7 @@ clock = pygame.time.Clock()
 
 # Charger la map et les sprites
 game_map = Map()
-game_map.setTab(tab)
+game_map.generate(24)
 sprites = load_terrain_sprites()
 
 # Créer le gestionnaire de joueurs

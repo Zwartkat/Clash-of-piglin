@@ -1,4 +1,5 @@
 from config.constants import Orientation, Animation, Direction
+from core.config import Config
 import pygame
 
 
@@ -60,7 +61,9 @@ class Sprite:
                         frame_height,
                     )
                 )
-                frame = pygame.transform.scale(frame, (32, 32))
+                frame = pygame.transform.scale(
+                    frame, (Config.TILE_SIZE(), Config.TILE_SIZE())
+                )
                 self.frames.append(frame)
 
     def set_animation(self, animation_name: Animation, direction: Direction) -> None:
@@ -96,12 +99,10 @@ class Sprite:
             # Update the frame index based on the frame duration
             self.delta_time += delta_time
 
-            # Quand assez de temps est passé, on change de frame
             if self.delta_time >= self.frame_duration:
-                self.delta_time -= self.frame_duration  # on garde le "reste"
+                self.delta_time -= self.frame_duration
                 self.current_frame_index += 1
 
-                # Boucler si on dépasse
                 if self.current_frame_index >= len(frames):
                     self.current_frame_index = 0
 

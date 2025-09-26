@@ -51,7 +51,7 @@ class CollisionSystem(IteratingProcessor):
         ):
             return True
 
-        terrain_type = self.game_map.tab[tile_y][tile_x]
+        terrain_type = self.game_map.tab[tile_y][tile_x].type
 
         rules = COLLISION_TYPE_RULES.get(collision_type, {})
         can_cross = rules.get("can_cross", {})

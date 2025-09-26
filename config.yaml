@@ -2,6 +2,7 @@ game_name: "Clash of Piglin"
 version: "1.0.0"
 
 menu_buttons : ["Play", "Options", "Quit"]
+tile_size: 64
 
 assets_path:
   logo: "assets/images/logo.png"

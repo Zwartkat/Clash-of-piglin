@@ -20,3 +20,6 @@ class Config:
     def get_texture(key, default=None):
         textures = Config._config.get("textures", {})
         return textures.get(key, default)
+
+    def TILE_SIZE() -> int:
+        return Config.get("tile_size", 32)

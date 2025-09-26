@@ -36,7 +36,7 @@ class TerrainEffectSystem(IteratingProcessor):
         if 0 <= tile_x < len(self.game_map.tab[0]) and 0 <= tile_y < len(
             self.game_map.tab
         ):
-            return self.game_map.tab[tile_y][tile_x]
+            return self.game_map.tab[tile_y][tile_x].type
         return None
 
     def _clear_terrain_effects(self, ent):

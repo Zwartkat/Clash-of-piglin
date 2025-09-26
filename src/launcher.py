@@ -72,7 +72,7 @@ def draw_menu():
         draw_button(screen, rect, menu_items[i], hovered)
 
     info_font = pygame.font.Font(Config.get_assets(key="font"), 12)
-    info_text = info_font.render("Presque Minecraft 1.16", True, (220, 220, 220))
+    info_text = info_font.render("Presque pas Minecraft 1.16", True, (220, 220, 220))
     screen.blit(info_text, (20, 580))
 
     pygame.display.flip()
