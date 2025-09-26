@@ -66,9 +66,6 @@ def load_terrain_sprites():
     return sprites
 
 
-from components.case import Case
-
-
 def draw_map(screen, game_map, sprites):
     """Dessine la map à l'écran avec les vraies images"""
     printed_types = set()  # Pour éviter de spam la console
@@ -91,7 +88,8 @@ def draw_map(screen, game_map, sprites):
 
 
 def main(screen: pygame.Surface):
-    pygame.init()
+
+    dt = 0.05
     map_width = 24 * TILE_SIZE
     map_height = 24 * TILE_SIZE
     screen = pygame.display.set_mode((map_width, map_height))
@@ -124,9 +122,12 @@ def main(screen: pygame.Surface):
     )
 
     from entities.crossbowman import Crossbowman
+    from entities.brute import Brute
+    from entities.ghast import Ghast
 
     EntityFactory.create(*Crossbowman().get_all_components())
-    print(Crossbowman().get_all_components())
+    EntityFactory.create(*Ghast().get_all_components())
+    EntityFactory.create(*Brute().get_all_components())
     # Ghast solitaire
     ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_1_TEAM)
 
@@ -137,8 +138,6 @@ def main(screen: pygame.Surface):
     world.add_processor(CollisionSystem(game_map))
     selection_system = SelectionSystem(PlayerManager())
 
-    render = RenderSystem(screen)
-
     # Crée l'EventBus et le système de déplacement joueur
     event_bus_instance = event_bus.EventBus()
     world.add_processor(PlayerMoveSystem(event_bus_instance))
@@ -146,6 +145,10 @@ def main(screen: pygame.Surface):
 
     # Création d'un player avec ses thunes et sa team
     EntityFactory.create(Money(600), Squad(sword_squad + crossbow_squad + [ghast]))
+
+    render = RenderSystem(screen, game_map.tab, sprites)
+
+    event_bus_instance.subscribe(EventMoveTo, render.animate_move)
 
     mouse_pressed = False
 
@@ -191,19 +194,16 @@ def main(screen: pygame.Surface):
                 if mouse_pressed:
                     selection_system.handle_mouse_motion(event.pos, world)
 
-        clock.tick(60)
+        clock.tick(100)
 
-        dt = clock.get_time() / 1000.0
+        dt = min(clock.get_time() / 1000, dt)
 
         world.process(dt)  # dt = 1/60 pour 60 FPS
 
-        screen.fill((0, 0, 0))  # fond noir
-        # Dessiner la map d'abord
-        draw_map(screen, game_map, sprites)
-
-        # Le SelectionSystem gère maintenant TOUT l'affichage des entités
-        selection_system.draw_selections(screen, world)
+        # draw_map(screen,game_map,sprites)
+        render.show_map()
         render.process(dt)
+        selection_system.draw_selections(screen, world)
         pygame.display.flip()
 
     pygame.quit()
