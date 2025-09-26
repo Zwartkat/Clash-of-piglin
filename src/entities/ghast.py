@@ -11,6 +11,7 @@ from components.position import Position
 from components.cost import Cost
 from config.constants import Animation, Direction
 from config.unit_stats import UNIT_STATS
+from core.config import Config
 from core.entity import Entity
 
 
@@ -23,10 +24,10 @@ class Ghast(Entity):
                 Health(health=70),
                 Velocity(x=0, y=0, speed=40),
                 Fly(),
-                Position(x=0, y=0),
+                Position(x=400, y=500),
                 Cost(amount=820),
                 Selection(),
-                Collider(24, 24, "player"),
+                Collider(Config.TILE_SIZE(), Config.TILE_SIZE(), "fly"),
                 Team(PLAYER_1_TEAM),
                 UnitType("ghast", UNIT_STATS["ghast"]["name"]),
                 Sprite(

@@ -1,3 +1,4 @@
+from core.config import Config
 from components.attack import Attack
 from components.collider import Collider
 from components.health import Health
@@ -25,7 +26,7 @@ class Brute(Entity):
                 Position(x=60, y=200),
                 Cost(amount=350),
                 Selection(),
-                Collider(24, 24, "player"),
+                Collider(Config.TILE_SIZE(), Config.TILE_SIZE(), "player"),
                 Team(PLAYER_1_TEAM),
                 UnitType("piglin_sword", UNIT_STATS["piglin_sword"]["name"]),
                 Sprite(

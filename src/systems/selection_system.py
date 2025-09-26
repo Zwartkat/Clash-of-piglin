@@ -155,16 +155,14 @@ class SelectionSystem:
             # pygame.draw.rect(screen, color, entity_rect)
 
             if team.team_id == current_team:
-                pass
-                # pygame.draw.rect(screen, team_outline, entity_rect, 2)
+                pygame.draw.rect(screen, team_outline, entity_rect, 2)
             else:
-                pass
-                # pygame.draw.rect(screen, team_outline, entity_rect, 1)
+                pygame.draw.rect(screen, team_outline, entity_rect, 1)
 
-            if esper.has_component(ent, Health):
-                health = esper.component_for_entity(ent, Health)
-                if health.remaining < health.full:
-                    self._draw_health_bar(screen, pos, collider, health)
+            # if esper.has_component(ent, Health):
+            #    health = esper.component_for_entity(ent, Health)
+            #    if health.remaining < health.full:
+            #        self._draw_health_bar(screen, pos, collider, health)
 
             if team.team_id == current_team and esper.has_component(ent, Selection):
                 selection = esper.component_for_entity(ent, Selection)

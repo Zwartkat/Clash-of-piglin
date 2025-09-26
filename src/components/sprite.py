@@ -1,4 +1,5 @@
 from config.constants import Orientation, Animation, Direction
+from core.config import Config
 import pygame
 
 
@@ -60,7 +61,9 @@ class Sprite:
                         frame_height,
                     )
                 )
-                frame = pygame.transform.scale(frame, (32, 32))
+                frame = pygame.transform.scale(
+                    frame, (Config.TILE_SIZE(), Config.TILE_SIZE())
+                )
                 self.frames.append(frame)
 
     def set_animation(self, animation_name: Animation, direction: Direction) -> None:

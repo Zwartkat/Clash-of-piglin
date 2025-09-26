@@ -110,16 +110,19 @@ def main(screen: pygame.Surface):
                 EntityFactory.create(*case.get_all_components())
 
         # Crée l'entité et ses composants
-    sword_positions = [(200, 200), (230, 200), (160, 200)]
-    sword_squad = UnitFactory.create_squad(
-        "piglin_sword", sword_positions, PLAYER_1_TEAM
-    )
+    # sword_positions = [(200, 200), (230, 200), (160, 200)]
+    # sword_squad = UnitFactory.create_squad(
+    #    "piglin_sword", sword_positions, PLAYER_1_TEAM
+    # )
+    #
+    ## Escouade d'Arbalétriers
+    # crossbow_positions = [(200, 300), (230, 300), (260, 300)]
+    # crossbow_squad = UnitFactory.create_squad(
+    #    "piglin_crossbow", crossbow_positions, PLAYER_1_TEAM
+    # )
 
-    # Escouade d'Arbalétriers
-    crossbow_positions = [(200, 300), (230, 300), (260, 300)]
-    crossbow_squad = UnitFactory.create_squad(
-        "piglin_crossbow", crossbow_positions, PLAYER_1_TEAM
-    )
+    # Ghast solitaire
+    # ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_1_TEAM)
 
     from entities.crossbowman import Crossbowman
     from entities.brute import Brute
@@ -128,8 +131,6 @@ def main(screen: pygame.Surface):
     EntityFactory.create(*Crossbowman().get_all_components())
     EntityFactory.create(*Ghast().get_all_components())
     EntityFactory.create(*Brute().get_all_components())
-    # Ghast solitaire
-    ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_1_TEAM)
 
     # Crée le monde Esper
     world = esper
@@ -144,7 +145,7 @@ def main(screen: pygame.Surface):
     world.add_processor(EconomySystem(event_bus_instance))
 
     # Création d'un player avec ses thunes et sa team
-    EntityFactory.create(Money(600), Squad(sword_squad + crossbow_squad + [ghast]))
+    # EntityFactory.create(Money(600), Squad(sword_squad + crossbow_squad + [ghast]))
 
     render = RenderSystem(screen, game_map.tab, sprites)
 
