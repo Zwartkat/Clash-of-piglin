@@ -1,4 +1,5 @@
 from collections import defaultdict
+from os import stat
 from typing import Dict, Type, List, Callable
 from .event import Event
 
@@ -47,3 +48,9 @@ class EventBus:
         """
         for handler in self._subscribers[type(event)]:
             handler(event)
+
+    @staticmethod
+    def get_event_bus():
+        if not hasattr(EventBus, "_instance"):
+            EventBus._instance = EventBus()
+        return EventBus._instance

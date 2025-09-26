@@ -139,7 +139,7 @@ def main(screen: pygame.Surface):
     selection_system = SelectionSystem(PlayerManager())
 
     # Crée l'EventBus et le système de déplacement joueur
-    event_bus_instance = event_bus.EventBus()
+    event_bus_instance = event_bus.EventBus.get_event_bus()
     world.add_processor(PlayerMoveSystem(event_bus_instance))
     world.add_processor(EconomySystem(event_bus_instance))
 

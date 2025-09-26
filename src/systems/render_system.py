@@ -6,6 +6,8 @@ from components.sprite import Sprite
 from components.position import Position
 from components.velocity import Velocity
 
+from core.config import Config
+
 from events.event_move import EventMoveTo
 
 import esper
@@ -52,19 +54,28 @@ class RenderSystem(IteratingProcessor):
             position (Position): The Position component of the entity.
             sprite (Sprite): The Sprite component of the entity.
         """
-
         sprite.update(dt)
 
         frame: pygame.Surface = sprite.get_frame()
         if frame:
             x = position.x
+            y = position.y
             if sprite.current_animation != Animation.NONE:
                 x = position.x - (frame.get_width() / 2)
-                frame = pygame.transform.scale(frame, (64, 64))
+                y = position.y - (frame.get_height() / 2)
+                frame = pygame.transform.scale(
+                    frame, (Config.get("tile_size"), Config.get("tile_size"))
+                )
 
-            self.screen.blit(frame, (x, position.y))
+            self.screen.blit(frame, (x, y))
 
     def animate_move(self, event: EventMoveTo):
+        """
+        Animate entity who moves by changing its sprite animation based on its velocity direction.
+
+        Args:
+            event (EventMoveTo): An event containing the entity that moved.
+        """
         if esper.has_component(event.entity, Velocity) and esper.has_component(
             event.entity, Sprite
         ):

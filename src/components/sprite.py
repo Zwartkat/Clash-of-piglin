@@ -96,12 +96,10 @@ class Sprite:
             # Update the frame index based on the frame duration
             self.delta_time += delta_time
 
-            # Quand assez de temps est passé, on change de frame
             if self.delta_time >= self.frame_duration:
-                self.delta_time -= self.frame_duration  # on garde le "reste"
+                self.delta_time -= self.frame_duration
                 self.current_frame_index += 1
 
-                # Boucler si on dépasse
                 if self.current_frame_index >= len(frames):
                     self.current_frame_index = 0
 

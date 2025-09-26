@@ -71,5 +71,3 @@ class EconomySystem(esper.Processor):
                 money.amount = 1500
             else:
                 money.amount += self.generation_speed
-
-            print("entité n°", ent, ":", int(money.amount))
