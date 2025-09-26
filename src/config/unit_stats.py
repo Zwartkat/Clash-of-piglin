@@ -2,7 +2,7 @@ UNIT_STATS = {
     "piglin_sword": {
         "name": "Piglin Épéiste",
         "health": 100,
-        "attack": {"damage": 10, "range": 100, "attack_speed": 1},
+        "attack": {"damage": 10, "range": 30, "attack_speed": 1},
         "speed": 80,
         "collision_type": "player",
         "size": {"width": 20, "height": 20},
@@ -22,8 +22,8 @@ UNIT_STATS = {
     "ghast": {
         "name": "Ghast",
         "health": 150,
-        "attack": {"damage": 10, "range": 100, "attack_speed": 1},
-        "speed": 300,
+        "attack": {"damage": 0, "range": 100, "attack_speed": 1},
+        "speed": 150,
         "collision_type": "flying",
         "size": {"width": 32, "height": 32},
         "description": "Créature volante du Nether",
