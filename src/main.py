@@ -7,6 +7,7 @@ from components.team import PLAYER_1_TEAM, PLAYER_2_TEAM, Team
 from core import event_bus
 from events.event_move import EventMoveTo
 from systems.collision_system import CollisionSystem
+from systems.combat_system import CombatSystem
 from systems.mouvement_system import MovementSystem
 from components.position import Position
 from components.velocity import Velocity
@@ -21,6 +22,9 @@ from systems.terrain_effect_system import TerrainEffectSystem
 from systems.player_manager import PlayerManager
 from systems.unit_factory import UnitFactory
 from ui.hud import Hud
+from systems.targeting_system import TargetingSystem
+from systems.death_event_handler import DeathEventHandler
+from components.target import Target
 
 TILE_SIZE = 32
 
@@ -115,7 +119,8 @@ def display_current_player(screen, player_manager):
         instruction_text, True, (255, 255, 255)
     )
     screen.blit(instruction_surface, (10, 50))
-    
+
+
 def add_hud(screen, time, offset: tuple[int]):
     """Ajoute/met à jour le hud de la fenêtre."""
 
@@ -143,9 +148,11 @@ def add_hud(screen, time, offset: tuple[int]):
 pygame.init()
 map_width = 24 * TILE_SIZE
 map_height = 24 * TILE_SIZE
-hud_width = 0.4*map_width
+hud_width = 0.4 * map_width
 clock = pygame.time.Clock()
-screen = pygame.display.set_mode((map_width + hud_width, map_height)) #map_width + hud_width, 
+screen = pygame.display.set_mode(
+    (map_width + hud_width, map_height)
+)  # map_width + hud_width,
 pygame.display.set_caption("Clash of Piglin - 2 Joueurs")
 
 # Charger la map et les sprites
@@ -205,6 +212,10 @@ ghast_p2 = UnitFactory.create_unit("ghast", 450, 350, PLAYER_2_TEAM)
 # Crée l'EventBus et le système de déplacement joueur
 event_bus_instance = event_bus.EventBus()
 world.add_processor(PlayerMoveSystem(event_bus_instance))
+death_handler = DeathEventHandler(event_bus_instance)
+world.add_processor(TargetingSystem())
+world.add_processor(CombatSystem(event_bus_instance))
+
 
 mouse_pressed = False
 running = True
