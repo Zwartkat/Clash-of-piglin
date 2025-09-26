@@ -7,6 +7,7 @@ from components.team import PLAYER_1_TEAM, PLAYER_2_TEAM, Team
 from core import event_bus
 from events.event_move import EventMoveTo
 from systems.collision_system import CollisionSystem
+from systems.combat_system import CombatSystem
 from systems.mouvement_system import MovementSystem
 from components.position import Position
 from components.velocity import Velocity
@@ -20,6 +21,9 @@ from components.effects import OnTerrain
 from systems.terrain_effect_system import TerrainEffectSystem
 from systems.player_manager import PlayerManager
 from systems.unit_factory import UnitFactory
+from systems.targeting_system import TargetingSystem
+from systems.death_event_handler import DeathEventHandler
+from components.target import Target
 
 TILE_SIZE = 32
 
@@ -149,6 +153,10 @@ ghast_p2 = UnitFactory.create_unit("ghast", 450, 350, PLAYER_2_TEAM)
 # Crée l'EventBus et le système de déplacement joueur
 event_bus_instance = event_bus.EventBus()
 world.add_processor(PlayerMoveSystem(event_bus_instance))
+death_handler = DeathEventHandler(event_bus_instance)
+world.add_processor(TargetingSystem())
+world.add_processor(CombatSystem(event_bus_instance))
+
 
 mouse_pressed = False
 running = True

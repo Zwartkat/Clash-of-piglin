@@ -1,5 +1,6 @@
 import pygame
 import esper
+from components.health import Health
 from components.position import Position
 from components.selection import Selection
 from components.team import PLAYER_1_TEAM, PLAYER_2_TEAM, Team
@@ -158,6 +159,11 @@ class SelectionSystem:
             else:
                 pygame.draw.rect(screen, team_outline, entity_rect, 1)
 
+            if esper.has_component(ent, Health):
+                health = esper.component_for_entity(ent, Health)
+                if health.remaining < health.full:
+                    self._draw_health_bar(screen, pos, collider, health)
+
             if team.team_id == current_team and esper.has_component(ent, Selection):
                 selection = esper.component_for_entity(ent, Selection)
                 if selection.is_selected:
@@ -178,3 +184,26 @@ class SelectionSystem:
 
         pygame.draw.polygon(screen, color, diamond_points)
         pygame.draw.polygon(screen, (0, 0, 0), diamond_points, 1)
+
+    def _draw_health_bar(self, screen, pos, collider, health):
+        bar_width = collider.width
+        bar_height = 4
+
+        bar_x = int(pos.x - bar_width // 2)
+        bar_y = int(pos.y - collider.height // 2 - bar_height - 3)
+
+        # black background
+        pygame.draw.rect(
+            screen, (0, 0, 0), (bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2)
+        )
+
+        # Red background (HP lost)
+        pygame.draw.rect(screen, (255, 0, 0), (bar_x, bar_y, bar_width, bar_height))
+
+        # Green bar (HP remaining)
+        hp_ratio = max(0, health.remaining / health.full)  # between 0 and 1
+        green_width = int(bar_width * hp_ratio)
+        if green_width > 0:
+            pygame.draw.rect(
+                screen, (0, 255, 0), (bar_x, bar_y, green_width, bar_height)
+            )
