@@ -40,7 +40,7 @@ class Crossbowman(Entity):
                             Direction.RIGHT: [0],
                         },
                         Animation.WALK: {
-                            Direction.DOWN: [1],
+                            Direction.DOWN: [1, 6, 1, 7],
                             Direction.UP: [3],
                             Direction.LEFT: [2],
                             Direction.RIGHT: [0],

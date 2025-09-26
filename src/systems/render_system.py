@@ -55,7 +55,6 @@ class RenderSystem(IteratingProcessor):
             sprite (Sprite): The Sprite component of the entity.
         """
         sprite.update(dt)
-
         frame: pygame.Surface = sprite.get_frame()
         if frame:
             x = position.x
