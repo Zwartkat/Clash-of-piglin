@@ -1,11 +1,11 @@
-from config.constants import Animation, Direction
-from .position import Position
-from core.component import Component
-from components.collider import Collider
-from config.constants import CaseType
-
 from core.entity import Entity
+
+from enums.case_type import CaseType
+from enums.animation import Animation
+from enums.direction import Direction
+
 from components.sprite import Sprite
+from components.position import Position
 
 
 class Case(Entity):
@@ -42,7 +42,7 @@ class Case(Entity):
             super().__init__(components=components)
 
         self.coordonates = coordonates  # copies the provided position in coordonates
-        self.type = type  # copies the provided type in type
+        self.type: CaseType = type  # copies the provided type in type
 
     @classmethod
     def initFromModel(cls, model):

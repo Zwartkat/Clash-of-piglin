@@ -1,5 +1,5 @@
 from core.component import Component
-from config.constants import CaseType
+from enums.case_type import CaseType
 from .case import Position, Case
 import random
 

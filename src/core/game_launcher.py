@@ -1,32 +1,33 @@
 import pygame
 import esper
 import os
-from components.collider import Collider
-from components.team import PLAYER_1_TEAM, Team
+
+from components.team import Team
+from components.velocity import Velocity
 from core import event_bus
+from core.entity import Entity
 from events.event_move import EventMoveTo
 from systems.collision_system import CollisionSystem
+from systems.combat_system import CombatSystem
+from systems.death_event_handler import DeathEventHandler
 from systems.mouvement_system import MovementSystem
 from components.position import Position
-from components.velocity import Velocity
 from systems.player_manager import PlayerManager
 from components.money import Money
 from components.squad import Squad
 from systems.player_move_system import PlayerMoveSystem
 from systems.render_system import RenderSystem
-from temp_map import tab
+from systems.targeting_system import TargetingSystem
 from components.case import Case
 from components.map import Map
-from components.selection import Selection
 from systems.selection_system import SelectionSystem
-from components.effects import OnTerrain
 from systems.terrain_effect_system import TerrainEffectSystem
-from systems.unit_factory import UnitFactory
 from systems.economy_system import EconomySystem
 from systems.entity_factory import EntityFactory
-from config.constants import CaseType
+from enums.case_type import CaseType
+from core.config import Config
 
-TILE_SIZE = 32
+tile_size: int = Config.TILE_SIZE()
 
 
 def load_terrain_sprites():
@@ -51,12 +52,12 @@ def load_terrain_sprites():
         if os.path.exists(full_path):
             sprite = pygame.image.load(full_path)
             if terrain_type != CaseType.LAVA:
-                sprite = pygame.transform.scale(sprite, (TILE_SIZE, TILE_SIZE))
+                sprite = pygame.transform.scale(sprite, (tile_size, tile_size))
                 sprites[terrain_type] = sprite
 
         else:
             print(f"Warning: Image not found: {full_path}")
-            sprite = pygame.Surface((TILE_SIZE, TILE_SIZE))
+            sprite = pygame.Surface((tile_size, tile_size))
             fallback_colors = {
                 "Netherrack": (139, 69, 19),
                 "Blue_netherrack": (100, 150, 255),
@@ -70,39 +71,35 @@ def load_terrain_sprites():
     return sprites
 
 
-def draw_map(screen, game_map: Map, sprites):
-    """Dessine la map à l'écran avec les vraies images"""
-    printed_types = set()  # Pour éviter de spam la console
+def display_current_player(screen, player_manager):
+    """Affiche le joueur actuel en haut à gauche"""
+    font = pygame.font.Font(None, 36)
+    player_text = f"Joueur {player_manager.current_player}"
+    color = (0, 255, 0) if player_manager.current_player == 1 else (255, 0, 0)
+    text_surface = font.render(player_text, True, color)
+    screen.blit(text_surface, (10, 10))
 
-    for y in range(len(game_map.tab)):
-        for x in range(len(game_map.tab[y])):
-            tile_type: Case = game_map.tab[y][x].getType()
-
-            # Récupérer le sprite correspondant
-            sprite = sprites.get(tile_type, sprites.get(CaseType.NETHERRACK))
-
-            if tile_type.type != CaseType.LAVA:
-
-                # Position de la tile
-                pos_x = x * TILE_SIZE
-                pos_y = y * TILE_SIZE
-
-            # Dessiner le sprite
-            screen.blit(sprite, (pos_x, pos_y))
+    # Instructions
+    instruction_font = pygame.font.Font(None, 24)
+    instruction_text = "Appuyez sur CTRL pour changer de joueur"
+    instruction_surface = instruction_font.render(
+        instruction_text, True, (255, 255, 255)
+    )
+    screen.blit(instruction_surface, (10, 50))
 
 
-def main(screen: pygame.Surface):
+def main(screen: pygame.Surface, map_size=24):
 
     dt = 0.05
-    map_width = 24 * TILE_SIZE
-    map_height = 24 * TILE_SIZE
+    map_width = map_size * tile_size
+    map_height = map_size * tile_size
     screen = pygame.display.set_mode((map_width, map_height))
     clock = pygame.time.Clock()
 
     # Charger la map et les sprites
-    game_map = Map()
+    game_map: Map = Map()
     # game_map.setTab(tab)
-    game_map.generate(24)
+    game_map.generate(map_size)
     sprites = load_terrain_sprites()
 
     for y in range(len(game_map.tab)):
@@ -110,32 +107,29 @@ def main(screen: pygame.Surface):
             tile_type = game_map.tab[y][x]
 
             if tile_type.type == CaseType.LAVA:
-                case = Case(Position(x * TILE_SIZE, y * TILE_SIZE), CaseType.LAVA)
+                case = Case(Position(x * tile_size, y * tile_size), CaseType.LAVA)
                 EntityFactory.create(*case.get_all_components())
 
-        # Crée l'entité et ses composants
-    # sword_positions = [(200, 200), (230, 200), (160, 200)]
-    # sword_squad = UnitFactory.create_squad(
-    #    "piglin_sword", sword_positions, PLAYER_1_TEAM
-    # )
+    player_manager = PlayerManager()
+
+    from config.units import UNITS
+    from enums.entity_type import EntityType
+    from systems.unit_factory import UnitFactory
+
+    UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
+    UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
+    UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
+
+    EntityFactory.create(
+        *UNITS[EntityType.CROSSBOWMAN].get_all_components(), Position(100, 200), Team(1)
+    )
+    EntityFactory.create(
+        *UNITS[EntityType.GHAST].get_all_components(), Position(300, 200), Team(1)
+    )
+    EntityFactory.create(
+        *UNITS[EntityType.BRUTE].get_all_components(), Position(400, 100), Team(1)
+    )
     #
-    ## Escouade d'Arbalétriers
-    # crossbow_positions = [(200, 300), (230, 300), (260, 300)]
-    # crossbow_squad = UnitFactory.create_squad(
-    #    "piglin_crossbow", crossbow_positions, PLAYER_1_TEAM
-    # )
-
-    # Ghast solitaire
-    # ghast = UnitFactory.create_unit("ghast", 350, 400, PLAYER_1_TEAM)
-
-    from entities.crossbowman import Crossbowman
-    from entities.brute import Brute
-    from entities.ghast import Ghast
-
-    EntityFactory.create(*Crossbowman().get_all_components())
-    EntityFactory.create(*Ghast().get_all_components())
-    EntityFactory.create(*Brute().get_all_components())
-
     # Crée le monde Esper
     world = esper
     world.add_processor(MovementSystem())
@@ -147,7 +141,9 @@ def main(screen: pygame.Surface):
     event_bus_instance = event_bus.EventBus.get_event_bus()
     world.add_processor(PlayerMoveSystem(event_bus_instance))
     world.add_processor(EconomySystem(event_bus_instance))
-
+    death_handler = DeathEventHandler(event_bus_instance)
+    world.add_processor(TargetingSystem())
+    world.add_processor(CombatSystem(event_bus_instance))
     # Création d'un player avec ses thunes et sa team
     # EntityFactory.create(Money(600), Squad(sword_squad + crossbow_squad + [ghast]))
 
@@ -159,9 +155,19 @@ def main(screen: pygame.Surface):
 
     running = True
     while running:
+
+        ###################################################################################
+        # To move (Check https://trello.com/c/X1GHv5GY)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+            elif event.type == pygame.KEYDOWN:
+                # Changement de joueur avec CTRL
+                if event.key == pygame.K_LCTRL or event.key == pygame.K_RCTRL:
+                    player_manager.switch_player()
+                    selection_system.clear_selection(world)
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Clic gauche - sélection
                     mouse_pressed = True
@@ -199,6 +205,8 @@ def main(screen: pygame.Surface):
                 if mouse_pressed:
                     selection_system.handle_mouse_motion(event.pos, world)
 
+        ###################################################################################
+
         clock.tick(100)
 
         dt = min(clock.get_time() / 1000, dt)
@@ -209,6 +217,7 @@ def main(screen: pygame.Surface):
         render.show_map()
         render.process(dt)
         selection_system.draw_selections(screen, world)
+        display_current_player(screen, player_manager)
         pygame.display.flip()
 
     pygame.quit()

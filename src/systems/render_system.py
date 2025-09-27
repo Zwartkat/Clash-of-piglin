@@ -2,7 +2,8 @@ from components.case import Case
 from components.collider import Collider
 from components.health import Health
 from components.selection import Selection
-from config.constants import Animation, Direction
+from components.team import Team
+from components.unit import Unit
 from core.event_bus import EventBus
 from core.iterator_system import IteratingProcessor
 from components.sprite import Sprite
@@ -10,8 +11,13 @@ from components.position import Position
 from components.velocity import Velocity
 
 from core.config import Config
-from config.constants import CaseType
 
+from enums.case_type import *
+from enums.animation import *
+from enums.orientation import *
+from enums.direction import *
+
+from enums.unit_type import UnitType
 from events.event_move import EventMoveTo
 
 import esper
@@ -29,7 +35,6 @@ class RenderSystem(IteratingProcessor):
         super().__init__(Position, Sprite)
         self.screen: pygame.Surface = screen
         self.map: list[list[Case]] = map
-        # self.sprites : dict[CaseType, pygame.Surface] = {}
         self.sprites: dict[CaseType, pygame.Surface] = sprites
 
     def show_map(self) -> None:
@@ -58,8 +63,9 @@ class RenderSystem(IteratingProcessor):
             position (Position): The Position component of the entity.
             sprite (Sprite): The Sprite component of the entity.
         """
-        sprite.update(dt)
+
         frame: pygame.Surface = sprite.get_frame()
+
         if frame:
             x = position.x
             y = position.y
@@ -78,6 +84,7 @@ class RenderSystem(IteratingProcessor):
                 self._draw_health_bar(position, esper.component_for_entity(ent, Health))
 
             self.screen.blit(frame, (x, y))
+        sprite.update(dt)
 
     def animate_move(self, event: EventMoveTo):
         """

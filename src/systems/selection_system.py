@@ -5,7 +5,6 @@ from components.position import Position
 from components.selection import Selection
 from components.team import PLAYER_1_TEAM, PLAYER_2_TEAM, Team
 from components.collider import Collider
-from config.unit_stats import UNIT_COLORS
 from components.stats import UnitType
 
 
@@ -142,10 +141,10 @@ class SelectionSystem:
             base_color = (255, 255, 255)
             if esper.has_component(ent, UnitType):
                 unit_type_comp = esper.component_for_entity(ent, UnitType)
-                base_color = UNIT_COLORS.get(unit_type_comp.unit_type, (255, 255, 255))
+                # base_color = UNIT_COLORS.get(unit_type_comp.unit_type, (255, 255, 255))
 
             if team.team_id == PLAYER_1_TEAM:
-                color = base_color
+                # color = base_color
                 team_outline = (0, 255, 0)
             else:
                 color = tuple(c // 2 for c in base_color)

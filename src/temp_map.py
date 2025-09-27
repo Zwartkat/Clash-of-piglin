@@ -1,4 +1,4 @@
-from config.constants import CaseType
+from enums.case_type import CaseType
 
 tab = [
     [
