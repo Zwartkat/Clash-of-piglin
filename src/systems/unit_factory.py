@@ -1,4 +1,9 @@
+import copy
+import esper
+
+from components.cost import Cost
 from components.position import Position
+from components.sprite import Sprite
 from components.velocity import Velocity
 from components.collider import Collider
 from components.team import Team
@@ -7,53 +12,46 @@ from components.selection import Selection
 from components.effects import OnTerrain
 from components.health import Health
 from components.stats import UnitType
-from config.unit_stats import UNIT_STATS
+from config.units import UNITS
+from core.entity import Entity
+from enums.entity_type import EntityType
 from systems.entity_factory import EntityFactory
 
 
 class UnitFactory:
     @staticmethod
-    def create_unit(unit_type, x, y, team_id):
-        stats = UNIT_STATS.get(unit_type)
-        if not stats:
-            raise ValueError(f"Unknown unit type: {unit_type}")
+    def create_unit(entity_type: EntityType, team: Team, position: Position):
+        entity: Entity = copy.deepcopy(UNITS.get(entity_type, None))
+        if not entity:
+            raise ValueError(f"Unknown unit type: {entity_type}")
 
-        velocity_component = Velocity(x=0, y=0, speed=stats["speed"])
+        components = []
 
-        components = [
-            Position(x, y),
-            velocity_component,  # ← AJOUTER ICI !
-            Collider(
-                width=stats["size"]["width"],
-                height=stats["size"]["height"],
-                collision_type=stats["collision_type"],
-            ),
-            Team(team_id),
-            Health(stats["health"]),
-            Attack(
-                damage=stats["attack"]["damage"],
-                range=stats["attack"]["range"],
-                attack_speed=stats["attack"]["attack_speed"],
-                last_attack=0,
-            ),
-            UnitType(unit_type, stats["name"]),
-            OnTerrain(),
-            Selection(False),
-        ]
+        for comp in entity.get_all_components():
+            components.append(copy.deepcopy(comp))
 
-        entity = EntityFactory.create(*components)
+        components = [c for c in components if not isinstance(c, (Position, Team))]
+        components.append(position)
+        components.append(team)
 
-        return entity
+        ent: int = EntityFactory.create(*components)
+
+        return ent
 
     @staticmethod
-    def create_squad(unit_type, positions, team_id):
-        entities = []
-        for x, y in positions:
-            entity = UnitFactory.create_unit(unit_type, x, y, team_id)
+    def create_squad(entity_type: EntityType, positions: list[Position], team: Team):
+
+        entities: list[int] = []
+
+        for pos in positions:
+            entity: int = UnitFactory.create_unit(entity_type, team, pos)
             entities.append(entity)
         return entities
 
     @staticmethod
-    def get_unit_cost(unit_type):
-        stats = UNIT_STATS.get(unit_type, {})
-        return stats.get("cost", 0)
+    def get_unit_cost(entity_type: EntityType) -> int:
+        entity: Entity = UNITS.get(entity_type, None)
+        if not entity:
+            return 0
+        cost: Cost = entity.get_component(Cost)
+        return cost.amount

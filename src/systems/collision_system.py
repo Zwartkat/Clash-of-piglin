@@ -1,48 +1,66 @@
-from components.velocity import Velocity
-from config.terrain_config import (
-    COLLISION_CONFIG,
-    COLLISION_TYPE_RULES,
-    TERRAIN_PROPERTIES,
-)
-from core.iterator_system import IteratingProcessor
-from components.position import Position
-from components.collider import Collider
+from typing import Tuple
+
 import esper
 
-TILE_SIZE = 32
+from core.iterator_system import IteratingProcessor
+from core.config import Config
+
+from config.terrains import TERRAIN, COLLISION_CONFIG
+
+from components.map import Map
+from components.case import Case
+from components.velocity import Velocity
+from components.position import Position
+from components.collider import Collider
+from components.unit import Unit
+
+from core.terrain import Terrain
+from enums.case_type import CaseType
+from enums.entity_type import EntityType
+
+tile_size: int = Config.TILE_SIZE()
 
 
 class CollisionSystem(IteratingProcessor):
-    def __init__(self, game_map):
+    def __init__(self, game_map: Map):
         super().__init__(Position, Collider)
-        self.game_map = game_map
+        self.game_map: Map = game_map
 
-    def process_entity(self, ent, dt, pos, collider):
+    def process_entity(self, ent: int, dt: float, pos: Position, collider: Collider):
+        # To change
         if COLLISION_CONFIG["enable_entity_collision"]:
-            for ent2, (pos2, collider2) in esper.get_components(Position, Collider):
+            for ent2, (pos2, collider2) in esper.get_components(
+                Position, Collider
+            ):  # type : Tuple[int,Tuple[Position,Collider]]
                 if ent != ent2 and self.check_collision(pos, collider, pos2, collider2):
                     self.resolve_collision(pos, pos2, collider, collider2)
 
+        # To change
         if COLLISION_CONFIG["enable_terrain_collision"]:
             self.check_terrain_wall_collision(ent, pos, collider)
 
-    def check_terrain_wall_collision(self, ent, pos, collider):
-        left = pos.x - collider.width // 2
-        right = pos.x + collider.width // 2
-        top = pos.y - collider.height // 2
-        bottom = pos.y + collider.height // 2
+    def check_terrain_wall_collision(self, ent: int, pos: Position, collider: Collider):
+        left: int = pos.x - collider.width // 2
+        right: int = pos.x + collider.width // 2
+        top: int = pos.y - collider.height // 2
+        bottom: int = pos.y + collider.height // 2
 
-        tile_left = int(left // TILE_SIZE)
-        tile_right = int(right // TILE_SIZE)
-        tile_top = int(top // TILE_SIZE)
-        tile_bottom = int(bottom // TILE_SIZE)
+        tile_left: int = int(left // tile_size)
+        tile_right: int = int(right // tile_size)
+        tile_top: int = int(top // tile_size)
+        tile_bottom: int = int(bottom // tile_size)
+
+        if not esper.has_component(ent, Unit):
+            return
+
+        unit: Unit = esper.component_for_entity(ent, Unit)
 
         for tile_y in range(tile_top, tile_bottom + 1):
             for tile_x in range(tile_left, tile_right + 1):
-                if self.is_tile_blocking(tile_x, tile_y, collider.collision_type):
+                if self.is_tile_blocking(unit, tile_x, tile_y):
                     self.resolve_terrain_collision(ent, pos, collider, tile_x, tile_y)
 
-    def is_tile_blocking(self, tile_x, tile_y, collision_type):
+    def is_tile_blocking(self, unit: Unit, tile_x: int, tile_y: int):
         if (
             tile_x < 0
             or tile_x >= len(self.game_map.tab[0])
@@ -51,29 +69,31 @@ class CollisionSystem(IteratingProcessor):
         ):
             return True
 
-        terrain_type = self.game_map.tab[tile_y][tile_x].type
+        case: Case = self.game_map.tab[tile_y][tile_x]
 
-        rules = COLLISION_TYPE_RULES.get(collision_type, {})
-        can_cross = rules.get("can_cross", {})
-        return not can_cross.get(terrain_type, True)
+        terrain: Terrain = TERRAIN.get(case.type)
 
-    def resolve_terrain_collision(self, ent, pos, collider, tile_x, tile_y):
-        tile_left = tile_x * TILE_SIZE
-        tile_right = (tile_x + 1) * TILE_SIZE
-        tile_top = tile_y * TILE_SIZE
-        tile_bottom = (tile_y + 1) * TILE_SIZE
+        return unit.unit_type not in terrain.walkable
 
-        entity_left = pos.x - collider.width // 2
-        entity_right = pos.x + collider.width // 2
-        entity_top = pos.y - collider.height // 2
-        entity_bottom = pos.y + collider.height // 2
+    def resolve_terrain_collision(
+        self, ent: int, pos: Position, collider: Collider, tile_x: int, tile_y: int
+    ):
+        tile_left: int = tile_x * tile_size
+        tile_right: int = (tile_x + 1) * tile_size
+        tile_top: int = tile_y * tile_size
+        tile_bottom: int = (tile_y + 1) * tile_size
 
-        overlap_left = entity_right - tile_left
-        overlap_right = tile_right - entity_left
-        overlap_top = entity_bottom - tile_top
-        overlap_bottom = tile_bottom - entity_top
+        entity_left: int = pos.x - collider.width // 2
+        entity_right: int = pos.x + collider.width // 2
+        entity_top: int = pos.y - collider.height // 2
+        entity_bottom: int = pos.y + collider.height // 2
 
-        min_overlap = min(overlap_left, overlap_right, overlap_top, overlap_bottom)
+        overlap_left: int = entity_right - tile_left
+        overlap_right: int = tile_right - entity_left
+        overlap_top: int = entity_bottom - tile_top
+        overlap_bottom: int = tile_bottom - entity_top
+
+        min_overlap: int = min(overlap_left, overlap_right, overlap_top, overlap_bottom)
 
         if min_overlap == overlap_left:
             pos.x = tile_left - collider.width // 2 - 1
@@ -91,17 +111,17 @@ class CollisionSystem(IteratingProcessor):
             if min_overlap in [overlap_top, overlap_bottom]:
                 vel.y = 0
 
-    def check_collision(self, pos1, col1, pos2, col2):
-        dx = abs(pos2.x - pos1.x)
-        dy = abs(pos2.y - pos1.y)
-        half_width = (col1.width + col2.width) / 2
-        half_height = (col1.height + col2.height) / 2
+    def check_collision(self, pos1: int, col1: int, pos2: int, col2: int):
+        dx: int = abs(pos2.x - pos1.x)
+        dy: int = abs(pos2.y - pos1.y)
+        half_width: int = (col1.width + col2.width) / 2
+        half_height: int = (col1.height + col2.height) / 2
         return dx < half_width and dy < half_height
 
-    def resolve_collision(self, pos1, pos2, col1, col2):
-        dx = pos1.x - pos2.x
-        dy = pos1.y - pos2.y
-        distance = (dx**2 + dy**2) ** 0.5
+    def resolve_collision(self, pos1: int, pos2: int, col1: int, col2: int):
+        dx: int = pos1.x - pos2.x
+        dy: int = pos1.y - pos2.y
+        distance: int = (dx**2 + dy**2) ** 0.5
 
         if distance < 0.1:
             dx, dy = 1, 0
@@ -110,8 +130,8 @@ class CollisionSystem(IteratingProcessor):
         dx /= distance
         dy /= distance
 
-        min_distance = (col1.width + col2.width) / 2
-        push_distance = (min_distance - distance) / 2
+        min_distance: int = (col1.width + col2.width) / 2
+        push_distance: int = (min_distance - distance) / 2
 
         pos1.x += dx * push_distance
         pos1.y += dy * push_distance

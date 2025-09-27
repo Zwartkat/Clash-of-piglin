@@ -1,4 +1,5 @@
 from core.component import Component
+from enums.case_type import CaseType
 from .case import Position, Case
 import random
 
@@ -6,20 +7,22 @@ import random
 class Map(Component):
     counter = 0  # static counter that allows to differenciate maps with their index
     list_frequencies = {
-        "Lava": 11,
-        "Soulsand": 10,
-        "Red_netherrack": 9,
-        "Blue_netherrack": 9,
-        "Netherrack": 0,
+        CaseType.LAVA: 11,
+        CaseType.SOULSAND: 10,
+        CaseType.RED_NETHERRACK: 9,
+        CaseType.BLUE_NETHERRACK: 9,
+        CaseType.NETHERRACK: 0,
     }  # static dictionnary that associate a frequency to all types of blocks, to control the amount of each type of block
     generate_on_base = [
-        "Red_netherrack",
-        "Blue_netherrack",
+        CaseType.RED_NETHERRACK,
+        CaseType.BLUE_NETHERRACK,
     ]  # static list containing the types of blocks that will be used as floor for the bases
     restricted_cases = [
-        "Lava"
+        CaseType.LAVA
     ]  # static list containing the types of blocks that grounded units can't cross (used to check)
-    default_block = "Netherrack"  # static string stocking the default type of blocks in map generation
+    default_block = (
+        CaseType.NETHERRACK
+    )  # static string stocking the default type of blocks in map generation
     limit_of_generation_for_type = 2  # static number defining the upper limit of the number of group each type can have (outside of impossible generation/base floor generation)
     radius_bases = 0.2  # static float defining the radius of the zone in which the floor around bases will be of the designated type
     radius_center = 0.05  # static float defining the radius of the zone at the center of the map where if a group of block starts generating, it won't be symmetrical
@@ -37,14 +40,14 @@ class Map(Component):
         self.index = Map.counter  # copies the current counter of the class as its index
 
     @classmethod
-    def initFromTab(cls, tab_type: list[list[str]]):
+    def initFromTab(cls, tab_type: list[list[CaseType]]):
         """Creates a map from a table of types."""
         tab: list[list[Case]] = []  # creates a tab
         for i, row in enumerate(tab_type):  # for each line of the table
             line = []  # creates another table for each line
-            for j, type_str in enumerate(row):  # for each type in the line
+            for j, type in enumerate(row):  # for each type in the line
                 line.append(
-                    Case(Position(i, j), type_str)
+                    Case(Position(i, j), type)
                 )  # adds a case of the corresponding type
             tab.append(line)  # add the line to the tab
         return cls(tab)  # use __init__(tab) to create the instance of map
@@ -451,7 +454,7 @@ class Map(Component):
         for i in range(len(self.tab)):
             value += "["
             for j in range(len(self.tab[i])):
-                type_case = self.tab[i][j].getType()
+                type_case = self.tab[i][j]
                 value += f'"{type_case}",'
             value += "],\n"
         value += "]"

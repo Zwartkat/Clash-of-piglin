@@ -6,7 +6,26 @@
 L'EventBus est un système permettant de transmettre des événements à n'importe quelle méthode de classe abonné <br>
 Cette classe est sous la forme d'un singleton et peut être récupérée avec `EventBus.get_event_bus()`. <br>
 La méthode `subscribe` permet en fournissant une classe `Event` et une méthode sous forme de `Callable`. Pour désabonner, il faut utiliser `unsubcribe`. <br>
-Pour émettre un événement, il doit être donné à la méthode `emit` qui exécutera toutes les objets méthodes abonnés
+Pour émettre un événement, il doit être donné à la méthode `emit` qui exécutera toutes les objets méthodes abonnés. Ces méthodes doivent posséder en argument l'event qui lui sera transmis<br>
+```py
+from core.event_bus import EventBus
+
+render = RenderSystem()
+
+event_bus : EventBus = EventBus.get_event_bus()
+
+event_bus.subscribe(MoveEvent, render.animate_move)
+
+class RenderSystem:
+
+    def __init__(self):
+        pass
+
+    ...
+
+    def animate_move(self, event : MoveEvent):
+        print(event.pos_x,event.pos_y)
+```
 
 ### IteratingProcessor
 La classe `IteratingProcessor` est une classe abstraite qui permet d'effectuer une action à définir dans la classe fille. Elle permet d'executer cette action pour toutes les entités qui possèdent les `Component` fournis à l'instanciation de la classe par l'intermédiaire de la méthode `process_entity`.<br> 
@@ -102,7 +121,8 @@ Exemple de paramètre animation:
 L'animation d'une entité dépend du composant [`Sprite`](#sprite) à sa création. 
 
 La frame courante peut ensuite être récupérée à partir de la méthode `get_frame`.<br>
-La méthode `set_animation` permet de définir l'animation et la direction à afficher. Elle est généralement utilisée dans des méthodes appelées par l'émission d'un `Event`.<br> [Voir EventBus](#eventbus) <br><br>
+La méthode `set_animation` permet de définir l'animation et la direction à afficher. Elle est généralement utilisée dans des méthodes appelées par l'émission d'un `Event`.<br> [Voir EventBus](#eventbus) <br>
+
 Le Sprite est mis à jour via la méthode `update`, qui utilise le `delta_time` pour décider du changement de frame. Le [`RenderSystem`](#rendersystem) permet d'effectuer automatiquement la mise à jour de la frame à afficher
 
 ## Systèmes
@@ -113,4 +133,4 @@ Le Sprite est mis à jour via la méthode `update`, qui utilise le `delta_time` 
 
 RenderSystem est une classe qui gère de façon globale l'affichage. Elle hérite de [`IteratingProcessor`](#iteratingprocessor) ce qui permet d'effectuer des actions sur chaque entités possédant un composant `Position` et `Sprite`.<br><br>
 Son `process_entity` va afficher les entités concernées et également mettre à jour l'animation. <br><br>
-Lorsque le type d'animation vaut `None`, l'entité est considéré comme un personnage jouable. Dans ce cas, une barre de vie lui ai ajouté au dessus du sprite ainsi qu'un point avec une couleur réprésentant son équipe et son état de sélection.
+Lorsque le type d'animation ne vaut pas `None`, l'entité est considéré comme un personnage jouable. Dans ce cas, une barre de vie lui ai ajouté au dessus du sprite ainsi qu'un point avec une couleur réprésentant son équipe et son état de sélection.
