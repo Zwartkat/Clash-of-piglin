@@ -24,21 +24,28 @@ from systems.unit_factory import UnitFactory
 from systems.targeting_system import TargetingSystem
 from systems.death_event_handler import DeathEventHandler
 from components.target import Target
+from config.constants import CaseType
+
+# from core.config import Config
 
 TILE_SIZE = 32
 
 
 def load_terrain_sprites():
     """Charge tous les sprites de terrain"""
+
+    # TODO :
+    # Modifier pour utiliser core.config.Config pour récupérer les path (actuellement bugué)
+
     sprites = {}
     asset_path = "assets/images/"
 
     terrain_files = {
-        "Netherrack": "Netherrack.png",
-        "Blue_netherrack": "Blue_netherrack.png",
-        "Red_netherrack": "Red_netherrack.png",
-        "Lava": "Lava_long.png",
-        "Soulsand": "Soul_Sand.png",
+        CaseType.NETHERRACK: "Netherrack.png",
+        CaseType.BLUE_NETHERRACK: "Blue_netherrack.png",
+        CaseType.RED_NETHERRACK: "Red_netherrack.png",
+        CaseType.LAVA: "Lava.png",
+        CaseType.SOULSAND: "Soulsand.png",
     }
 
     for terrain_type, filename in terrain_files.items():
@@ -64,12 +71,12 @@ def load_terrain_sprites():
     return sprites
 
 
-def draw_map(screen, game_map, sprites):
+def draw_map(screen, game_map: Map, sprites):
     """Dessine la map à l'écran avec les vraies images"""
     for y in range(len(game_map.tab)):
         for x in range(len(game_map.tab[y])):
-            tile_type = game_map.tab[y][x]
-            sprite = sprites.get(tile_type, sprites.get("Netherrack"))
+            tile_type = game_map.tab[y][x].getType()
+            sprite = sprites.get(tile_type, sprites.get(CaseType.NETHERRACK))
             pos_x = x * TILE_SIZE
             pos_y = y * TILE_SIZE
             screen.blit(sprite, (pos_x, pos_y))

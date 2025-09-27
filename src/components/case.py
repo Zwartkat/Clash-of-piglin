@@ -2,6 +2,7 @@ from config.constants import Animation, Direction
 from .position import Position
 from core.component import Component
 from components.collider import Collider
+from config.constants import CaseType
 
 from core.entity import Entity
 from components.sprite import Sprite
@@ -9,24 +10,18 @@ from components.sprite import Sprite
 
 class Case(Entity):
 
-    types_of_cases = [
-        "Lava",
-        "Soulsand",
-        "Red_netherrack",
-        "Blue_netherrack",
-        "Netherrack",
-    ]  # static list of the possible types for a case
-
-    def __init__(self, coordonates: Position = Position(), type: str = "Netherrack"):
+    def __init__(
+        self, coordonates: Position = Position(), type: CaseType = CaseType.NETHERRACK
+    ):
         """Creates a Case from a Position and a type, or from a default Position and type if empty."""
-        if type not in Case.types_of_cases:
+        if type not in CaseType:
             raise ValueError(
-                f"type must be one of {Case.types_of_cases}"
+                f"type must be one of {CaseType}"
             )  # returns an error if the type isn't part of the possible types for a case
 
         components = ()
 
-        if type == "Lava":
+        if type == CaseType.LAVA:
             components = (
                 Sprite(
                     "assets/images/lava.png",
@@ -64,7 +59,7 @@ class Case(Entity):
         """Returns the position of the case."""
         return self.coordonates
 
-    def getType(self) -> str:
+    def getType(self) -> CaseType:
         """Returns the type of the case."""
         return self.type
 
@@ -72,11 +67,11 @@ class Case(Entity):
         """Sets the position of the case to be as the one provided."""
         self.coordonates = value
 
-    def setType(self, value: str) -> None:
+    def setType(self, value: CaseType) -> None:
         """Sets the position of the case to be as the one provided."""
-        if type not in Case.types_of_cases:
+        if type not in CaseType:
             raise ValueError(
-                f"type must be one of {Case.types_of_cases}"
+                f"type must be one of {CaseType}"
             )  # returns an error if the type isn't part of the possible types for a case
         self.type = value
 

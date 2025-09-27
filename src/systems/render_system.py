@@ -10,6 +10,7 @@ from components.position import Position
 from components.velocity import Velocity
 
 from core.config import Config
+from config.constants import CaseType
 
 from events.event_move import EventMoveTo
 
@@ -23,13 +24,13 @@ class RenderSystem(IteratingProcessor):
         self,
         screen: pygame.Surface,
         map: list[list[Case]] = [],
-        sprites: dict[str, pygame.Surface] = {},
+        sprites: dict[CaseType, pygame.Surface] = {},
     ):
         super().__init__(Position, Sprite)
         self.screen: pygame.Surface = screen
         self.map: list[list[Case]] = map
         # self.sprites : dict[CaseType, pygame.Surface] = {}
-        self.sprites: dict[str, pygame.Surface] = sprites
+        self.sprites: dict[CaseType, pygame.Surface] = sprites
 
     def show_map(self) -> None:
         """
@@ -42,7 +43,7 @@ class RenderSystem(IteratingProcessor):
                 tile: Case = self.map[y][x]
                 sprite = self.sprites.get(tile.type, self.sprites.get("Netherrack"))
 
-                if tile.type != "Lava":
+                if tile.type != CaseType.LAVA:
                     pos_x = x * 32  # To be replaced by TILE_SIZE constant
                     pos_y = y * 32  # To be replaced by TILE_SIZE constant
                     self.screen.blit(sprite, (pos_x, pos_y))

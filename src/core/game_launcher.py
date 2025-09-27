@@ -23,30 +23,34 @@ from components.effects import OnTerrain
 from systems.terrain_effect_system import TerrainEffectSystem
 from systems.unit_factory import UnitFactory
 from systems.economy_system import EconomySystem
-
 from systems.entity_factory import EntityFactory
+from config.constants import CaseType
 
 TILE_SIZE = 32
 
 
 def load_terrain_sprites():
     """Charge tous les sprites de terrain"""
+
+    # TODO :
+    # Modifier pour utiliser core.config.Config pour récupérer les path (actuellement bugué)
+
     sprites = {}
     asset_path = "assets/images/"
 
     terrain_files = {
-        "Netherrack": "Netherrack.png",
-        "Blue_netherrack": "Blue_netherrack.png",
-        "Red_netherrack": "Red_netherrack.png",
-        "Lava": "Lava_long.png",
-        "Soulsand": "Soul_Sand.png",
+        CaseType.NETHERRACK: "Netherrack.png",
+        CaseType.BLUE_NETHERRACK: "Blue_netherrack.png",
+        CaseType.RED_NETHERRACK: "Red_netherrack.png",
+        CaseType.SOULSAND: "Soulsand.png",
+        CaseType.LAVA: "Lava.png",
     }
 
     for terrain_type, filename in terrain_files.items():
         full_path = os.path.join(asset_path, filename)
         if os.path.exists(full_path):
             sprite = pygame.image.load(full_path)
-            if terrain_type != "Lava":
+            if terrain_type != CaseType.LAVA:
                 sprite = pygame.transform.scale(sprite, (TILE_SIZE, TILE_SIZE))
                 sprites[terrain_type] = sprite
 
@@ -66,18 +70,18 @@ def load_terrain_sprites():
     return sprites
 
 
-def draw_map(screen, game_map, sprites):
+def draw_map(screen, game_map: Map, sprites):
     """Dessine la map à l'écran avec les vraies images"""
     printed_types = set()  # Pour éviter de spam la console
 
     for y in range(len(game_map.tab)):
         for x in range(len(game_map.tab[y])):
-            tile_type: Case = game_map.tab[y][x]
+            tile_type: Case = game_map.tab[y][x].getType()
 
             # Récupérer le sprite correspondant
-            sprite = sprites.get(tile_type.type, sprites.get("Netherrack"))
+            sprite = sprites.get(tile_type, sprites.get(CaseType.NETHERRACK))
 
-            if tile_type.type != "Lava":
+            if tile_type.type != CaseType.LAVA:
 
                 # Position de la tile
                 pos_x = x * TILE_SIZE
@@ -105,8 +109,8 @@ def main(screen: pygame.Surface):
         for x in range(len(game_map.tab[y])):
             tile_type = game_map.tab[y][x]
 
-            if tile_type.type == "Lava":
-                case = Case(Position(x * TILE_SIZE, y * TILE_SIZE), "Lava")
+            if tile_type.type == CaseType.LAVA:
+                case = Case(Position(x * TILE_SIZE, y * TILE_SIZE), CaseType.LAVA)
                 EntityFactory.create(*case.get_all_components())
 
         # Crée l'entité et ses composants

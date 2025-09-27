@@ -11,3 +11,7 @@ assets_path:
 
 textures:
   lava: "assets/images/lava.png"
+  netherrack : "assets/images/Netherrack.png"
+  red_netherrack : "assets/images/Red_netherrack.png"
+  blue_netherrack : "assets/images/Blue_netherrack.png"
+  soulsand : "assets/images/Soulsand.png"
