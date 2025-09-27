@@ -116,18 +116,36 @@ def main(screen: pygame.Surface, map_size=24):
     from enums.entity_type import EntityType
     from systems.unit_factory import UnitFactory
 
-    UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
-    UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
-    UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
+    entities_1 = []
 
-    EntityFactory.create(
-        *UNITS[EntityType.CROSSBOWMAN].get_all_components(), Position(100, 200), Team(1)
+    entities_1.append(
+        UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
     )
-    EntityFactory.create(
-        *UNITS[EntityType.GHAST].get_all_components(), Position(300, 200), Team(1)
+    entities_1.append(
+        UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
     )
-    EntityFactory.create(
-        *UNITS[EntityType.BRUTE].get_all_components(), Position(400, 100), Team(1)
+    entities_1.append(
+        UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
+    )
+
+    entities_2 = []
+
+    entities_2.append(
+        EntityFactory.create(
+            *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
+            Position(100, 200),
+            Team(2),
+        )
+    )
+    entities_2.append(
+        EntityFactory.create(
+            *UNITS[EntityType.GHAST].get_all_components(), Position(300, 200), Team(2)
+        )
+    )
+    entities_2.append(
+        EntityFactory.create(
+            *UNITS[EntityType.BRUTE].get_all_components(), Position(400, 100), Team(2)
+        )
     )
     #
     # Crée le monde Esper
@@ -135,7 +153,7 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(MovementSystem())
     world.add_processor(TerrainEffectSystem(game_map))
     world.add_processor(CollisionSystem(game_map))
-    selection_system = SelectionSystem(PlayerManager())
+    selection_system = SelectionSystem(player_manager)
 
     # Crée l'EventBus et le système de déplacement joueur
     event_bus_instance = event_bus.EventBus.get_event_bus()
@@ -145,7 +163,9 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(TargetingSystem())
     world.add_processor(CombatSystem(event_bus_instance))
     # Création d'un player avec ses thunes et sa team
-    # EntityFactory.create(Money(600), Squad(sword_squad + crossbow_squad + [ghast]))
+
+    EntityFactory.create(Money(600), Squad(entities_1), Team(1))
+    EntityFactory.create(Money(600), Squad(entities_2), Team(2))
 
     render = RenderSystem(screen, game_map.tab, sprites)
 
@@ -207,7 +227,7 @@ def main(screen: pygame.Surface, map_size=24):
 
         ###################################################################################
 
-        clock.tick(100)
+        clock.tick(60)
 
         dt = min(clock.get_time() / 1000, dt)
 

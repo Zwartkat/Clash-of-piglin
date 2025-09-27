@@ -6,5 +6,5 @@ class Squad(Component):
 
     troops: int
 
-    def __init__(self, troops: list):
+    def __init__(self, troops: list[int]):
         self.troops = troops

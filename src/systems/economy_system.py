@@ -1,5 +1,6 @@
 import esper
 import pygame
+from components.team import Team
 from events.buy_event import BuyEvent
 from events.death_event import DeathEvent
 from components.cost import Cost
@@ -34,11 +35,20 @@ class EconomySystem(esper.Processor):
         else:
             print(f"Il vous manqua {cost.amount - money.amount} pour acheter {entity}")
 
-    def reward_money(self, event):
-        player = event.player
-        entity = event.entity
+    def reward_money(self, event: DeathEvent):
+        player: Team = event.player
+        entity: int = event.entity
         entity_cost = esper.component_for_entity(entity, Cost)
-        money = esper.component_for_entity(player, Money)
+
+        players = esper.get_components(Money)
+        money = 0
+        for ent, ent_money in esper.get_component(Money):
+            print(esper.component_for_entity(ent, Team), event.player)
+            if esper.component_for_entity(ent, Team) == event.player:
+                money = ent_money
+        if money == 0:
+            return
+        money = esper.component_for_entity(player, Cost)
         reward = int(entity_cost.amount / 10)  # 10% du prix de l'entité
 
         if (

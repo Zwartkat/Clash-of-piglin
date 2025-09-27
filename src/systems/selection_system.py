@@ -90,6 +90,8 @@ class SelectionSystem:
         self.clear_selection(world)
 
         for ent, (pos, team) in esper.get_components(Position, Team):
+
+            print(team.team_id, self.player_manager.get_current_player())
             if team.team_id == self.player_manager.get_current_player():
                 if self.selection_rect.collidepoint(pos.x, pos.y):
                     if esper.has_component(ent, Selection):
