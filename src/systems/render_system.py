@@ -39,25 +39,23 @@ class RenderSystem(IteratingProcessor):
         self.screen: pygame.Surface = screen
         self.map: list[list[Case]] = map
         self.sprites: dict[CaseType, pygame.Surface] = sprites
-        self.tst = 0
+        self.entities = []
 
-    def show_map(self) -> None:
-        """
-        Draws the game map on the screen using the provided sprites for each terrain type.
-        """
-        self.screen.fill((0, 0, 0))
+    def process(self, dt):
 
-        for y in range(len(self.map)):
-            for x in range(len(self.map[y])):
-                tile: Case = self.map[y][x]
-                sprite = self.sprites.get(tile.type, self.sprites.get("Netherrack"))
+        entities_comps: list = esper.get_components(Position, Sprite)
+        sprite_index: int = self.components.index(Sprite)
 
-                if tile.type != CaseType.LAVA:
-                    pos_x = x * 32  # To be replaced by TILE_SIZE constant
-                    pos_y = y * 32  # To be replaced by TILE_SIZE constant
-                    self.draw_surface_camera(sprite, pos_x, pos_y)
+        if self.entities != entities_comps:
+            entities_comps = sorted(
+                entities_comps, key=lambda ent: (ent[1][sprite_index]).priority
+            )
+            self.entities = entities_comps
 
-    def process_entity(self, ent, dt, position: Position, sprite: Sprite):
+        for ent, comps in self.entities:
+            self.process_entity(ent, dt, *comps)
+
+    def process_entity(self, ent, dt, position: Position, sprite: Sprite) -> None:
         """
         For each entity with a Position and Sprite component, update the sprite animation and draw it on the screen at the entity's position.
 
@@ -90,7 +88,23 @@ class RenderSystem(IteratingProcessor):
             self.draw_surface_camera(frame, x, y)
         sprite.update(dt)
 
-    def animate_move(self, event: EventMoveTo):
+    def show_map(self) -> None:
+        """
+        Draws the game map on the screen using the provided sprites for each terrain type.
+        """
+        self.screen.fill((0, 0, 0))
+
+        for y in range(len(self.map)):
+            for x in range(len(self.map[y])):
+                tile: Case = self.map[y][x]
+                sprite = self.sprites.get(tile.type, self.sprites.get("Netherrack"))
+
+                if tile.type != CaseType.LAVA:
+                    pos_x = x * Config.TILE_SIZE()
+                    pos_y = y * Config.TILE_SIZE()
+                    self.draw_surface_camera(sprite, pos_x, pos_y)
+
+    def animate_move(self, event: EventMoveTo) -> None:
         """
         Animate entity who moves by changing its sprite animation based on its velocity direction.
 
@@ -110,6 +124,16 @@ class RenderSystem(IteratingProcessor):
     def draw_surface_camera(
         self, image: pygame.Surface, x: int = None, y: int = None
     ) -> tuple[int]:
+        """Draws a surface (image) considering the camera position and zoom.
+
+        Args:
+            image (pygame.Surface): The image (sprite) to render.
+            x (int, optional): World x position. If None → taken from `image.get_rect()`.
+            y (int, optional): World y position. If None → taken from `image.get_rect()`.
+
+        Returns:
+            tuple[int]: The final (x, y) position of the image after applying the camera transform.
+        """
 
         rect: pygame.Rect = image.get_rect()
         x = x if x else rect.x
@@ -126,6 +150,13 @@ class RenderSystem(IteratingProcessor):
         return pos
 
     def draw_rect_camera(self, rect_value, color: Tuple[int] = (0, 0, 0)):
+        """Draws a rectangle considering the camera position and zoom.
+
+
+        Args:
+            rect_value (tuple[int]): (x, y, width, height) in world coordinates.
+            color (Tuple[int], optional): RGB color of the rectangle (default: black).
+        """
         x, y = CAMERA.apply(rect_value[0], rect_value[1])
         zoom = CAMERA.zoom_factor
         rect = pygame.Rect(
@@ -139,9 +170,14 @@ class RenderSystem(IteratingProcessor):
     def draw_polygon_camera(
         self, sequence: list[tuple[int]], color: Tuple[int] = (0, 0, 0)
     ):
+        """Draws a polygon considering the camera position.
+
+        Args:
+            sequence (list[tuple[int]]): List of points [(x1, y1), (x2, y2), ...] in world coordinates.
+            color (Tuple[int], optional): RGB color of the polygon (default: black).
+        """
 
         camera_sequence: list[tuple[int]] = []
-
         for x, y in sequence:
             camera_sequence.append(CAMERA.apply(x, y))
         pygame.draw.polygon(self.screen, color, camera_sequence)
@@ -179,8 +215,6 @@ class RenderSystem(IteratingProcessor):
             (x - 2, y - 8),  # left
         ]
         self.draw_polygon_camera(diamond_points, color)
-        # pygame.draw.polygon(self.screen, color, diamond_points)
-        # pygame.draw.polygon(self.screen, (0, 0, 0), diamond_points, 1)
 
     def _draw_health_bar(self, position: Position, health: Health):
         """
@@ -198,24 +232,13 @@ class RenderSystem(IteratingProcessor):
 
         # Border of the health bar
         self.draw_rect_camera((bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2))
-        # pygame.draw.rect(
-        #    self.screen,
-        #    (0, 0, 0),
-        #    (bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2),
-        # )
 
         # Red part of health bar (HP lost)
         if health.remaining < health.full and health.remaining > 0:
             self.draw_rect_camera((bar_x, bar_y, bar_width, bar_height), (255, 0, 0))
-            # pygame.draw.rect(
-            #    self.screen, (255, 0, 0), (bar_x, bar_y, bar_width, bar_height)
-            # )
 
         # Green part of health bar (HP remaining)
         hp_ratio = max(0, health.remaining / health.full)  # between 0 and 1
         green_width = int(bar_width * hp_ratio)
         if green_width > 0:
             self.draw_rect_camera((bar_x, bar_y, green_width, bar_height), (0, 255, 0))
-            # pygame.draw.rect(
-            #    self.screen, (0, 255, 0), (bar_x, bar_y, green_width, bar_height)
-            # )

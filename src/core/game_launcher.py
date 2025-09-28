@@ -101,6 +101,7 @@ def main(screen: pygame.Surface, map_size=24):
     screen_rect = screen.get_rect()
 
     CAMERA.set_size(screen_rect.width, screen_rect.height)
+    CAMERA.set_world_size(map_width, map_height)
 
     # Charger la map et les sprites
     game_map: Map = Map()
@@ -123,34 +124,45 @@ def main(screen: pygame.Surface, map_size=24):
 
     entities_1 = []
 
-    entities_1.append(
-        UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
-    )
-    entities_1.append(
-        UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
-    )
-    entities_1.append(
-        UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
-    )
+    for i in range(6):
+
+        entities_1.append(
+            UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
+        )
+    for i in range(6):
+
+        entities_1.append(
+            UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
+        )
+    for i in range(6):
+        entities_1.append(
+            UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
+        )
 
     entities_2 = []
-    
+
     entities_2.append(
         EntityFactory.create(
             *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
             Position(100, 200),
             Team(2),
-            OnTerrain()
+            OnTerrain(),
         )
     )
     entities_2.append(
         EntityFactory.create(
-            *UNITS[EntityType.GHAST].get_all_components(), Position(300, 200), Team(2), OnTerrain()
+            *UNITS[EntityType.GHAST].get_all_components(),
+            Position(300, 200),
+            Team(2),
+            OnTerrain(),
         )
     )
     entities_2.append(
         EntityFactory.create(
-            *UNITS[EntityType.BRUTE].get_all_components(), Position(400, 100), Team(2), OnTerrain()
+            *UNITS[EntityType.BRUTE].get_all_components(),
+            Position(400, 100),
+            Team(2),
+            OnTerrain(),
         )
     )
     #
@@ -292,6 +304,7 @@ def main(screen: pygame.Surface, map_size=24):
         render.show_map()
         render.process(dt)
         selection_system.draw_selections(screen, world)
+        display_current_player(screen, player_manager)
         display_current_player(screen, player_manager)
         pygame.display.flip()
 

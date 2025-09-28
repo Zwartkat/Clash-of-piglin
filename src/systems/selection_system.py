@@ -6,7 +6,7 @@ from components.position import Position
 from components.selection import Selection
 from components.team import PLAYER_1_TEAM, PLAYER_2_TEAM, Team
 from components.collider import Collider
-from components.stats import UnitType
+from enums.unit_type import UnitType
 
 
 class SelectionSystem:
@@ -179,37 +179,3 @@ class SelectionSystem:
                     # pygame.draw.rect(screen, (255, 165, 0), selection_rect, 3)
 
         self.draw_selection_rect(screen)
-
-    def draw_diamond(self, screen, pos, color):
-        diamond_points = [
-            (int(pos.x), int(pos.y - 5)),  # Top
-            (int(pos.x + 2), int(pos.y - 3)),  # right
-            (int(pos.x), int(pos.y + 1)),  # bottom
-            (int(pos.x - 2), int(pos.y - 3)),  # left
-        ]
-
-        pygame.draw.polygon(screen, color, diamond_points)
-        pygame.draw.polygon(screen, (0, 0, 0), diamond_points, 1)
-
-    def _draw_health_bar(self, screen, pos, collider, health):
-        bar_width = collider.width
-        bar_height = 4
-
-        bar_x = int(pos.x - bar_width // 2)
-        bar_y = int(pos.y - collider.height // 2 - bar_height - 3)
-
-        # black background
-        pygame.draw.rect(
-            screen, (0, 0, 0), (bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2)
-        )
-
-        # Red background (HP lost)
-        pygame.draw.rect(screen, (255, 0, 0), (bar_x, bar_y, bar_width, bar_height))
-
-        # Green bar (HP remaining)
-        hp_ratio = max(0, health.remaining / health.full)  # between 0 and 1
-        green_width = int(bar_width * hp_ratio)
-        if green_width > 0:
-            pygame.draw.rect(
-                screen, (0, 255, 0), (bar_x, bar_y, green_width, bar_height)
-            )

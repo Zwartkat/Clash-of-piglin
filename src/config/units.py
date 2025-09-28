@@ -1,4 +1,6 @@
+from components.fly import Fly
 from components.unit import Unit
+from config.layer import ENTITY_LAYER
 from enums.entity_type import *
 
 from core.entity import Entity
@@ -16,10 +18,8 @@ from components.health import Health
 from components.position import Position
 from components.velocity import Velocity
 from components.cost import Cost
-from components.fly import Fly
 from components.collider import Collider
 from components.sprite import Sprite
-from components.structure import Structure
 from components.selection import Selection
 from components.team import Team, PLAYER_1_TEAM
 
@@ -28,7 +28,7 @@ UNITS = {
         components=[
             Unit(EntityType.CROSSBOWMAN, UnitType.WALK),
             Description("Piglin Arbalétrier", "Guerrier d'attaque à distance"),
-            Attack(damage=20, range=Config.TILE_SIZE() * 3, attack_speed=2.0),
+            Attack(damage=20, range=3, attack_speed=2.0),
             Health(90),
             Velocity(x=0, y=0, speed=80),
             Position(x=10, y=10),
@@ -53,7 +53,8 @@ UNITS = {
                         Direction.RIGHT: [0, 8, 0, 9],
                     },
                 },
-                0.4,
+                0.3,
+                priority=ENTITY_LAYER[UnitType.WALK],
             ),
         ]
     ),
@@ -61,7 +62,7 @@ UNITS = {
         components=[
             Unit(EntityType.BRUTE, UnitType.WALK),
             Description("Piglin Brute", "Unité de corps à corps"),
-            Attack(damage=15, range=Config.TILE_SIZE(), attack_speed=1.0),
+            Attack(damage=15, range=1, attack_speed=1.0),
             Health(health=100),
             Velocity(x=0, y=0, speed=20),
             Cost(amount=350),
@@ -86,6 +87,7 @@ UNITS = {
                     },
                 },
                 0.5,
+                priority=ENTITY_LAYER[UnitType.WALK],
             ),
         ]
     ),
@@ -94,12 +96,12 @@ UNITS = {
             Unit(EntityType.GHAST, UnitType.FLY),
             Description("Ghast", "Unité à distance ne ciblant que les structures"),
             Attack(damage=40, range=5, attack_speed=2.5),
-            Health(health=70),
+            Health(health=700),
             Velocity(x=0, y=0, speed=40),
-            Fly(),
             Cost(amount=820),
             Selection(),
             Collider(Config.TILE_SIZE(), Config.TILE_SIZE()),
+            Fly(),
             Team(PLAYER_1_TEAM),
             Sprite(
                 "assets/sprites/spritesheet-ghast.png",
@@ -120,6 +122,22 @@ UNITS = {
                     },
                 },
                 0.5,
+                priority=ENTITY_LAYER[UnitType.FLY],
+            ),
+        ]
+    ),
+    EntityType.BASTION: Entity(
+        components=[
+            Unit(EntityType.BASTION, UnitType.STRUCTURE),
+            Description("Bastion", "Base d'un joueur à défendre"),
+            Health(1000),
+            Sprite(
+                "assets/sprites/sprisheet-bastion.png",
+                500,
+                500,
+                {},
+                1000,
+                priority=ENTITY_LAYER[UnitType.STRUCTURE],
             ),
         ]
     ),

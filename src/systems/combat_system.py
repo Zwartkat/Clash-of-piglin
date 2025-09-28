@@ -7,7 +7,6 @@ from components.attack import Attack
 from components.health import Health
 from components.target import Target
 from components.position import Position
-from components.stats import UnitType
 from core.iterator_system import IteratingProcessor
 
 

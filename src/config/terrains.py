@@ -19,7 +19,7 @@ TERRAIN = {
     CaseType.SOULSAND: Terrain(
         [UnitType.WALK, UnitType.FLY],
         "Sables des âmes, ralentit les unités terrestres",
-        0.1,
+        0.5,
         [UnitType.WALK],
     ),
 }

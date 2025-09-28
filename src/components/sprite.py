@@ -16,6 +16,7 @@ class Sprite:
         spritesheet_direction: Orientation = Orientation.HORIZONTAL,
         default_animation: Animation = Animation.IDLE,
         default_direction: Direction = Direction.DOWN,
+        priority: int = 0,
     ):
         """A sprite component that handles animations from a spritesheet.
 
@@ -28,6 +29,7 @@ class Sprite:
             spritesheet_direction (Orientation, optional): Orientation of the spritesheet. Defaults to Orientation.HORIZONTAL.
             default_animation (Animation, optional): The default animation to play. Defaults to Animation.IDLE.
             default_direction (Direction, optional): The default direction to face. Defaults to Direction.DOWN.
+            priority (int) : Layer of the sprite. Defaults to 0.
         """
         self.sprite_sheet = sprite_sheet
         self.frame_width: int = frame_width
@@ -39,6 +41,7 @@ class Sprite:
         self.current_direction: Direction = default_direction
         self.current_frame_index: int = 0
         self.delta_time: float = 0
+        self.priority: int = priority
 
         self.image: pygame.Surface = None
         self.frames: list[pygame.Surface] = []

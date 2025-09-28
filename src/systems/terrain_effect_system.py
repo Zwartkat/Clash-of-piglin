@@ -4,18 +4,13 @@ from components.fly import Fly
 from components.map import Map
 from components.position import Position
 from components.effects import Slowed, OnTerrain
-from components.collider import Collider
-from components.team import Team
 from components.unit import Unit
 from config.terrains import TERRAIN
 from core.config import Config
 from core.iterator_system import IteratingProcessor
 from core.terrain import Terrain
 from enums.case_type import CaseType
-from enums.entity_type import EntityType
 from enums.source_effect import SourceEffect
-from enums.unit_type import UnitType
-
 
 tile_size: int = Config.TILE_SIZE()
 

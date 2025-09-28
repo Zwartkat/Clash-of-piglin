@@ -50,7 +50,7 @@ class CollisionSystem(IteratingProcessor):
 
         if esper.has_component(ent, Unit):
             unit = esper.component_for_entity(ent, Unit)
-            if unit.unit_type == EntityType.GHAST:
+            if unit.entity_type == EntityType.GHAST:
                 return "flying"
 
         return "ground"

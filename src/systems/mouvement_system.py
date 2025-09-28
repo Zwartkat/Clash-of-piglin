@@ -1,8 +1,7 @@
 import esper
 from components.position import Position
-from components.stats import UnitType
 from components.velocity import Velocity
-from components.effects import Slowed, Blocked
+from components.effects import Slowed
 from core.iterator_system import IteratingProcessor
 
 
