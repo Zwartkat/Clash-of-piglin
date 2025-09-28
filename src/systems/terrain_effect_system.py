@@ -1,15 +1,18 @@
 import esper
 from components.case import Case
+from components.fly import Fly
 from components.map import Map
 from components.position import Position
 from components.effects import Slowed, OnTerrain
 from components.collider import Collider
+from components.team import Team
 from components.unit import Unit
 from config.terrains import TERRAIN
 from core.config import Config
 from core.iterator_system import IteratingProcessor
 from core.terrain import Terrain
 from enums.case_type import CaseType
+from enums.entity_type import EntityType
 from enums.source_effect import SourceEffect
 from enums.unit_type import UnitType
 
@@ -23,27 +26,25 @@ class TerrainEffectSystem(IteratingProcessor):
         self.game_map: Map = game_map
 
     def process_entity(self, ent: int, dt: float, pos: Position, on_terrain: OnTerrain):
-        if esper.has_component(ent, Unit):
-            unit: Unit = esper.component_for_entity(ent, Unit)
-            if unit.unit_type == UnitType.FLY:
-                return
+        if esper.has_component(ent, Fly):
+            return
 
         current_case: Case = self.get_terrain_at_position(pos)
-
-        if current_case.type != on_terrain.terrain_type:
+        if current_case != on_terrain.terrain_type:
             self._clear_terrain_effects(ent)
             self._apply_terrain_effects(ent, current_case.type)
 
             on_terrain.previous_terrain = on_terrain.terrain_type
             on_terrain.terrain_type = current_case.type
 
-    def get_terrain_at_position(self, pos: Position) -> Case | None:
+    def get_terrain_at_position(self, pos: Position) -> CaseType | None:
         tile_x: int = int(pos.x // tile_size)
         tile_y: int = int(pos.y // tile_size)
 
         if 0 <= tile_x < len(self.game_map.tab[0]) and 0 <= tile_y < len(
             self.game_map.tab
         ):
+
             return self.game_map.tab[tile_y][tile_x]
         return None
 

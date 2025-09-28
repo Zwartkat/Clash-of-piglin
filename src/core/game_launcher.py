@@ -3,6 +3,7 @@ import esper
 import os
 
 from components.camera import CAMERA, Camera
+from components.effects import OnTerrain
 from components.team import Team
 from components.velocity import Velocity
 from core import event_bus
@@ -133,22 +134,23 @@ def main(screen: pygame.Surface, map_size=24):
     )
 
     entities_2 = []
-
+    
     entities_2.append(
         EntityFactory.create(
             *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
             Position(100, 200),
             Team(2),
+            OnTerrain()
         )
     )
     entities_2.append(
         EntityFactory.create(
-            *UNITS[EntityType.GHAST].get_all_components(), Position(300, 200), Team(2)
+            *UNITS[EntityType.GHAST].get_all_components(), Position(300, 200), Team(2), OnTerrain()
         )
     )
     entities_2.append(
         EntityFactory.create(
-            *UNITS[EntityType.BRUTE].get_all_components(), Position(400, 100), Team(2)
+            *UNITS[EntityType.BRUTE].get_all_components(), Position(400, 100), Team(2), OnTerrain()
         )
     )
     #
