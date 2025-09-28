@@ -2,6 +2,7 @@ from typing import Tuple
 
 import esper
 
+from components.fly import Fly
 from core.iterator_system import IteratingProcessor
 from core.config import Config
 
@@ -28,16 +29,40 @@ class CollisionSystem(IteratingProcessor):
 
     def process_entity(self, ent: int, dt: float, pos: Position, collider: Collider):
         # To change
+        entity_layer = self._get_collision_layer(ent)
+
         if COLLISION_CONFIG["enable_entity_collision"]:
-            for ent2, (pos2, collider2) in esper.get_components(
-                Position, Collider
-            ):  # type : Tuple[int,Tuple[Position,Collider]]
-                if ent != ent2 and self.check_collision(pos, collider, pos2, collider2):
-                    self.resolve_collision(pos, pos2, collider, collider2)
+            for ent2, (pos2, collider2) in esper.get_components(Position, Collider):
+                if ent != ent2:
+                    other_layer = self._get_collision_layer(ent2)
+
+                    if self._should_collide(entity_layer, other_layer):
+                        if self.check_collision(pos, collider, pos2, collider2):
+                            self.resolve_collision(pos, pos2, collider, collider2)
 
         # To change
         if COLLISION_CONFIG["enable_terrain_collision"]:
             self.check_terrain_wall_collision(ent, pos, collider)
+
+    def _get_collision_layer(self, ent: int) -> str:
+        if esper.has_component(ent, Fly):
+            return "flying"
+
+        if esper.has_component(ent, Unit):
+            unit = esper.component_for_entity(ent, Unit)
+            if unit.unit_type == EntityType.GHAST:
+                return "flying"
+
+        return "ground"
+
+    def _should_collide(self, layer1: str, layer2: str) -> bool:
+        collision_matrix = {
+            ("ground", "ground"): True,  # Ground block each other
+            ("ground", "flying"): False,  # Ground does not block flying
+            ("flying", "ground"): False,  # Flying does not block ground
+            ("flying", "flying"): True,  # Ghasts block each other
+        }
+        return collision_matrix.get((layer1, layer2), False)
 
     def check_terrain_wall_collision(self, ent: int, pos: Position, collider: Collider):
         left: int = pos.x - collider.width // 2
@@ -119,21 +144,25 @@ class CollisionSystem(IteratingProcessor):
         return dx < half_width and dy < half_height
 
     def resolve_collision(self, pos1: int, pos2: int, col1: int, col2: int):
-        dx: int = pos1.x - pos2.x
-        dy: int = pos1.y - pos2.y
-        distance: int = (dx**2 + dy**2) ** 0.5
+        dx = pos1.x - pos2.x
+        dy = pos1.y - pos2.y
+        distance = (dx**2 + dy**2) ** 0.5
 
         if distance < 0.1:
             dx, dy = 1, 0
-            distance = 1
+            distance = 1.0
+        else:
+            dx /= distance
+            dy /= distance
 
-        dx /= distance
-        dy /= distance
+        min_distance = (col1.width + col2.width) / 2
+        overlap = min_distance - distance
 
-        min_distance: int = (col1.width + col2.width) / 2
-        push_distance: int = (min_distance - distance) / 2
+        if overlap > 0:
+            damping = 0.6
+            separation = (overlap + 3) * damping
 
-        pos1.x += dx * push_distance
-        pos1.y += dy * push_distance
-        pos2.x -= dx * push_distance
-        pos2.y -= dy * push_distance
+            pos1.x += dx * separation * 0.6
+            pos1.y += dy * separation * 0.6
+            pos2.x -= dx * separation * 0.4
+            pos2.y -= dy * separation * 0.4
