@@ -336,34 +336,33 @@ class Map(Component):
                                 placed_generation_tile_number < number_of_tiles_to_place
                             ):  # while all the cases in the group haven't been placed
 
-                                candidates = [
-                                    case
-                                    for case in placed_tiles
-                                    if self.determinateAvailableNeighbour(
-                                        case.getPosition(), type, size
+                                list_available_neighbours: list[list[Case]] = []
+                                for case in placed_tiles:
+                                    available_neighbours_for_case = (
+                                        self.determinateAvailableNeighbour(
+                                            case.getPosition(), type, size
+                                        )
                                     )
-                                ]  # create a list of candidates which have at least 1 available neighbour
-                                if not candidates:
+                                    if available_neighbours_for_case != []:
+                                        list_available_neighbours.append(
+                                            available_neighbours_for_case
+                                        )
+
+                                # create a list of candidates which have at least 1 available neighbour
+                                if list_available_neighbours == []:
                                     break  # if there is no candidates, will break to choose another starting point
 
-                                selected_case = random.choice(
-                                    candidates
+                                selected_neighbour_group = random.choice(
+                                    list_available_neighbours
                                 )  # choose a random candidate as the case to expend the group from
 
-                                list_available_neighbours: list[Case] = (
-                                    self.determinateAvailableNeighbour(
-                                        selected_case.getPosition(), type, size
-                                    )
-                                )  # create a list of the available neighbours of that candidate
-
                                 if (
-                                    len(list_available_neighbours) != 0
+                                    len(selected_neighbour_group) != 0
                                 ):  # verifies that it does have at least one available neighbour
-                                    selected_neighbour = list_available_neighbours[
-                                        random.randint(
-                                            0, len(list_available_neighbours) - 1
-                                        )
-                                    ]  # select a random neighbour from the list
+                                    selected_neighbour = random.choice(
+                                        selected_neighbour_group
+                                    )
+                                    # select a random neighbour from the list
                                     self.changeCase(
                                         Case(selected_neighbour.getPosition(), type)
                                     )  # change the type of the neighbour to the current type
