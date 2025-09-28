@@ -31,11 +31,6 @@ class TerrainEffectSystem(IteratingProcessor):
 
         current_case: Case = self.get_terrain_at_position(pos)
         if current_case != on_terrain.terrain_type:
-            print(
-                "current_case != on_terrain.terrain_type:",
-                current_case,
-                on_terrain.terrain_type,
-            )
             self._clear_terrain_effects(ent)
             self._apply_terrain_effects(ent, current_case.type)
 
