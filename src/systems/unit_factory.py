@@ -33,6 +33,7 @@ class UnitFactory:
         components = [c for c in components if not isinstance(c, (Position, Team))]
         components.append(position)
         components.append(team)
+        components.append(OnTerrain())
 
         ent: int = EntityFactory.create(*components)
 
