@@ -1,3 +1,6 @@
+from typing import Tuple
+from pyparsing import Union
+from components.camera import CAMERA, Camera
 from components.case import Case
 from components.collider import Collider
 from components.health import Health
@@ -36,6 +39,7 @@ class RenderSystem(IteratingProcessor):
         self.screen: pygame.Surface = screen
         self.map: list[list[Case]] = map
         self.sprites: dict[CaseType, pygame.Surface] = sprites
+        self.tst = 0
 
     def show_map(self) -> None:
         """
@@ -51,7 +55,7 @@ class RenderSystem(IteratingProcessor):
                 if tile.type != CaseType.LAVA:
                     pos_x = x * 32  # To be replaced by TILE_SIZE constant
                     pos_y = y * 32  # To be replaced by TILE_SIZE constant
-                    self.screen.blit(sprite, (pos_x, pos_y))
+                    self.draw_surface_camera(sprite, pos_x, pos_y)
 
     def process_entity(self, ent, dt, position: Position, sprite: Sprite):
         """
@@ -83,7 +87,7 @@ class RenderSystem(IteratingProcessor):
 
                 self._draw_health_bar(position, esper.component_for_entity(ent, Health))
 
-            self.screen.blit(frame, (x, y))
+            self.draw_surface_camera(frame, x, y)
         sprite.update(dt)
 
     def animate_move(self, event: EventMoveTo):
@@ -102,6 +106,45 @@ class RenderSystem(IteratingProcessor):
             direction: Direction = self._get_direction_from_velocity(velocity)
 
             sprite.set_animation(Animation.WALK, direction)
+
+    def draw_surface_camera(
+        self, image: pygame.Surface, x: int = None, y: int = None
+    ) -> tuple[int]:
+
+        rect: pygame.Rect = image.get_rect()
+        x = x if x else rect.x
+        y = y if y else rect.y
+
+        pos: Tuple[int] = CAMERA.apply(x, y)
+        zoom: float = CAMERA.zoom_factor
+        image = pygame.transform.scale(
+            image,
+            (round(rect.width * zoom + 0.9999), round(rect.height * zoom + 0.9999)),
+        )
+
+        self.screen.blit(image, (pos[0], pos[1]))
+        return pos
+
+    def draw_rect_camera(self, rect_value, color: Tuple[int] = (0, 0, 0)):
+        x, y = CAMERA.apply(rect_value[0], rect_value[1])
+        zoom = CAMERA.zoom_factor
+        rect = pygame.Rect(
+            x,
+            y,
+            round(rect_value[2] * zoom + 0.9999),
+            round(rect_value[3] * zoom + 0.9999),
+        )
+        pygame.draw.rect(self.screen, color, rect)
+
+    def draw_polygon_camera(
+        self, sequence: list[tuple[int]], color: Tuple[int] = (0, 0, 0)
+    ):
+
+        camera_sequence: list[tuple[int]] = []
+
+        for x, y in sequence:
+            camera_sequence.append(CAMERA.apply(x, y))
+        pygame.draw.polygon(self.screen, color, camera_sequence)
 
     def _get_direction_from_velocity(self, velocity: Velocity) -> Direction:
         """
@@ -135,8 +178,8 @@ class RenderSystem(IteratingProcessor):
             (x, y - 6),  # bottom
             (x - 2, y - 8),  # left
         ]
-
-        pygame.draw.polygon(self.screen, color, diamond_points)
+        self.draw_polygon_camera(diamond_points, color)
+        # pygame.draw.polygon(self.screen, color, diamond_points)
         # pygame.draw.polygon(self.screen, (0, 0, 0), diamond_points, 1)
 
     def _draw_health_bar(self, position: Position, health: Health):
@@ -154,22 +197,25 @@ class RenderSystem(IteratingProcessor):
         bar_y: int = int(position.y - Config.TILE_SIZE() // 2 - 3)
 
         # Border of the health bar
-        pygame.draw.rect(
-            self.screen,
-            (0, 0, 0),
-            (bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2),
-        )
+        self.draw_rect_camera((bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2))
+        # pygame.draw.rect(
+        #    self.screen,
+        #    (0, 0, 0),
+        #    (bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2),
+        # )
 
         # Red part of health bar (HP lost)
         if health.remaining < health.full and health.remaining > 0:
-            pygame.draw.rect(
-                self.screen, (255, 0, 0), (bar_x, bar_y, bar_width, bar_height)
-            )
+            self.draw_rect_camera((bar_x, bar_y, bar_width, bar_height), (255, 0, 0))
+            # pygame.draw.rect(
+            #    self.screen, (255, 0, 0), (bar_x, bar_y, bar_width, bar_height)
+            # )
 
         # Green part of health bar (HP remaining)
         hp_ratio = max(0, health.remaining / health.full)  # between 0 and 1
         green_width = int(bar_width * hp_ratio)
         if green_width > 0:
-            pygame.draw.rect(
-                self.screen, (0, 255, 0), (bar_x, bar_y, green_width, bar_height)
-            )
+            self.draw_rect_camera((bar_x, bar_y, green_width, bar_height), (0, 255, 0))
+            # pygame.draw.rect(
+            #    self.screen, (0, 255, 0), (bar_x, bar_y, green_width, bar_height)
+            # )

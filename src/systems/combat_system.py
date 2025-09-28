@@ -12,14 +12,15 @@ from core.iterator_system import IteratingProcessor
 
 
 class CombatSystem(IteratingProcessor):
-    def __init__(self, event_bus):
+    def __init__(self):
         super().__init__(Attack, Target, Position, Team)
-        self.event_bus = event_bus
         self.frame_count = 0
 
-    def can_attack(self, ent, attack, target_id, pos) -> bool:
+    def can_attack(
+        self, ent: int, attack: Attack, ent_target_id: int, pos: Position
+    ) -> bool:
         """Check if entity can attack its target"""
-        if not esper.entity_exists(target_id):
+        if not esper.entity_exists(ent_target_id):
             return False
 
         # Check attack cooldown
@@ -28,15 +29,25 @@ class CombatSystem(IteratingProcessor):
             return False
 
         # Check range
-        if not esper.has_component(target_id, Position):
+        if not esper.has_component(ent_target_id, Position):
             return False
 
-        target_pos = esper.component_for_entity(target_id, Position)
-        distance_squared = ((target_pos.x - pos.x) ** 2) + ((target_pos.y - pos.y) ** 2)
+        target_pos: Position = esper.component_for_entity(ent_target_id, Position)
+        distance_squared: int = ((target_pos.x - pos.x) ** 2) + (
+            (target_pos.y - pos.y) ** 2
+        )
 
         return distance_squared <= attack.range**2
 
-    def process_entity(self, ent, dt, attack, target, pos, team) -> None:
+    def process_entity(
+        self,
+        ent: int,
+        dt: int,
+        attack: Attack,
+        target: Target,
+        pos: Position,
+        team: Team,
+    ) -> None:
         """Process attacking entity"""
         self.frame_count += 1
 
@@ -48,10 +59,12 @@ class CombatSystem(IteratingProcessor):
                 target.target_entity_id = None
                 return
 
-            target_health = esper.component_for_entity(target.target_entity_id, Health)
+            target_health: Health = esper.component_for_entity(
+                target.target_entity_id, Health
+            )
 
             # Deal damage
-            old_hp = target_health.remaining
+            old_hp: int = target_health.remaining
             target_health.remaining -= attack.damage
             attack.last_attack = self.frame_count
 
@@ -59,5 +72,5 @@ class CombatSystem(IteratingProcessor):
             if target_health.remaining <= 0:
                 target_health.remaining = 0
                 dead_entity_id = target.target_entity_id
-                self.event_bus.emit(DeathEvent(team.team_id, dead_entity_id))
+                EventBus.get_event_bus().emit(DeathEvent(team, dead_entity_id))
                 target.target_entity_id = None

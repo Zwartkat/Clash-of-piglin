@@ -2,6 +2,7 @@ import pygame
 import esper
 import os
 
+from components.camera import CAMERA, Camera
 from components.effects import OnTerrain
 from components.team import Team
 from components.velocity import Velocity
@@ -94,13 +95,16 @@ def main(screen: pygame.Surface, map_size=24):
     dt = 0.05
     map_width = map_size * tile_size
     map_height = map_size * tile_size
-    screen = pygame.display.set_mode((map_width, map_height))
+    screen = pygame.display.set_mode((800, 700))
     clock = pygame.time.Clock()
+
+    screen_rect = screen.get_rect()
+
+    CAMERA.set_size(screen_rect.width, screen_rect.height)
 
     # Charger la map et les sprites
     game_map: Map = Map()
-    # game_map.setTab(tab)
-    game_map.generate(map_size)
+    game_map.generate(24)
     sprites = load_terrain_sprites()
 
     for y in range(len(game_map.tab)):
@@ -117,27 +121,37 @@ def main(screen: pygame.Surface, map_size=24):
     from enums.entity_type import EntityType
     from systems.unit_factory import UnitFactory
 
-    UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
-    UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
-    UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
+    entities_1 = []
 
-    EntityFactory.create(
-        *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
-        Position(100, 200),
-        Team(1),
-        OnTerrain(),
+    entities_1.append(
+        UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
     )
-    EntityFactory.create(
-        *UNITS[EntityType.GHAST].get_all_components(),
-        Position(300, 200),
-        Team(1),
-        OnTerrain(),
+    entities_1.append(
+        UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
     )
-    EntityFactory.create(
-        *UNITS[EntityType.BRUTE].get_all_components(),
-        Position(400, 100),
-        Team(1),
-        OnTerrain(),
+    entities_1.append(
+        UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
+    )
+
+    entities_2 = []
+    
+    entities_2.append(
+        EntityFactory.create(
+            *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
+            Position(100, 200),
+            Team(2),
+            OnTerrain()
+        )
+    )
+    entities_2.append(
+        EntityFactory.create(
+            *UNITS[EntityType.GHAST].get_all_components(), Position(300, 200), Team(2), OnTerrain()
+        )
+    )
+    entities_2.append(
+        EntityFactory.create(
+            *UNITS[EntityType.BRUTE].get_all_components(), Position(400, 100), Team(2), OnTerrain()
+        )
     )
     #
     # Crée le monde Esper
@@ -145,7 +159,7 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(MovementSystem())
     world.add_processor(TerrainEffectSystem(game_map))
     world.add_processor(CollisionSystem(game_map))
-    selection_system = SelectionSystem(PlayerManager())
+    selection_system = SelectionSystem(player_manager)
 
     # Crée l'EventBus et le système de déplacement joueur
     event_bus_instance = event_bus.EventBus.get_event_bus()
@@ -153,15 +167,24 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(EconomySystem(event_bus_instance))
     death_handler = DeathEventHandler(event_bus_instance)
     world.add_processor(TargetingSystem())
-    world.add_processor(CombatSystem(event_bus_instance))
+    world.add_processor(CombatSystem())
     # Création d'un player avec ses thunes et sa team
-    # EntityFactory.create(Money(600), Squad(sword_squad + crossbow_squad + [ghast]))
+
+    EntityFactory.create(Money(600), Squad(entities_1), Team(1))
+    EntityFactory.create(Money(600), Squad(entities_2), Team(2))
 
     render = RenderSystem(screen, game_map.tab, sprites)
 
     event_bus_instance.subscribe(EventMoveTo, render.animate_move)
 
     mouse_pressed = False
+
+    keys_down = {
+        pygame.K_UP: False,
+        pygame.K_DOWN: False,
+        pygame.K_RIGHT: False,
+        pygame.K_LEFT: False,
+    }
 
     running = True
     while running:
@@ -178,14 +201,42 @@ def main(screen: pygame.Surface, map_size=24):
                     player_manager.switch_player()
                     selection_system.clear_selection(world)
 
+                if event.key == pygame.K_UP:
+                    keys_down[pygame.K_UP] = True
+                if event.key == pygame.K_DOWN:
+                    keys_down[pygame.K_DOWN] = True
+                if event.key == pygame.K_LEFT:
+                    keys_down[pygame.K_LEFT] = True
+                if event.key == pygame.K_RIGHT:
+                    keys_down[pygame.K_RIGHT] = True
+                if event.key == pygame.K_SPACE:
+                    CAMERA.set_position(0, 0)
+                    CAMERA.set_zoom(1.0)
+
+            elif event.type == pygame.KEYUP:
+
+                if event.key == pygame.K_UP:
+                    keys_down[pygame.K_UP] = False
+                if event.key == pygame.K_DOWN:
+                    keys_down[pygame.K_DOWN] = False
+                if event.key == pygame.K_LEFT:
+                    keys_down[pygame.K_LEFT] = False
+                if event.key == pygame.K_RIGHT:
+                    keys_down[pygame.K_RIGHT] = False
+
+            elif event.type == pygame.MOUSEWHEEL:
+                CAMERA.zoom(0.05 * event.y)
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Clic gauche - sélection
                     mouse_pressed = True
-                    selection_system.handle_mouse_down(event.pos, world)
+                    selection_system.handle_mouse_down(
+                        CAMERA.unapply(event.pos[0], event.pos[1]), world
+                    )
                 elif event.button == 3:  # Clic droit - donner ordre aux sélectionnées
                     selected_entities = selection_system.get_selected_entities(world)
                     if selected_entities:
-                        x, y = event.pos
+                        x, y = CAMERA.unapply(event.pos[0], event.pos[1])
                         from systems.troop_system import (
                             FormationSystem,
                             TROOP_GRID,
@@ -210,14 +261,28 @@ def main(screen: pygame.Surface, map_size=24):
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:  # Relâcher clic gauche
                     mouse_pressed = False
-                    selection_system.handle_mouse_up(event.pos, world)
+
+                    selection_system.handle_mouse_up(
+                        CAMERA.unapply(event.pos[0], event.pos[1]), world
+                    )
             elif event.type == pygame.MOUSEMOTION:
                 if mouse_pressed:
-                    selection_system.handle_mouse_motion(event.pos, world)
+                    selection_system.handle_mouse_motion(
+                        CAMERA.unapply(event.pos[0], event.pos[1]), world
+                    )
+
+        if keys_down[pygame.K_UP]:
+            CAMERA.move(0, -5)
+        if keys_down[pygame.K_DOWN]:
+            CAMERA.move(0, 5)
+        if keys_down[pygame.K_LEFT]:
+            CAMERA.move(-5, 0)
+        if keys_down[pygame.K_RIGHT]:
+            CAMERA.move(5, 0)
 
         ###################################################################################
 
-        clock.tick(100)
+        clock.tick(60)
 
         dt = min(clock.get_time() / 1000, dt)
 

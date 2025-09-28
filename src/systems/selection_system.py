@@ -1,5 +1,6 @@
 import pygame
 import esper
+from components.camera import CAMERA
 from components.health import Health
 from components.position import Position
 from components.selection import Selection
@@ -38,6 +39,8 @@ class SelectionSystem:
                 width = abs(end_x - start_x)
                 height = abs(end_y - start_y)
 
+                left, top = CAMERA.apply(left, top)
+
                 self.selection_rect = pygame.Rect(left, top, width, height)
 
     def handle_mouse_up(self, mouse_pos, world):
@@ -56,6 +59,7 @@ class SelectionSystem:
         closest_distance = float("inf")
 
         for ent, (pos, team) in esper.get_components(Position, Team):
+            # pos = CAMERA.apply_position(pos)
             if team.team_id == self.player_manager.get_current_player():
                 dx = mouse_pos[0] - pos.x
                 dy = mouse_pos[1] - pos.y
@@ -90,7 +94,10 @@ class SelectionSystem:
         self.clear_selection(world)
 
         for ent, (pos, team) in esper.get_components(Position, Team):
+
+            print(team.team_id, self.player_manager.get_current_player())
             if team.team_id == self.player_manager.get_current_player():
+                pos = CAMERA.apply_position(pos)
                 if self.selection_rect.collidepoint(pos.x, pos.y):
                     if esper.has_component(ent, Selection):
                         selection = esper.component_for_entity(ent, Selection)
