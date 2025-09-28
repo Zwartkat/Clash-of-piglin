@@ -1,5 +1,55 @@
 # Clash-of-piglin
 
+## Tutoriels
+...
+
+### Afficher un élement dans la map
+
+Les coordonnées traitées en arrière plan sont les coordonnées de l'élément **dans le monde**, celui n'est cependant pas afficher à cet emplacement.
+Pour afficher un élément sur la carte, il est impératif de passer par la [`Camera`](#caméra).
+
+Il n'est pas nécessaire d'accéder directement à la caméra pour afficher l'élément souhaité. La classe [`RenderSystem`](#rendersystem) permet directement de passer l'élément souhaité pour l'afficher dans la carte
+
+Pour cela, on doit récupérer l'instance de `RenderSystem` est utiliser les méthodes suivantes:
+- `draw_surface` : pour afficher une Surface pygame
+- `draw_rect` : pour dessiner un Rect de pygame 
+- `draw_polygon` : pour dessiner un Polygon de pygame 
+
+```py
+
+from systems.rendersystem import RenderSystem
+
+screen : pygame.Surface
+map : Map
+sprites : dict[CaseType,pygame.Surface]
+
+render = RenderSystem(screen,map,sprites)
+
+frame = sprite.get_frame()
+render.draw_surface(frame, x, y)
+
+render.draw_rect((x, y, width, height), color)
+
+diamond_points: list[tuple[int]] = [
+            (x, y - 10),  # Top
+            (x + 2, y - 8),  # right
+            (x, y - 6),  # bottom
+            (x - 2, y - 8),  # left
+        ]
+render.draw_polygon(diamond_points, color)
+
+```
+
+### Animer une entité
+
+L'animation d'une entité dépend du composant [`Sprite`](#sprite) à sa création. 
+
+La frame courante peut ensuite être récupérée à partir de la méthode `get_frame`.<br>
+La méthode `set_animation` permet de définir l'animation et la direction à afficher. Elle est généralement utilisée dans des méthodes appelées par l'émission d'un `Event`.<br> [Voir EventBus](#eventbus) <br>
+
+Le Sprite est mis à jour via la méthode `update`, qui utilise le `delta_time` pour décider du changement de frame. Le [`RenderSystem`](#rendersystem) permet d'effectuer automatiquement la mise à jour de la frame à afficher
+
+
 ## Core
 
 ### EventBus
@@ -45,6 +95,20 @@ class ExempleSystem(IteratingProcessor):
     
     def process_entity(self, ent : int, dt : float, comp1: Component1, comp2 : Component2):
         pass
+```
+
+### Caméra
+
+La caméra affiche uniquement les éléments aux coordonnées correspondant au delta x et y de la caméra (le décalage de la caméra par rapport au monde)
+
+Pour utiliser la caméra, il est impératif d'executer ces deux fonctions : `set_size` et `set_world_size`
+
+```py
+
+from core.camera import CAMERA
+
+CAMERA.set_size(300,300)
+CAMERA.set_world_size(700,800)
 ```
 
 ## Composants
@@ -113,18 +177,6 @@ Exemple de paramètre animation:
 
 ### Velocity
 
-## Gestion des entités
-...
-
-### Animer une entité
-
-L'animation d'une entité dépend du composant [`Sprite`](#sprite) à sa création. 
-
-La frame courante peut ensuite être récupérée à partir de la méthode `get_frame`.<br>
-La méthode `set_animation` permet de définir l'animation et la direction à afficher. Elle est généralement utilisée dans des méthodes appelées par l'émission d'un `Event`.<br> [Voir EventBus](#eventbus) <br>
-
-Le Sprite est mis à jour via la méthode `update`, qui utilise le `delta_time` pour décider du changement de frame. Le [`RenderSystem`](#rendersystem) permet d'effectuer automatiquement la mise à jour de la frame à afficher
-
 ## Systèmes
 
 ...
@@ -132,5 +184,18 @@ Le Sprite est mis à jour via la méthode `update`, qui utilise le `delta_time` 
 ### RenderSystem
 
 RenderSystem est une classe qui gère de façon globale l'affichage. Elle hérite de [`IteratingProcessor`](#iteratingprocessor) ce qui permet d'effectuer des actions sur chaque entités possédant un composant `Position` et `Sprite`.<br><br>
+Avant l'exécution du `process_entity`, les entités sont triés par `Layer` définie par la propriété `priority` de Sprite <br><br>
 Son `process_entity` va afficher les entités concernées et également mettre à jour l'animation. <br><br>
 Lorsque le type d'animation ne vaut pas `None`, l'entité est considéré comme un personnage jouable. Dans ce cas, une barre de vie lui ai ajouté au dessus du sprite ainsi qu'un point avec une couleur réprésentant son équipe et son état de sélection.
+
+A sa création `RenderSystem` a besoin des 3 éléments suivants : 
+- une Surface issue de pygame
+- une [`Map`](#map)
+- un dictionnaire de sprite pour les cases : ```dict[CaseType,pygame.Surface]```
+
+Méthodes : 
+- `show_map` : affiche la carte (carte définie à l'instanciation)
+- `animate_move` : méthode qui passe les animations de sprite des entités fournit par `EventMoveTo`
+- `draw_surface` : Dessine une surface pygame sur le screen du RenderSystem
+- `draw_rect` : Dessine une surface pygame sur le screen du RenderSystem
+- `draw_polygon` : Dessine une surface pygame sur le screen du RenderSystem

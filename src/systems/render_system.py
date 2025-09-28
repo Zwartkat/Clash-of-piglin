@@ -1,9 +1,10 @@
 from typing import Tuple
 from pyparsing import Union
-from components.camera import CAMERA, Camera
+from core.camera import CAMERA, Camera
 from components.case import Case
 from components.collider import Collider
 from components.health import Health
+from components.map import Map
 from components.selection import Selection
 from components.team import Team
 from components.unit import Unit
@@ -32,12 +33,12 @@ class RenderSystem(IteratingProcessor):
     def __init__(
         self,
         screen: pygame.Surface,
-        map: list[list[Case]] = [],
+        map: Map,
         sprites: dict[CaseType, pygame.Surface] = {},
     ):
         super().__init__(Position, Sprite)
         self.screen: pygame.Surface = screen
-        self.map: list[list[Case]] = map
+        self.map: list[list[Case]] = map.tab
         self.sprites: dict[CaseType, pygame.Surface] = sprites
         self.entities = []
 
@@ -85,7 +86,7 @@ class RenderSystem(IteratingProcessor):
 
                 self._draw_health_bar(position, esper.component_for_entity(ent, Health))
 
-            self.draw_surface_camera(frame, x, y)
+            self.draw_surface(frame, x, y)
         sprite.update(dt)
 
     def show_map(self) -> None:
@@ -102,7 +103,7 @@ class RenderSystem(IteratingProcessor):
                 if tile.type != CaseType.LAVA:
                     pos_x = x * Config.TILE_SIZE()
                     pos_y = y * Config.TILE_SIZE()
-                    self.draw_surface_camera(sprite, pos_x, pos_y)
+                    self.draw_surface(sprite, pos_x, pos_y)
 
     def animate_move(self, event: EventMoveTo) -> None:
         """
@@ -121,7 +122,7 @@ class RenderSystem(IteratingProcessor):
 
             sprite.set_animation(Animation.WALK, direction)
 
-    def draw_surface_camera(
+    def draw_surface(
         self, image: pygame.Surface, x: int = None, y: int = None
     ) -> tuple[int]:
         """Draws a surface (image) considering the camera position and zoom.
@@ -149,7 +150,7 @@ class RenderSystem(IteratingProcessor):
         self.screen.blit(image, (pos[0], pos[1]))
         return pos
 
-    def draw_rect_camera(self, rect_value, color: Tuple[int] = (0, 0, 0)):
+    def draw_rect(self, rect_value, color: Tuple[int] = (0, 0, 0)):
         """Draws a rectangle considering the camera position and zoom.
 
 
@@ -167,9 +168,7 @@ class RenderSystem(IteratingProcessor):
         )
         pygame.draw.rect(self.screen, color, rect)
 
-    def draw_polygon_camera(
-        self, sequence: list[tuple[int]], color: Tuple[int] = (0, 0, 0)
-    ):
+    def draw_polygon(self, sequence: list[tuple[int]], color: Tuple[int] = (0, 0, 0)):
         """Draws a polygon considering the camera position.
 
         Args:
@@ -214,7 +213,7 @@ class RenderSystem(IteratingProcessor):
             (x, y - 6),  # bottom
             (x - 2, y - 8),  # left
         ]
-        self.draw_polygon_camera(diamond_points, color)
+        self.draw_polygon(diamond_points, color)
 
     def _draw_health_bar(self, position: Position, health: Health):
         """
@@ -231,14 +230,14 @@ class RenderSystem(IteratingProcessor):
         bar_y: int = int(position.y - Config.TILE_SIZE() // 2 - 3)
 
         # Border of the health bar
-        self.draw_rect_camera((bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2))
+        self.draw_rect((bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2))
 
         # Red part of health bar (HP lost)
         if health.remaining < health.full and health.remaining > 0:
-            self.draw_rect_camera((bar_x, bar_y, bar_width, bar_height), (255, 0, 0))
+            self.draw_rect((bar_x, bar_y, bar_width, bar_height), (255, 0, 0))
 
         # Green part of health bar (HP remaining)
         hp_ratio = max(0, health.remaining / health.full)  # between 0 and 1
         green_width = int(bar_width * hp_ratio)
         if green_width > 0:
-            self.draw_rect_camera((bar_x, bar_y, green_width, bar_height), (0, 255, 0))
+            self.draw_rect((bar_x, bar_y, green_width, bar_height), (0, 255, 0))

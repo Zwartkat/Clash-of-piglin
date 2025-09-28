@@ -2,7 +2,7 @@ import pygame
 import esper
 import os
 
-from components.camera import CAMERA, Camera
+from core.camera import CAMERA
 from components.effects import OnTerrain
 from components.team import Team
 from components.velocity import Velocity
@@ -10,6 +10,8 @@ from core import event_bus
 from core.entity import Entity
 from events.event_move import EventMoveTo
 from systems.collision_system import CollisionSystem
+from systems.combat_system import CombatSystem
+from systems.death_event_handler import DeathEventHandler
 from systems.combat_system import CombatSystem
 from systems.death_event_handler import DeathEventHandler
 from systems.mouvement_system import MovementSystem
@@ -185,7 +187,9 @@ def main(screen: pygame.Surface, map_size=24):
     EntityFactory.create(Money(600), Squad(entities_1), Team(1))
     EntityFactory.create(Money(600), Squad(entities_2), Team(2))
 
-    render = RenderSystem(screen, game_map.tab, sprites)
+    render = RenderSystem(screen, game_map, sprites)
+
+    world.add_processor(render)
 
     event_bus_instance.subscribe(EventMoveTo, render.animate_move)
 

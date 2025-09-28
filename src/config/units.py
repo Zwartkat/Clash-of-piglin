@@ -102,7 +102,6 @@ UNITS = {
             Selection(),
             Collider(Config.TILE_SIZE(), Config.TILE_SIZE()),
             Fly(),
-            Team(PLAYER_1_TEAM),
             Sprite(
                 "assets/sprites/spritesheet-ghast.png",
                 24,
