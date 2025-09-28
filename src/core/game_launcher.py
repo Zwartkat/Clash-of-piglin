@@ -104,7 +104,7 @@ def main(screen: pygame.Surface, map_size=24):
 
     # Charger la map et les sprites
     game_map: Map = Map()
-    game_map.generate(24)
+    game_map.generate(map_size)
     sprites = load_terrain_sprites()
 
     for y in range(len(game_map.tab)):
@@ -134,23 +134,29 @@ def main(screen: pygame.Surface, map_size=24):
     )
 
     entities_2 = []
-    
+
     entities_2.append(
         EntityFactory.create(
             *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
             Position(100, 200),
             Team(2),
-            OnTerrain()
+            OnTerrain(),
         )
     )
     entities_2.append(
         EntityFactory.create(
-            *UNITS[EntityType.GHAST].get_all_components(), Position(300, 200), Team(2), OnTerrain()
+            *UNITS[EntityType.GHAST].get_all_components(),
+            Position(300, 200),
+            Team(2),
+            OnTerrain(),
         )
     )
     entities_2.append(
         EntityFactory.create(
-            *UNITS[EntityType.BRUTE].get_all_components(), Position(400, 100), Team(2), OnTerrain()
+            *UNITS[EntityType.BRUTE].get_all_components(),
+            Position(400, 100),
+            Team(2),
+            OnTerrain(),
         )
     )
     #
