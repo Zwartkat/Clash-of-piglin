@@ -105,7 +105,7 @@ def main(screen: pygame.Surface, map_size=24):
 
     # Charger la map et les sprites
     game_map: Map = Map()
-    game_map.generate(24)
+    game_map.generate(map_size)
     sprites = load_terrain_sprites()
 
     for y in range(len(game_map.tab)):
