@@ -23,7 +23,7 @@ class CombatSystem(IteratingProcessor):
             return False
 
         # Check attack cooldown
-        frames_per_attack = max(1, int(60 / attack.attack_speed))
+        frames_per_attack = max(1, int(60 * attack.attack_speed))
         if self.frame_count - attack.last_attack < frames_per_attack:
             return False
 

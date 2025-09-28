@@ -1,4 +1,5 @@
 from core.component import Component
+from core.config import Config
 
 
 class Attack(Component):
@@ -13,6 +14,6 @@ class Attack(Component):
         self, damage: int, range: int, attack_speed: float, last_attack: int = 0
     ):
         self.damage = damage
-        self.range = range
+        self.range = (range + 1) * Config.TILE_SIZE()
         self.attack_speed = attack_speed
         self.last_attack = last_attack

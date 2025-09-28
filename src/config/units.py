@@ -95,7 +95,7 @@ UNITS = {
         components=[
             Unit(EntityType.GHAST, UnitType.FLY),
             Description("Ghast", "Unité à distance ne ciblant que les structures"),
-            Attack(damage=40, range=5, attack_speed=2.5),
+            Attack(damage=40, range=5, attack_speed=5),
             Health(health=700),
             Velocity(x=0, y=0, speed=40),
             Cost(amount=820),
