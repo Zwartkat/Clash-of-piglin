@@ -10,6 +10,7 @@ class InputManager(esper.Processor):
     def __init__(self, event_bus, camera):
         self.event_bus = event_bus
         self.camera = camera
+
         self.keys_down = {
             pygame.K_UP: False,
             pygame.K_DOWN: False,
@@ -33,7 +34,6 @@ class InputManager(esper.Processor):
         }
 
     def process(self, dt):
-        print("keys down:", self.keys_down)
         for event in pygame.event.get():
             self.handle_event(event)
 

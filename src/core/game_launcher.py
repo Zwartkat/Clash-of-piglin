@@ -9,6 +9,7 @@ from components.velocity import Velocity
 from core import event_bus
 from core.entity import Entity
 from events.event_move import EventMoveTo
+from events.event_input import EventInput
 from systems.collision_system import CollisionSystem
 from systems.combat_system import CombatSystem
 from systems.death_event_handler import DeathEventHandler
@@ -31,6 +32,7 @@ from systems.entity_factory import EntityFactory
 from systems.input_manager import InputManager
 from enums.case_type import CaseType
 from core.config import Config
+from systems.game_actions_system import GameActionSystem
 
 tile_size: int = Config.TILE_SIZE()
 
@@ -180,7 +182,6 @@ def main(screen: pygame.Surface, map_size=24):
     event_bus_instance = event_bus.EventBus.get_event_bus()
     world.add_processor(PlayerMoveSystem(event_bus_instance))
     world.add_processor(EconomySystem(event_bus_instance))
-    world.add_processor(InputManager(event_bus_instance, CAMERA))
     death_handler = DeathEventHandler(event_bus_instance)
     world.add_processor(TargetingSystem())
     world.add_processor(CombatSystem())
@@ -189,9 +190,16 @@ def main(screen: pygame.Surface, map_size=24):
     EntityFactory.create(Money(600), Squad(entities_1), Team(1))
     EntityFactory.create(Money(600), Squad(entities_2), Team(2))
 
+    input_manager = InputManager(event_bus_instance, CAMERA)
     render = RenderSystem(screen, game_map, sprites)
 
+    world.add_processor(input_manager)
     world.add_processor(render)
+    world.add_processor(
+        GameActionSystem(
+            event_bus_instance, world, player_manager, selection_system, CAMERA
+        )
+    )
 
     event_bus_instance.subscribe(EventMoveTo, render.animate_move)
 
