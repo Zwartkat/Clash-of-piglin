@@ -10,6 +10,7 @@ class InputManager(esper.Processor):
     def __init__(self, event_bus, camera):
         self.event_bus = event_bus
         self.camera = camera
+        self.mouse_pressed = False
 
         self.keys_down = {
             pygame.K_UP: False,
@@ -61,15 +62,24 @@ class InputManager(esper.Processor):
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button in self.mouse_bindings:
+                self.mouse_pressed = True
                 action = self.mouse_bindings[event.button]
                 pos = self.camera.unapply(event.pos[0], event.pos[1])
                 self.event_bus.emit(EventInput(action, InputState.PRESSED, pos))
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button in self.mouse_bindings:
+                self.mouse_pressed = False
                 action = self.mouse_bindings[event.button]
                 pos = self.camera.unapply(event.pos[0], event.pos[1])
                 self.event_bus.emit(EventInput(action, InputState.RELEASED, pos))
+
+        elif event.type == pygame.MOUSEMOTION:
+            if self.mouse_pressed:
+                pos = self.camera.unapply(event.pos[0], event.pos[1])
+                self.event_bus.emit(
+                    EventInput(InputAction.SELECT, InputState.HELD, pos)
+                )
 
         elif event.type == pygame.MOUSEWHEEL:
             self.event_bus.emit(EventInput(InputAction.ZOOM, InputState.WHEEL, event.y))

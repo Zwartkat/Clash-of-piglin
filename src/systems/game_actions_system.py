@@ -60,6 +60,10 @@ class GameActionSystem(esper.Processor):
     def select(self, event: EventInput):
         if event.state == InputState.PRESSED:
             self.selection_system.handle_mouse_down(event.data, self.world)
+        elif event.state == InputState.RELEASED:
+            self.selection_system.handle_mouse_up(event.data, self.world)
+        elif event.state == InputState.HELD:
+            self.selection_system.handle_mouse_motion(event.data, self.world)
 
     def move_order(self, event: EventInput):
         if event.state == InputState.PRESSED:
@@ -84,9 +88,7 @@ class GameActionSystem(esper.Processor):
                 for i, ent in enumerate(selected_entities):
                     if i < len(positions):
                         target_x, target_y = positions[i]
-                        self.event_bus_instance.emit(
-                            EventMoveTo(ent, target_x, target_y)
-                        )
+                        self.event_bus.emit(EventMoveTo(ent, target_x, target_y))
 
     def camera_up(self, event: EventInput):
         self.camera.move(0, -5)
