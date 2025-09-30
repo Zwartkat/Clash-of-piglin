@@ -28,6 +28,7 @@ from systems.selection_system import SelectionSystem
 from systems.terrain_effect_system import TerrainEffectSystem
 from systems.economy_system import EconomySystem
 from systems.entity_factory import EntityFactory
+from systems.input_manager import InputManager
 from enums.case_type import CaseType
 from core.config import Config
 
@@ -179,6 +180,7 @@ def main(screen: pygame.Surface, map_size=24):
     event_bus_instance = event_bus.EventBus.get_event_bus()
     world.add_processor(PlayerMoveSystem(event_bus_instance))
     world.add_processor(EconomySystem(event_bus_instance))
+    # world.add_processor(InputManager(event_bus_instance, CAMERA)) a décommenter quand la boucle fonctionnera avec
     death_handler = DeathEventHandler(event_bus_instance)
     world.add_processor(TargetingSystem())
     world.add_processor(CombatSystem())
