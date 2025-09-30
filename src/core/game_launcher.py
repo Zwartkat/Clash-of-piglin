@@ -180,7 +180,7 @@ def main(screen: pygame.Surface, map_size=24):
     event_bus_instance = event_bus.EventBus.get_event_bus()
     world.add_processor(PlayerMoveSystem(event_bus_instance))
     world.add_processor(EconomySystem(event_bus_instance))
-    # world.add_processor(InputManager(event_bus_instance, CAMERA)) a décommenter quand la boucle fonctionnera avec
+    world.add_processor(InputManager(event_bus_instance, CAMERA))
     death_handler = DeathEventHandler(event_bus_instance)
     world.add_processor(TargetingSystem())
     world.add_processor(CombatSystem())
@@ -209,94 +209,94 @@ def main(screen: pygame.Surface, map_size=24):
 
         ###################################################################################
         # To move (Check https://trello.com/c/X1GHv5GY)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+        # for event in pygame.event.get():
+        #     if event.type == pygame.QUIT:
+        #         running = False
 
-            elif event.type == pygame.KEYDOWN:
-                # Changement de joueur avec CTRL
-                if event.key == pygame.K_LCTRL or event.key == pygame.K_RCTRL:
-                    player_manager.switch_player()
-                    selection_system.clear_selection(world)
+        #     elif event.type == pygame.KEYDOWN:
+        #         # Changement de joueur avec CTRL
+        #         if event.key == pygame.K_LCTRL or event.key == pygame.K_RCTRL:
+        #             player_manager.switch_player()
+        #             selection_system.clear_selection(world)
 
-                if event.key == pygame.K_UP:
-                    keys_down[pygame.K_UP] = True
-                if event.key == pygame.K_DOWN:
-                    keys_down[pygame.K_DOWN] = True
-                if event.key == pygame.K_LEFT:
-                    keys_down[pygame.K_LEFT] = True
-                if event.key == pygame.K_RIGHT:
-                    keys_down[pygame.K_RIGHT] = True
-                if event.key == pygame.K_SPACE:
-                    CAMERA.set_position(0, 0)
-                    CAMERA.set_zoom(1.0)
+        #         if event.key == pygame.K_UP:
+        #             keys_down[pygame.K_UP] = True
+        #         if event.key == pygame.K_DOWN:
+        #             keys_down[pygame.K_DOWN] = True
+        #         if event.key == pygame.K_LEFT:
+        #             keys_down[pygame.K_LEFT] = True
+        #         if event.key == pygame.K_RIGHT:
+        #             keys_down[pygame.K_RIGHT] = True
+        #         if event.key == pygame.K_SPACE:
+        #             CAMERA.set_position(0, 0)
+        #             CAMERA.set_zoom(1.0)
 
-            elif event.type == pygame.KEYUP:
+        #     elif event.type == pygame.KEYUP:
 
-                if event.key == pygame.K_UP:
-                    keys_down[pygame.K_UP] = False
-                if event.key == pygame.K_DOWN:
-                    keys_down[pygame.K_DOWN] = False
-                if event.key == pygame.K_LEFT:
-                    keys_down[pygame.K_LEFT] = False
-                if event.key == pygame.K_RIGHT:
-                    keys_down[pygame.K_RIGHT] = False
+        #         if event.key == pygame.K_UP:
+        #             keys_down[pygame.K_UP] = False
+        #         if event.key == pygame.K_DOWN:
+        #             keys_down[pygame.K_DOWN] = False
+        #         if event.key == pygame.K_LEFT:
+        #             keys_down[pygame.K_LEFT] = False
+        #         if event.key == pygame.K_RIGHT:
+        #             keys_down[pygame.K_RIGHT] = False
 
-            elif event.type == pygame.MOUSEWHEEL:
-                CAMERA.zoom(0.05 * event.y)
+        #     elif event.type == pygame.MOUSEWHEEL:
+        #         CAMERA.zoom(0.05 * event.y)
 
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Clic gauche - sélection
-                    mouse_pressed = True
-                    selection_system.handle_mouse_down(
-                        CAMERA.unapply(event.pos[0], event.pos[1]), world
-                    )
-                elif event.button == 3:  # Clic droit - donner ordre aux sélectionnées
-                    selected_entities = selection_system.get_selected_entities(world)
-                    if selected_entities:
-                        x, y = CAMERA.unapply(event.pos[0], event.pos[1])
-                        from systems.troop_system import (
-                            FormationSystem,
-                            TROOP_GRID,
-                            TROOP_CIRCLE,
-                        )
+        #     elif event.type == pygame.MOUSEBUTTONDOWN:
+        #         if event.button == 1:  # Clic gauche - sélection
+        #             mouse_pressed = True
+        #             selection_system.handle_mouse_down(
+        #                 CAMERA.unapply(event.pos[0], event.pos[1]), world
+        #             )
+        #         elif event.button == 3:  # Clic droit - donner ordre aux sélectionnées
+        #             selected_entities = selection_system.get_selected_entities(world)
+        #             if selected_entities:
+        #                 x, y = CAMERA.unapply(event.pos[0], event.pos[1])
+        #                 from systems.troop_system import (
+        #                     FormationSystem,
+        #                     TROOP_GRID,
+        #                     TROOP_CIRCLE,
+        #                 )
 
-                        positions = FormationSystem.calculate_formation_positions(
-                            selected_entities,
-                            x,
-                            y,
-                            spacing=35,
-                            formation_type=TROOP_GRID,  # you can change to TROOP_CIRCLE if needed
-                        )
+        #                 positions = FormationSystem.calculate_formation_positions(
+        #                     selected_entities,
+        #                     x,
+        #                     y,
+        #                     spacing=35,
+        #                     formation_type=TROOP_GRID,  # you can change to TROOP_CIRCLE if needed
+        #                 )
 
-                        for i, ent in enumerate(selected_entities):
-                            if i < len(positions):
-                                target_x, target_y = positions[i]
-                                event_bus_instance.emit(
-                                    EventMoveTo(ent, target_x, target_y)
-                                )
+        #                 for i, ent in enumerate(selected_entities):
+        #                     if i < len(positions):
+        #                         target_x, target_y = positions[i]
+        #                         event_bus_instance.emit(
+        #                             EventMoveTo(ent, target_x, target_y)
+        #                         )
 
-            elif event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:  # Relâcher clic gauche
-                    mouse_pressed = False
+        #     elif event.type == pygame.MOUSEBUTTONUP:
+        #         if event.button == 1:  # Relâcher clic gauche
+        #             mouse_pressed = False
 
-                    selection_system.handle_mouse_up(
-                        CAMERA.unapply(event.pos[0], event.pos[1]), world
-                    )
-            elif event.type == pygame.MOUSEMOTION:
-                if mouse_pressed:
-                    selection_system.handle_mouse_motion(
-                        CAMERA.unapply(event.pos[0], event.pos[1]), world
-                    )
+        #             selection_system.handle_mouse_up(
+        #                 CAMERA.unapply(event.pos[0], event.pos[1]), world
+        #             )
+        #     elif event.type == pygame.MOUSEMOTION:
+        #         if mouse_pressed:
+        #             selection_system.handle_mouse_motion(
+        #                 CAMERA.unapply(event.pos[0], event.pos[1]), world
+        #             )
 
-        if keys_down[pygame.K_UP]:
-            CAMERA.move(0, -5)
-        if keys_down[pygame.K_DOWN]:
-            CAMERA.move(0, 5)
-        if keys_down[pygame.K_LEFT]:
-            CAMERA.move(-5, 0)
-        if keys_down[pygame.K_RIGHT]:
-            CAMERA.move(5, 0)
+        # if keys_down[pygame.K_UP]:
+        #     CAMERA.move(0, -5)
+        # if keys_down[pygame.K_DOWN]:
+        #     CAMERA.move(0, 5)
+        # if keys_down[pygame.K_LEFT]:
+        #     CAMERA.move(-5, 0)
+        # if keys_down[pygame.K_RIGHT]:
+        #     CAMERA.move(5, 0)
 
         ###################################################################################
 

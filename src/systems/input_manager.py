@@ -10,7 +10,12 @@ class InputManager(esper.Processor):
     def __init__(self, event_bus, camera):
         self.event_bus = event_bus
         self.camera = camera
-        self.keys_down = []
+        self.keys_down = {
+            pygame.K_UP: False,
+            pygame.K_DOWN: False,
+            pygame.K_RIGHT: False,
+            pygame.K_LEFT: False,
+        }
 
         self.key_bindings = {
             pygame.K_LCTRL: InputAction.SWITCH_TROOP,
@@ -28,14 +33,13 @@ class InputManager(esper.Processor):
         }
 
     def process(self, dt):
+        print("keys down:", self.keys_down)
         for event in pygame.event.get():
             self.handle_event(event)
 
         # Gestion des touches maintenues
-        for key in self.keys_down:
-            action = self.key_bindings[key]
-            if action:
-                self.event_bus.emit(EventInput(action, InputState.HELD))
+        for key in self.keys_down.keys():
+            self.event_bus.emit(EventInput(self.key_bindings[key], InputState.HELD))
 
     def handle_event(self, event):
         if event.type == pygame.QUIT:
@@ -44,14 +48,14 @@ class InputManager(esper.Processor):
 
         elif event.type == pygame.KEYDOWN:
             if event.key in self.key_bindings:
-                self.keys_down.append(event.key)
+                self.keys_down[event.key] = True
                 self.event_bus.emit(
                     EventInput(self.key_bindings[event.key], InputState.PRESSED)
                 )
 
         elif event.type == pygame.KEYUP:
             if event.key in self.key_bindings:
-                self.keys_down.remove(event.key)
+                self.keys_down[event.key] = False
                 self.event_bus.emit(
                     EventInput(self.key_bindings[event.key], InputState.RELEASED)
                 )
