@@ -43,8 +43,7 @@ class InputManager(esper.Processor):
 
     def handle_event(self, event):
         if event.type == pygame.QUIT:
-            # Il faudra gérer ca différement je pense car ca quitte bien mais ca crée des erreurs quand même
-            pygame.quit()
+            self.event_bus.emit(EventInput(InputAction.QUIT, InputState.PRESSED))
 
         elif event.type == pygame.KEYDOWN:
             if event.key in self.key_bindings:
