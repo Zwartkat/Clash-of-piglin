@@ -1,5 +1,4 @@
 from typing import Tuple
-from pyparsing import Union
 from core.camera import CAMERA, Camera
 from components.case import Case
 from components.collider import Collider
