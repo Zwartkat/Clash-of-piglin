@@ -13,11 +13,11 @@ from components.case import Case
 from components.velocity import Velocity
 from components.position import Position
 from components.collider import Collider
-from components.unit import Unit
 
 from core.terrain import Terrain
 from enums.case_type import CaseType
 from enums.entity_type import EntityType
+from enums.unit_type import UnitType
 
 tile_size: int = Config.TILE_SIZE()
 
@@ -46,21 +46,20 @@ class CollisionSystem(IteratingProcessor):
 
     def _get_collision_layer(self, ent: int) -> str:
         if esper.has_component(ent, Fly):
-            return "flying"
+            return UnitType.FLY
 
-        if esper.has_component(ent, Unit):
-            unit = esper.component_for_entity(ent, Unit)
-            if unit.entity_type == EntityType.GHAST:
-                return "flying"
+        if esper.has_component(ent, UnitType):
+            unit_type = esper.component_for_entity(ent, UnitType)
+            return unit_type
 
-        return "ground"
+        return UnitType.WALK
 
     def _should_collide(self, layer1: str, layer2: str) -> bool:
         collision_matrix = {
-            ("ground", "ground"): True,  # Ground block each other
-            ("ground", "flying"): False,  # Ground does not block flying
-            ("flying", "ground"): False,  # Flying does not block ground
-            ("flying", "flying"): True,  # Ghasts block each other
+            (UnitType.WALK, UnitType.WALK): True,  # Ground block each other
+            (UnitType.WALK, UnitType.FLY): False,  # Ground does not block flying
+            (UnitType.FLY, UnitType.WALK): False,  # Flying does not block ground
+            (UnitType.FLY, UnitType.FLY): True,  # Ghasts block each other
         }
         return collision_matrix.get((layer1, layer2), False)
 
@@ -75,17 +74,17 @@ class CollisionSystem(IteratingProcessor):
         tile_top: int = int(top // tile_size)
         tile_bottom: int = int(bottom // tile_size)
 
-        if not esper.has_component(ent, Unit):
+        if not esper.has_component(ent, UnitType):
             return
 
-        unit: Unit = esper.component_for_entity(ent, Unit)
+        unit: UnitType = esper.component_for_entity(ent, UnitType)
 
         for tile_y in range(tile_top, tile_bottom + 1):
             for tile_x in range(tile_left, tile_right + 1):
                 if self.is_tile_blocking(unit, tile_x, tile_y):
                     self.resolve_terrain_collision(ent, pos, collider, tile_x, tile_y)
 
-    def is_tile_blocking(self, unit: Unit, tile_x: int, tile_y: int):
+    def is_tile_blocking(self, unit: UnitType, tile_x: int, tile_y: int):
         if (
             tile_x < 0
             or tile_x >= len(self.game_map.tab[0])
@@ -98,7 +97,7 @@ class CollisionSystem(IteratingProcessor):
 
         terrain: Terrain = TERRAIN.get(case.type)
 
-        return unit.unit_type not in terrain.walkable
+        return unit not in terrain.walkable
 
     def resolve_terrain_collision(
         self, ent: int, pos: Position, collider: Collider, tile_x: int, tile_y: int

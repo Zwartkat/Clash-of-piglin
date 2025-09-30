@@ -11,4 +11,5 @@ class InputAction(Enum):
     CAMERA_RIGHT = auto()
     CAMERA_RESET = auto()
     ZOOM = auto()
+    RESIZE = auto()
     QUIT = auto()

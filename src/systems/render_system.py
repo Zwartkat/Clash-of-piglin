@@ -1,12 +1,9 @@
 from typing import Tuple
-from core.camera import CAMERA, Camera
+from core.camera import CAMERA
 from components.case import Case
-from components.collider import Collider
 from components.health import Health
 from components.map import Map
 from components.selection import Selection
-from components.team import Team
-from components.unit import Unit
 from core.event_bus import EventBus
 from core.iterator_system import IteratingProcessor
 from components.sprite import Sprite
@@ -20,11 +17,13 @@ from enums.animation import *
 from enums.orientation import *
 from enums.direction import *
 
-from enums.unit_type import UnitType
+from events.attack_event import AttackEvent
 from events.event_move import EventMoveTo
 
 import esper
 import pygame
+
+from events.stop_event import StopEvent
 
 
 class RenderSystem(IteratingProcessor):
@@ -40,6 +39,10 @@ class RenderSystem(IteratingProcessor):
         self.map: list[list[Case]] = map.tab
         self.sprites: dict[CaseType, pygame.Surface] = sprites
         self.entities = []
+
+        EventBus.get_event_bus().subscribe(StopEvent, self.animate_idle)
+        EventBus.get_event_bus().subscribe(EventMoveTo, self.animate_move)
+        EventBus.get_event_bus().subscribe(AttackEvent, self.animate_attack)
 
     def process(self, dt):
 
@@ -93,7 +96,6 @@ class RenderSystem(IteratingProcessor):
         Draws the game map on the screen using the provided sprites for each terrain type.
         """
         self.screen.fill((0, 0, 0))
-
         for y in range(len(self.map)):
             for x in range(len(self.map[y])):
                 tile: Case = self.map[y][x]
@@ -104,6 +106,27 @@ class RenderSystem(IteratingProcessor):
                     pos_y = y * Config.TILE_SIZE()
                     self.draw_surface(sprite, pos_x, pos_y)
 
+    def _set_animation(self, ent: int, animation: Animation):
+        if esper.has_component(ent, Velocity) and esper.has_component(ent, Sprite):
+            velocity: Velocity = esper.component_for_entity(ent, Velocity)
+            sprite: Sprite = esper.component_for_entity(ent, Sprite)
+
+            if velocity.x != 0 and velocity.y != 0:
+                direction: Direction = self._get_direction_from_velocity(velocity)
+            else:
+                direction = sprite.current_direction
+
+            sprite.set_animation(animation, direction)
+
+    def animate_idle(self, event: StopEvent) -> None:
+        """
+        Animate entity who stopping by changing its sprite animation to idle.
+
+        Args:
+            event (StopEvent): An event containing the entity that stop moving.
+        """
+        self._set_animation(event.entity, Animation.IDLE)
+
     def animate_move(self, event: EventMoveTo) -> None:
         """
         Animate entity who moves by changing its sprite animation based on its velocity direction.
@@ -111,15 +134,16 @@ class RenderSystem(IteratingProcessor):
         Args:
             event (EventMoveTo): An event containing the entity that moved.
         """
-        if esper.has_component(event.entity, Velocity) and esper.has_component(
-            event.entity, Sprite
-        ):
-            velocity: Velocity = esper.component_for_entity(event.entity, Velocity)
-            sprite: Sprite = esper.component_for_entity(event.entity, Sprite)
+        self._set_animation(event.entity, Animation.WALK)
 
-            direction: Direction = self._get_direction_from_velocity(velocity)
+    def animate_attack(self, event: AttackEvent):
+        """
+        Animate entity who attack by changing its sprite animation on attack
 
-            sprite.set_animation(Animation.WALK, direction)
+        Args:
+            event (AttackEvent): An event emit before an attack
+        """
+        self._set_animation(event.fighter, Animation.ATTACK)
 
     def draw_surface(
         self, image: pygame.Surface, x: int = None, y: int = None

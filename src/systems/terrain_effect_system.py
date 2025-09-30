@@ -4,7 +4,6 @@ from components.fly import Fly
 from components.map import Map
 from components.position import Position
 from components.effects import Slowed, OnTerrain
-from components.unit import Unit
 from config.terrains import TERRAIN
 from core.config import Config
 from core.iterator_system import IteratingProcessor

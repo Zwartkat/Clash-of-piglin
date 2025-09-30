@@ -35,7 +35,7 @@ from core.config import Config
 from systems.game_actions_system import GameActionSystem
 from systems.quit_system import QuitSystem
 
-tile_size: int = Config.TILE_SIZE()
+tile_size = Config.TILE_SIZE()
 
 
 def load_terrain_sprites():
@@ -60,6 +60,7 @@ def load_terrain_sprites():
         if os.path.exists(full_path):
             sprite = pygame.image.load(full_path)
             if terrain_type != CaseType.LAVA:
+                print(tile_size)
                 sprite = pygame.transform.scale(sprite, (tile_size, tile_size))
                 sprites[terrain_type] = sprite
 
@@ -96,12 +97,18 @@ def display_current_player(screen, player_manager):
     screen.blit(instruction_surface, (10, 50))
 
 
-def main(screen: pygame.Surface, map_size=24):
+def main(screen: pygame.Surface = pygame.display.set_mode((1000, 1000)), map_size=24):
 
     dt = 0.05
     map_width = map_size * tile_size
     map_height = map_size * tile_size
-    screen = pygame.display.set_mode((800, 700))
+
+    info = pygame.display.Info()
+    win_w, win_h = info.current_w, info.current_h
+
+    # Crée une fenêtre qui prend tout l’écran, mais fenêtrée + redimensionnable
+    screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
+
     clock = pygame.time.Clock()
 
     screen_rect = screen.get_rect()
@@ -181,7 +188,7 @@ def main(screen: pygame.Surface, map_size=24):
 
     # Crée l'EventBus et le système de déplacement joueur
     event_bus_instance = event_bus.EventBus.get_event_bus()
-    world.add_processor(PlayerMoveSystem(event_bus_instance))
+    world.add_processor(PlayerMoveSystem())
     world.add_processor(EconomySystem(event_bus_instance))
     death_handler = DeathEventHandler(event_bus_instance)
     world.add_processor(TargetingSystem())
