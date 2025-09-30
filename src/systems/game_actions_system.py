@@ -7,6 +7,7 @@ from systems.player_manager import PlayerManager
 from systems.selection_system import SelectionSystem
 from enums.input_actions import InputAction
 from enums.input_state import InputState
+from core.camera import Camera
 
 
 class GameActionSystem(esper.Processor):
@@ -16,7 +17,7 @@ class GameActionSystem(esper.Processor):
         world,
         player_manager: PlayerManager,
         selection_system: SelectionSystem,
-        camera,
+        camera: Camera,
     ):
         super().__init__()
 
@@ -103,7 +104,7 @@ class GameActionSystem(esper.Processor):
         self.camera.move(-5, 0)
 
     def quit_game(self, event: EventInput):
-        pygame.quit()
+        pass  # On gère pas ca ici, j'implémente la fonction pour éviter les erreurs
 
     def process(self, dt):
         pass

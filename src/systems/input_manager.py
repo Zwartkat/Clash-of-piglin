@@ -39,8 +39,9 @@ class InputManager(esper.Processor):
             self.handle_event(event)
 
         # Gestion des touches maintenues
-        for key in self.keys_down.keys():
-            self.event_bus.emit(EventInput(self.key_bindings[key], InputState.HELD))
+        for key, value in self.keys_down.items():
+            if value:
+                self.event_bus.emit(EventInput(self.key_bindings[key], InputState.HELD))
 
     def handle_event(self, event):
         if event.type == pygame.QUIT:
