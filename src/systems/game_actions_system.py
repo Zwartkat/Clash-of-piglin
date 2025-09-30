@@ -36,7 +36,7 @@ class GameActionSystem(esper.Processor):
             InputAction.SELECT: self.select,
             InputAction.MOVE_ORDER: self.move_order,
             InputAction.CAMERA_UP: self.camera_up,
-            InputAction.CAMERA_DOWN: self.camera_up,
+            InputAction.CAMERA_DOWN: self.camera_down,
             InputAction.CAMERA_RIGHT: self.camera_right,
             InputAction.CAMERA_LEFT: self.camera_left,
             InputAction.QUIT: self.quit_game,
