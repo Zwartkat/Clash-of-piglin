@@ -131,12 +131,14 @@ UNITS = {
             Description("Bastion", "Base d'un joueur à défendre"),
             Health(1000),
             Sprite(
-                "assets/sprites/sprisheet-bastion.png",
+                "assets/sprites/spritesheet-bastion.png",
                 500,
                 500,
-                {},
+                {Animation.NONE: {Direction.NONE: [0]}},
                 1000,
                 priority=ENTITY_LAYER[UnitType.STRUCTURE],
+                default_animation=Animation.NONE,
+                default_direction=Direction.NONE,
             ),
         ]
     ),

@@ -1,5 +1,6 @@
 import esper
 import pygame
+from core.services import Services
 from events.event_input import EventInput
 from core.event_bus import EventBus
 from events.event_move import EventMoveTo
@@ -47,7 +48,9 @@ class GameActionSystem(esper.Processor):
 
     def switch_troops(self, event: EventInput):
         if event.state == InputState.PRESSED:
-            self.player_manager.switch_player()
+            print("SW")
+            Services.player_manager.switch_player()
+            print(Services.player_manager.get_current_player())
             self.selection_system.clear_selection(self.world)
 
     def reset_cam(self, event: EventInput):

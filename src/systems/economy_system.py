@@ -1,10 +1,11 @@
 import esper
 import pygame
 from components.team import Team
+from core.player import Player
+from core.services import Services
 from events.buy_event import BuyEvent
 from events.death_event import DeathEvent
 from components.cost import Cost
-from components.money import Money
 from components.squad import Squad
 from core.iterator_system import IteratingProcessor
 
@@ -20,35 +21,30 @@ class EconomySystem(esper.Processor):
         self.generation_speed = 0.133  # Valeur de base pour 0-1 minute
 
     def buy(self, event):
-        player = event.player
+        player: Player = event.player
         entity = event.entity
+        money = player.money
         cost = esper.component_for_entity(entity, Cost)
-        money = esper.component_for_entity(player, Money)
+        # money = esper.component_for_entity(player, Money)
         squad = esper.component_for_entity(player, Squad)
 
-        if money.amount >= cost.amount:
-            money.amount -= cost.amount
+        if money >= cost.amount:
+            money -= cost.amount
             squad.troops.append(entity)
             print(
-                f"Vous avez acheté {entity} pour {cost.amount}. Il vous reste: {money.amount} pépites d'or"
+                f"Vous avez acheté {entity} pour {cost.amount}. Il vous reste: {money} pépites d'or"
             )
         else:
-            print(f"Il vous manqua {cost.amount - money.amount} pour acheter {entity}")
+            print(f"Il vous manqua {cost.amount - money} pour acheter {entity}")
 
     def reward_money(self, event: DeathEvent):
-        player: Team = event.player
+        player_team: Team = event.player
         entity: int = event.entity
         entity_cost = esper.component_for_entity(entity, Cost)
 
-        players = esper.get_components(Money)
-        money = 0
-        for ent, ent_money in esper.get_component(Money):
-            print(esper.component_for_entity(ent, Team), event.player)
-            if esper.component_for_entity(ent, Team) == event.player:
-                money = ent_money
-        if money == 0:
-            return
-        money = esper.component_for_entity(player, Cost)
+        player = Services.player_manager.players[player_team.team_id]
+
+        money = esper.component_for_entity(entity, Cost)
         reward = int(entity_cost.amount / 10)  # 10% du prix de l'entité
 
         if (
@@ -75,9 +71,10 @@ class EconomySystem(esper.Processor):
         elif time_elapsed > 240000:
             self.generation_speed = 0.3
 
+        players: dict[int, Player] = Services.player_manager.players
         # Ajout de la thune aux comptes des joueurs
-        for ent, money in esper.get_component(Money):
-            if money.amount + self.generation_speed >= 1500:  # Cap
-                money.amount = 1500
+        for team in players:
+            if players[team].money + self.generation_speed >= 1500:  # Cap
+                players[team].money = 1500
             else:
-                money.amount += self.generation_speed
+                players[team].money += self.generation_speed
