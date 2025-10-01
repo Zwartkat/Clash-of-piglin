@@ -8,6 +8,7 @@ from components.team import Team
 from components.velocity import Velocity
 from core import event_bus
 from core.entity import Entity
+from core.services import Services
 from events.event_move import EventMoveTo
 from events.event_input import EventInput
 from systems.collision_system import CollisionSystem
@@ -18,7 +19,6 @@ from systems.death_event_handler import DeathEventHandler
 from systems.mouvement_system import MovementSystem
 from components.position import Position
 from systems.player_manager import PlayerManager
-from components.money import Money
 from components.squad import Squad
 from systems.player_move_system import PlayerMoveSystem
 from systems.render_system import RenderSystem
@@ -122,7 +122,14 @@ def main(screen: pygame.Surface, map_size=24):
                 case = Case(Position(x * tile_size, y * tile_size), CaseType.LAVA)
                 EntityFactory.create(*case.get_all_components())
 
-    player_manager = PlayerManager()
+    player_manager = PlayerManager(
+        [
+            Position(tile_size, tile_size),
+            Position(map_width - tile_size, map_height - tile_size),
+        ]
+    )
+
+    Services.player_manager = player_manager
 
     from config.units import UNITS
     from enums.entity_type import EntityType
@@ -188,9 +195,6 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(CombatSystem())
     # Création d'un player avec ses thunes et sa team
 
-    EntityFactory.create(Money(600), Squad(entities_1), Team(1))
-    EntityFactory.create(Money(600), Squad(entities_2), Team(2))
-
     input_manager = InputManager(event_bus_instance, CAMERA)
     render = RenderSystem(screen, game_map, sprites)
 
@@ -201,8 +205,6 @@ def main(screen: pygame.Surface, map_size=24):
             event_bus_instance, world, player_manager, selection_system, CAMERA
         )
     )
-
-    event_bus_instance.subscribe(EventMoveTo, render.animate_move)
 
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
     game_state = {"running": True}

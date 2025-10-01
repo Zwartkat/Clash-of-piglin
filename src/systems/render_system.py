@@ -15,6 +15,7 @@ from components.velocity import Velocity
 
 from core.config import Config
 
+from core.services import Services
 from enums.case_type import *
 from enums.animation import *
 from enums.orientation import *
@@ -77,11 +78,12 @@ class RenderSystem(IteratingProcessor):
                 frame = pygame.transform.scale(
                     frame, (Config.get("tile_size"), Config.get("tile_size"))
                 )
-                if esper.has_component(ent, Selection):
+                if esper.has_components(ent, Selection, Team):
+                    team: Team = esper.component_for_entity(ent, Team)
                     selection: Selection = esper.component_for_entity(ent, Selection)
-                    color = (0, 255, 0) if selection.is_selected else (255, 0, 0)
-
-                    self._draw_diamond(position, color)
+                    if team.team_id == Services.player_manager.get_current_player():
+                        color = (0, 255, 0) if selection.is_selected else (0, 0, 255)
+                        self._draw_diamond(position, color)
 
                 self._draw_health_bar(position, esper.component_for_entity(ent, Health))
 
