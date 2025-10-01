@@ -1,4 +1,5 @@
 from typing import Tuple
+from components.team import Team
 from core.camera import CAMERA
 from components.case import Case
 from components.health import Health
@@ -146,6 +147,7 @@ class RenderSystem(IteratingProcessor):
             event (AttackEvent): An event emit before an attack
         """
         self._set_animation(event.fighter, Animation.ATTACK)
+        self._set_animation(event.target, Animation.ATTACK)
 
     def draw_surface(
         self, image: pygame.Surface, x: int = None, y: int = None
