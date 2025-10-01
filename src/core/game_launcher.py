@@ -60,7 +60,6 @@ def load_terrain_sprites():
         if os.path.exists(full_path):
             sprite = pygame.image.load(full_path)
             if terrain_type != CaseType.LAVA:
-                print(tile_size)
                 sprite = pygame.transform.scale(sprite, (tile_size, tile_size))
                 sprites[terrain_type] = sprite
 
@@ -97,7 +96,7 @@ def display_current_player(screen, player_manager):
     screen.blit(instruction_surface, (10, 50))
 
 
-def main(screen: pygame.Surface = pygame.display.set_mode((1000, 1000)), map_size=24):
+def main(screen: pygame.Surface, map_size=24):
 
     dt = 0.05
     map_width = map_size * tile_size
@@ -106,8 +105,7 @@ def main(screen: pygame.Surface = pygame.display.set_mode((1000, 1000)), map_siz
     info = pygame.display.Info()
     win_w, win_h = info.current_w, info.current_h
 
-    # Crée une fenêtre qui prend tout l’écran, mais fenêtrée + redimensionnable
-    screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
+    screen = pygame.display.set_mode((800, 600), pygame.RESIZABLE)
 
     clock = pygame.time.Clock()
 
@@ -200,7 +198,6 @@ def main(screen: pygame.Surface = pygame.display.set_mode((1000, 1000)), map_siz
     death_handler = DeathEventHandler(event_bus_instance)
     world.add_processor(TargetingSystem())
     world.add_processor(CombatSystem())
-    # Création d'un player avec ses thunes et sa team
 
     input_manager = InputManager(event_bus_instance, CAMERA)
     render = RenderSystem(screen, game_map, sprites)

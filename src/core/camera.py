@@ -47,7 +47,6 @@ class Camera:
         dynamic_min_zoom = max(min_zoom_x, min_zoom_y, self.min_zoom)
 
         self.zoom_factor = max(dynamic_min_zoom, min(self.zoom_factor, self.max_zoom))
-        print(self.zoom_factor)
         self.x = min(self.x, max(0, self.world_width - self.width / self.zoom_factor))
         self.y = min(self.y, max(0, self.world_height - self.height / self.zoom_factor))
 
