@@ -6,12 +6,14 @@ from core.iterator_system import IteratingProcessor
 from systems.troop_system import TROOP_CIRCLE, TROOP_GRID, FormationSystem
 from components.selection import Selection
 
+from core.event_bus import EventBus
+from events.stop_event import StopEvent
+
 
 class PlayerMoveSystem(IteratingProcessor):
-    def __init__(self, event_bus):
+    def __init__(self):
         super().__init__(Position, Velocity)
-        self.event_bus = event_bus
-        self.event_bus.subscribe(EventMoveTo, self.on_move)
+        EventBus.get_event_bus().subscribe(EventMoveTo, self.on_move)
         self.target = {}
         self.last_group_order = None
 
@@ -30,7 +32,7 @@ class PlayerMoveSystem(IteratingProcessor):
                 vel.y = (dy / dist) * speed
                 self.target[event.entity] = (event.target_x, event.target_y)
 
-    def process_entity(self, ent, dt, pos, vel):
+    def process_entity(self, ent: int, dt: float, pos: Position, vel: Velocity):
         if ent in self.target:
             tx, ty = self.target[ent]
             dx = tx - pos.x
@@ -40,6 +42,7 @@ class PlayerMoveSystem(IteratingProcessor):
                 vel.x = 0
                 vel.y = 0
                 del self.target[ent]
+                EventBus.get_event_bus().emit(StopEvent(ent))
 
                 selection = esper.component_for_entity(ent, Selection)
                 if selection:

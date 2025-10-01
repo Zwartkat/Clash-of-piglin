@@ -6,3 +6,4 @@ class InputState(Enum):
     RELEASED = auto()
     HELD = auto()
     WHEEL = auto()
+    RESIZE = auto()

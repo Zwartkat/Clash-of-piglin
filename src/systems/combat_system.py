@@ -1,6 +1,7 @@
 # src/systems/combat_system.py
 import esper
 from core.event_bus import EventBus
+from events.attack_event import AttackEvent
 from events.death_event import DeathEvent
 from components.team import Team
 from components.attack import Attack
@@ -61,6 +62,8 @@ class CombatSystem(IteratingProcessor):
             target_health: Health = esper.component_for_entity(
                 target.target_entity_id, Health
             )
+
+            EventBus.get_event_bus().emit(AttackEvent(ent, target.target_entity_id))
 
             # Deal damage
             old_hp: int = target_health.remaining

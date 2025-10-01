@@ -8,7 +8,7 @@ from systems.player_manager import PlayerManager
 from systems.selection_system import SelectionSystem
 from enums.input_actions import InputAction
 from enums.input_state import InputState
-from core.camera import Camera
+from core.camera import CAMERA, Camera
 
 
 class GameActionSystem(esper.Processor):
@@ -41,6 +41,7 @@ class GameActionSystem(esper.Processor):
             InputAction.CAMERA_RIGHT: self.camera_right,
             InputAction.CAMERA_LEFT: self.camera_left,
             InputAction.QUIT: self.quit_game,
+            InputAction.RESIZE: self.resize_camera,
         }
 
     def handle_events(self, event: EventInput):
@@ -55,11 +56,16 @@ class GameActionSystem(esper.Processor):
 
     def reset_cam(self, event: EventInput):
         if event.state == InputState.PRESSED:
-            self.camera.set_position(0, 0)
-            self.camera.set_zoom(1.0)
+            CAMERA.set_position(0, 0)
+            CAMERA.set_zoom(1.0)
 
     def cam_zoom(self, event: EventInput):
-        self.camera.zoom(0.05 * event.data)
+        CAMERA.zoom(0.05 * event.data)
+
+    def resize_camera(self, event: EventInput):
+        win_w, win_h = event.data[0], event.data[1]
+        screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
+        CAMERA.set_size(win_w, win_h)
 
     def select(self, event: EventInput):
         if event.state == InputState.PRESSED:
@@ -95,16 +101,16 @@ class GameActionSystem(esper.Processor):
                         self.event_bus.emit(EventMoveTo(ent, target_x, target_y))
 
     def camera_up(self, event: EventInput):
-        self.camera.move(0, -5)
+        CAMERA.move(0, -5)
 
     def camera_down(self, event: EventInput):
-        self.camera.move(0, 5)
+        CAMERA.move(0, 5)
 
     def camera_right(self, event: EventInput):
-        self.camera.move(5, 0)
+        CAMERA.move(5, 0)
 
     def camera_left(self, event: EventInput):
-        self.camera.move(-5, 0)
+        CAMERA.move(-5, 0)
 
     def quit_game(self, event: EventInput):
         pass  # On gère pas ca ici, j'implémente la fonction pour éviter les erreurs
