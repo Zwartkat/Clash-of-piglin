@@ -87,7 +87,7 @@ class CollisionSystem(IteratingProcessor):
             bool: True if entities should block each other
         """
         collision_matrix = {
-            ("ground", "ground"): True,  # Ground block each other
+            ("ground", "ground"): True,  # Ground units block each other
             ("ground", "flying"): False,  # Ground does not block flying
             ("flying", "ground"): False,  # Flying does not block ground
             ("flying", "flying"): True,  # Ghasts block each other
@@ -103,8 +103,7 @@ class CollisionSystem(IteratingProcessor):
             pos: Entity position on map
             collider: Entity collision box size
         """
-
-        # Calculate the bounding box of the entity
+        # Calculate entity bounds
         left: int = pos.x - collider.width // 2
         right: int = pos.x + collider.width // 2
         top: int = pos.y - collider.height // 2
@@ -139,7 +138,6 @@ class CollisionSystem(IteratingProcessor):
         Returns:
             bool: True if tile blocks this unit type
         """
-
         # Map boundaries are always blocking
         if (
             tile_x < 0
@@ -150,7 +148,6 @@ class CollisionSystem(IteratingProcessor):
             return True
 
         case: Case = self.game_map.tab[tile_y][tile_x]
-
         terrain: Terrain = TERRAIN.get(case.type)
 
         return unit.unit_type not in terrain.walkable
@@ -168,7 +165,6 @@ class CollisionSystem(IteratingProcessor):
             tile_x: Blocking tile X position
             tile_y: Blocking tile Y position
         """
-
         # Calculate tile bounds
         tile_left: int = tile_x * tile_size
         tile_right: int = (tile_x + 1) * tile_size
