@@ -4,7 +4,6 @@ from components.fly import Fly
 from components.map import Map
 from components.position import Position
 from components.effects import Slowed, OnTerrain
-from components.unit import Unit
 from config.terrains import TERRAIN
 from core.config import Config
 from core.iterator_system import IteratingProcessor
@@ -39,7 +38,10 @@ class TerrainEffectSystem(IteratingProcessor):
         current_case: Case = self.get_terrain_at_position(pos)
         if current_case != on_terrain.terrain_type:
             self._clear_terrain_effects(ent)
-            self._apply_terrain_effects(ent, current_case.type)
+            try:
+                self._apply_terrain_effects(ent, current_case.type)
+            except:
+                print(current_case, pos)
 
             on_terrain.previous_terrain = on_terrain.terrain_type
             on_terrain.terrain_type = current_case.type

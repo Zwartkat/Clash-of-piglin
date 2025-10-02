@@ -117,6 +117,8 @@ Toutes les entités sont définis par des composants, ceux-ci servent de stockag
 
 ### Attack
 
+### Case
+
 ### Collider
 
 ### Cost
@@ -126,6 +128,8 @@ Toutes les entités sont définis par des composants, ceux-ci servent de stockag
 ### Fly
 
 ### Health
+
+### Map
 
 ### Money
 

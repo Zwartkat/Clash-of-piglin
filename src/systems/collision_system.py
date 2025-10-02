@@ -13,11 +13,11 @@ from components.case import Case
 from components.velocity import Velocity
 from components.position import Position
 from components.collider import Collider
-from components.unit import Unit
 
 from core.terrain import Terrain
 from enums.case_type import CaseType
 from enums.entity_type import EntityType
+from enums.unit_type import UnitType
 
 tile_size: int = Config.TILE_SIZE()
 
@@ -66,14 +66,13 @@ class CollisionSystem(IteratingProcessor):
             str: "flying" for ghasts and flying units, "ground" for others
         """
         if esper.has_component(ent, Fly):
-            return "flying"
+            return UnitType.FLY
 
-        if esper.has_component(ent, Unit):
-            unit = esper.component_for_entity(ent, Unit)
-            if unit.entity_type == EntityType.GHAST:
-                return "flying"
+        if esper.has_component(ent, UnitType):
+            unit_type = esper.component_for_entity(ent, UnitType)
+            return unit_type
 
-        return "ground"
+        return UnitType.WALK
 
     def _should_collide(self, layer1: str, layer2: str) -> bool:
         """
@@ -87,10 +86,10 @@ class CollisionSystem(IteratingProcessor):
             bool: True if entities should block each other
         """
         collision_matrix = {
-            ("ground", "ground"): True,  # Ground units block each other
-            ("ground", "flying"): False,  # Ground does not block flying
-            ("flying", "ground"): False,  # Flying does not block ground
-            ("flying", "flying"): True,  # Ghasts block each other
+            (UnitType.WALK, UnitType.WALK): True,  # Ground block each other
+            (UnitType.WALK, UnitType.FLY): False,  # Ground does not block flying
+            (UnitType.FLY, UnitType.WALK): False,  # Flying does not block ground
+            (UnitType.FLY, UnitType.FLY): True,  # Ghasts block each other
         }
         return collision_matrix.get((layer1, layer2), False)
 
@@ -115,10 +114,10 @@ class CollisionSystem(IteratingProcessor):
         tile_top: int = int(top // tile_size)
         tile_bottom: int = int(bottom // tile_size)
 
-        if not esper.has_component(ent, Unit):
+        if not esper.has_component(ent, UnitType):
             return
 
-        unit: Unit = esper.component_for_entity(ent, Unit)
+        unit: UnitType = esper.component_for_entity(ent, UnitType)
 
         # Check each tile the entity overlaps
         for tile_y in range(tile_top, tile_bottom + 1):
@@ -150,7 +149,7 @@ class CollisionSystem(IteratingProcessor):
         case: Case = self.game_map.tab[tile_y][tile_x]
         terrain: Terrain = TERRAIN.get(case.type)
 
-        return unit.unit_type not in terrain.walkable
+        return unit not in terrain.walkable
 
     def resolve_terrain_collision(
         self, ent: int, pos: Position, collider: Collider, tile_x: int, tile_y: int
