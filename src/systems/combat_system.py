@@ -11,6 +11,8 @@ from core.iterator_system import IteratingProcessor
 
 
 class CombatSystem(IteratingProcessor):
+    """Handles combat between entities with attack and target components."""
+
     def __init__(self):
         super().__init__(Attack, Target, Position, Team)
         self.frame_count = 0
@@ -18,16 +20,27 @@ class CombatSystem(IteratingProcessor):
     def can_attack(
         self, ent: int, attack: Attack, ent_target_id: int, pos: Position
     ) -> bool:
-        """Check if entity can attack its target"""
+        """
+        Check if entity can attack its current target.
+
+        Args:
+            ent: Attacking entity ID
+            attack: Entity attack stats and cooldown info
+            ent_target_id: Target entity ID to attack
+            pos: Attacker position on map
+
+        Returns:
+            bool: True if entity can attack target now
+        """
         if not esper.entity_exists(ent_target_id):
             return False
 
-        # Check attack cooldown
+        # Check attack cooldown based on attack speed
         frames_per_attack = max(1, int(60 * attack.attack_speed))
         if self.frame_count - attack.last_attack < frames_per_attack:
             return False
 
-        # Check range
+        # Check if target is in attack range
         if not esper.has_component(ent_target_id, Position):
             return False
 
@@ -47,7 +60,17 @@ class CombatSystem(IteratingProcessor):
         pos: Position,
         team: Team,
     ) -> None:
-        """Process attacking entity"""
+        """
+        Process one attacking entity and handle damage dealing.
+
+        Args:
+            ent: Attacking entity ID
+            dt: Time passed since last frame
+            attack: Entity attack damage and cooldown data
+            target: Entity current target info
+            pos: Attacker position on map
+            team: Attacker team for death event
+        """
         self.frame_count += 1
 
         if not target.target_entity_id:
@@ -62,12 +85,12 @@ class CombatSystem(IteratingProcessor):
                 target.target_entity_id, Health
             )
 
-            # Deal damage
+            # Apply damage to target
             old_hp: int = target_health.remaining
             target_health.remaining -= attack.damage
             attack.last_attack = self.frame_count
 
-            # Handle death
+            # Handle target death
             if target_health.remaining <= 0:
                 target_health.remaining = 0
                 dead_entity_id = target.target_entity_id

@@ -8,14 +8,22 @@ from components.selection import Selection
 
 
 class PlayerMoveSystem(IteratingProcessor):
+    """Handles unit movement when player gives move orders."""
+
     def __init__(self, event_bus):
         super().__init__(Position, Velocity)
         self.event_bus = event_bus
         self.event_bus.subscribe(EventMoveTo, self.on_move)
-        self.target = {}
+        self.target = {}  # Store move targets for each entity
         self.last_group_order = None
 
     def on_move(self, event):
+        """
+        Start moving entity to target position when move order is given.
+
+        Args:
+            event: EventMoveTo with entity ID and target position
+        """
         pos = esper.component_for_entity(event.entity, Position)
         vel = esper.component_for_entity(event.entity, Velocity)
 
@@ -31,20 +39,33 @@ class PlayerMoveSystem(IteratingProcessor):
                 self.target[event.entity] = (event.target_x, event.target_y)
 
     def process_entity(self, ent, dt, pos, vel):
+        """
+        Update entity movement towards target and stop when close enough.
+
+        Args:
+            ent: Moving entity ID
+            dt: Time passed since last frame
+            pos: Entity current position
+            vel: Entity velocity to update
+        """
         if ent in self.target:
             tx, ty = self.target[ent]
             dx = tx - pos.x
             dy = ty - pos.y
             dist = (dx**2 + dy**2) ** 0.5
+
+            # Stop when close to target
             if dist < 5:
                 vel.x = 0
                 vel.y = 0
                 del self.target[ent]
 
+                # Deselect unit when it reaches destination
                 selection = esper.component_for_entity(ent, Selection)
                 if selection:
                     selection.is_selected = False
             else:
+                # Keep moving towards target
                 speed = 100
                 vel.x = (dx / dist) * speed
                 vel.y = (dy / dist) * speed
