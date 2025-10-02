@@ -1,5 +1,4 @@
 from components.fly import Fly
-from components.unit import Unit
 from config.layer import ENTITY_LAYER
 from enums.entity_type import *
 
@@ -26,11 +25,12 @@ from components.team import Team, PLAYER_1_TEAM
 UNITS = {
     EntityType.CROSSBOWMAN: Entity(
         components=[
-            Unit(EntityType.CROSSBOWMAN, UnitType.WALK),
+            EntityType.CROSSBOWMAN,
+            UnitType.WALK,
             Description("Piglin Arbalétrier", "Guerrier d'attaque à distance"),
             Attack(damage=20, range=3, attack_speed=2.0),
             Health(90),
-            Velocity(x=0, y=0, speed=80),
+            Velocity(x=0, y=0, speed=2),
             Position(x=10, y=10),
             Cost(amount=425),
             Selection(),
@@ -60,11 +60,12 @@ UNITS = {
     ),
     EntityType.BRUTE: Entity(
         components=[
-            Unit(EntityType.BRUTE, UnitType.WALK),
+            EntityType.BRUTE,
+            UnitType.WALK,
             Description("Piglin Brute", "Unité de corps à corps"),
             Attack(damage=15, range=1, attack_speed=1.0),
             Health(health=100),
-            Velocity(x=0, y=0, speed=20),
+            Velocity(x=0, y=0, speed=3),
             Cost(amount=350),
             Selection(),
             Collider(Config.TILE_SIZE(), Config.TILE_SIZE()),
@@ -74,16 +75,22 @@ UNITS = {
                 24,
                 {
                     Animation.IDLE: {
-                        Direction.DOWN: [1],
-                        Direction.UP: [3],
-                        Direction.LEFT: [2],
-                        Direction.RIGHT: [0],
+                        Direction.DOWN: [1, 5],
+                        Direction.UP: [3, 7],
+                        Direction.LEFT: [2, 6],
+                        Direction.RIGHT: [0, 4],
                     },
                     Animation.WALK: {
-                        Direction.DOWN: [1],
-                        Direction.UP: [3],
-                        Direction.LEFT: [2],
-                        Direction.RIGHT: [0],
+                        Direction.DOWN: [1, 10, 1, 11],
+                        Direction.UP: [3, 14, 3, 15],
+                        Direction.LEFT: [2, 12, 2, 13],
+                        Direction.RIGHT: [0, 8, 0, 9],
+                    },
+                    Animation.ATTACK: {
+                        Direction.DOWN: [0],
+                        Direction.UP: [0],
+                        Direction.LEFT: [0],
+                        Direction.RIGHT: [0, 16, 17],
                     },
                 },
                 0.5,
@@ -93,11 +100,12 @@ UNITS = {
     ),
     EntityType.GHAST: Entity(
         components=[
-            Unit(EntityType.GHAST, UnitType.FLY),
+            EntityType.GHAST,
+            UnitType.FLY,
             Description("Ghast", "Unité à distance ne ciblant que les structures"),
             Attack(damage=40, range=5, attack_speed=5),
             Health(health=700),
-            Velocity(x=0, y=0, speed=40),
+            Velocity(x=0, y=0, speed=2),
             Cost(amount=820),
             Selection(),
             Collider(Config.TILE_SIZE(), Config.TILE_SIZE()),
@@ -120,23 +128,26 @@ UNITS = {
                         Direction.RIGHT: [1, 9],
                     },
                 },
-                0.5,
+                0.3,
                 priority=ENTITY_LAYER[UnitType.FLY],
             ),
         ]
     ),
     EntityType.BASTION: Entity(
         components=[
-            Unit(EntityType.BASTION, UnitType.STRUCTURE),
+            EntityType.BASTION,
+            UnitType.STRUCTURE,
             Description("Bastion", "Base d'un joueur à défendre"),
             Health(1000),
             Sprite(
-                "assets/sprites/sprisheet-bastion.png",
+                "assets/sprites/spritesheet-bastion.png",
                 500,
                 500,
-                {},
+                {Animation.NONE: {Direction.NONE: [0]}},
                 1000,
                 priority=ENTITY_LAYER[UnitType.STRUCTURE],
+                default_animation=Animation.NONE,
+                default_direction=Direction.NONE,
             ),
         ]
     ),

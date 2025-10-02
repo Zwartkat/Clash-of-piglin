@@ -35,8 +35,8 @@ class Camera:
         Args:
             dz (float): Change in zoom factor (positive = zoom in, negative = zoom out).
         """
-        self.min_zoom = 1.0
-        self.max_zoom = 5.0
+        self.min_zoom = 0.5
+        self.max_zoom = 50.0
         self.zoom_factor += dz
         min_zoom_x = (
             self.width / self.world_width if self.world_width else self.min_zoom
@@ -47,7 +47,6 @@ class Camera:
         dynamic_min_zoom = max(min_zoom_x, min_zoom_y, self.min_zoom)
 
         self.zoom_factor = max(dynamic_min_zoom, min(self.zoom_factor, self.max_zoom))
-
         self.x = min(self.x, max(0, self.world_width - self.width / self.zoom_factor))
         self.y = min(self.y, max(0, self.world_height - self.height / self.zoom_factor))
 

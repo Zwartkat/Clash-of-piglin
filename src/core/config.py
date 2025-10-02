@@ -42,4 +42,6 @@ class Config:
         return textures.get(key, default)
 
     def TILE_SIZE() -> int:
-        return Config.get("tile_size", default=32)
+        if len(Config._config) == 0:
+            Config.load()
+        return Config.get("tile_size", default=1)

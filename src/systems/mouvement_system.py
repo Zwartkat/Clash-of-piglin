@@ -2,6 +2,7 @@ import esper
 from components.position import Position
 from components.velocity import Velocity
 from components.effects import Slowed
+from core.config import Config
 from core.iterator_system import IteratingProcessor
 
 
@@ -21,7 +22,7 @@ class MovementSystem(IteratingProcessor):
             pos: Entity position to update
             vel: Entity velocity for movement
         """
-        effective_speed = self._calculate_effective_speed(ent, vel)
+        effective_speed: int = self._calculate_effective_speed(ent, vel)
 
         if vel.x != 0 or vel.y != 0:
             magnitude = (vel.x**2 + vel.y**2) ** 0.5
@@ -54,6 +55,6 @@ class MovementSystem(IteratingProcessor):
             slowed = esper.component_for_entity(ent, Slowed)
             speed_modifier *= slowed.factor
 
-        effective_speed = base_speed * speed_modifier
+        effective_speed = base_speed * speed_modifier * Config.TILE_SIZE()
 
         return effective_speed
