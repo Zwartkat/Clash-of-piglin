@@ -81,12 +81,11 @@ class RenderSystem(IteratingProcessor):
                 frame = pygame.transform.scale(
                     frame, (Config.get("tile_size"), Config.get("tile_size"))
                 )
-                if esper.has_components(ent, Selection, Team):
-                    team: Team = esper.component_for_entity(ent, Team)
+                if esper.has_component(ent, Selection):
                     selection: Selection = esper.component_for_entity(ent, Selection)
-                    if team.team_id == Services.player_manager.get_current_player():
-                        color = (0, 255, 0) if selection.is_selected else (0, 0, 255)
-                        self._draw_diamond(position, color)
+                    color = (0, 255, 0) if selection.is_selected else (255, 0, 0)
+
+                    self._draw_diamond(position, color)
 
                 self._draw_health_bar(position, esper.component_for_entity(ent, Health))
 

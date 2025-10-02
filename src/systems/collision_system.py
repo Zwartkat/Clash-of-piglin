@@ -125,7 +125,7 @@ class CollisionSystem(IteratingProcessor):
                 if self.is_tile_blocking(unit, tile_x, tile_y):
                     self.resolve_terrain_collision(ent, pos, collider, tile_x, tile_y)
 
-    def is_tile_blocking(self, unit: Unit, tile_x: int, tile_y: int):
+    def is_tile_blocking(self, unit: UnitType.WALK, tile_x: int, tile_y: int):
         """
         Check if a map tile blocks the unit from walking.
 

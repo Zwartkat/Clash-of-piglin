@@ -13,10 +13,10 @@ from events.stop_event import StopEvent
 class PlayerMoveSystem(IteratingProcessor):
     """Handles unit movement when player gives move orders."""
 
-    def __init__(self, event_bus):
+    def __init__(self):
         super().__init__(Position, Velocity)
-        self.event_bus = event_bus
-        self.event_bus.subscribe(EventMoveTo, self.on_move)
+        EventBus.get_event_bus().subscribe(EventMoveTo, self.on_move)
+        self.target = {}
         self.last_group_order = None
 
     def on_move(self, event):
@@ -40,7 +40,7 @@ class PlayerMoveSystem(IteratingProcessor):
                 vel.y = (dy / dist) * speed
                 self.target[event.entity] = (event.target_x, event.target_y)
 
-    def process_entity(self, ent, dt, pos, vel):
+    def process_entity(self, ent: int, dt: float, pos: Position, vel: Velocity):
         """
         Update entity movement towards target and stop when close enough.
 
