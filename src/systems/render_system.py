@@ -1,6 +1,5 @@
 from typing import Tuple
-from components.team import Team
-from core.camera import CAMERA
+from core.camera import CAMERA, Camera
 from components.case import Case
 from components.health import Health
 from components.map import Map

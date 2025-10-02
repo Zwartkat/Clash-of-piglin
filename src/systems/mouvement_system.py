@@ -7,15 +7,27 @@ from core.iterator_system import IteratingProcessor
 
 
 class MovementSystem(IteratingProcessor):
+    """Moves entities based on their velocity with terrain effect modifiers."""
+
     def __init__(self):
         super().__init__(Position, Velocity)
 
-    def process_entity(self, ent: int, dt: float, pos: Position, vel: Velocity):
+    def process_entity(self, ent, dt, pos, vel):
+        """
+        Move entity based on velocity and apply terrain slowdown effects.
+
+        Args:
+            ent: Entity ID to move
+            dt: Time passed since last frame
+            pos: Entity position to update
+            vel: Entity velocity for movement
+        """
         effective_speed: int = self._calculate_effective_speed(ent, vel)
 
         if vel.x != 0 or vel.y != 0:
             magnitude = (vel.x**2 + vel.y**2) ** 0.5
             if magnitude > 0:
+                # Normalize velocity and apply effective speed
                 normalized_x = vel.x / magnitude
                 normalized_y = vel.y / magnitude
 
@@ -24,9 +36,21 @@ class MovementSystem(IteratingProcessor):
                 pos.y += normalized_y * effective_speed * dt
 
     def _calculate_effective_speed(self, ent, vel):
-        base_speed = vel.speed if vel.speed > 0 else 50  # Fallback
+        """
+        Calculate final speed with terrain effects like Soul Sand slowdown.
+
+        Args:
+            ent: Entity ID to check for slowdown effects
+            vel: Entity velocity component with base speed
+
+        Returns:
+            float: Final movement speed with all effects applied
+        """
+        base_speed = vel.speed if vel.speed > 0 else 50  # Default speed
 
         speed_modifier = 1.0
+
+        # Apply slowdown from terrain effects
         if esper.has_component(ent, Slowed):
             slowed = esper.component_for_entity(ent, Slowed)
             speed_modifier *= slowed.factor
