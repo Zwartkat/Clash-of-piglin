@@ -3,14 +3,12 @@ import esper
 
 from core.event_bus import EventBus
 from enums.input_actions import InputAction
-from enums.input_state import InputState
 from events.event_input import EventInput
 
 
 class InputManager(esper.Processor):
-    def __init__(self, event_bus, camera):
+    def __init__(self, camera):
         self.camera = camera
-        self.mouse_pressed = False
 
         self.keys_down = {
             pygame.K_UP: False,
@@ -19,20 +17,34 @@ class InputManager(esper.Processor):
             pygame.K_LEFT: False,
         }
 
-        self.key_bindings = {
+        self.mouse_down = {1: False}
+
+        # Les touches qui seront utiles si on les presse
+        self.key_bindings_press = {
             pygame.K_LCTRL: InputAction.SWITCH_TROOP,
             pygame.K_RCTRL: InputAction.SWITCH_TROOP,
+            pygame.K_SPACE: InputAction.CAMERA_RESET,
+        }
+
+        # Les touches qui seront utiles si on les release
+        self.key_bindings_release = {}
+
+        # Les touches qui seront utiles si on les maintient
+        self.key_bindings_hold = {
             pygame.K_UP: InputAction.CAMERA_UP,
             pygame.K_DOWN: InputAction.CAMERA_DOWN,
             pygame.K_LEFT: InputAction.CAMERA_LEFT,
             pygame.K_RIGHT: InputAction.CAMERA_RIGHT,
-            pygame.K_SPACE: InputAction.CAMERA_RESET,
         }
 
-        self.mouse_bindings = {
-            1: InputAction.SELECT,
+        self.mouse_bindings_press = {
+            1: InputAction.START_SELECT,
             3: InputAction.MOVE_ORDER,
         }
+
+        self.mouse_bindings_release = {1: InputAction.STOP_SELECT}
+
+        self.mouse_bindings_hold = {1: InputAction.SELECT}
 
     def process(self, dt):
         for event in pygame.event.get():
@@ -41,61 +53,69 @@ class InputManager(esper.Processor):
         # Gestion des touches maintenues
         for key, value in self.keys_down.items():
             if value:
-                EventBus.get_event_bus().emit(
-                    EventInput(self.key_bindings[key], InputState.HELD)
-                )
+                EventBus.get_event_bus().emit(EventInput(self.key_bindings_hold[key]))
 
     def handle_event(self, event):
         if event.type == pygame.QUIT:
-            EventBus.get_event_bus().emit(
-                EventInput(InputAction.QUIT, InputState.PRESSED)
-            )
+            EventBus.get_event_bus().emit(EventInput(InputAction.QUIT))
 
         elif event.type == pygame.KEYDOWN:
-            if event.key in self.key_bindings:
+            if event.key in self.keys_down:
+                if event.key in self.key_bindings_press:
+                    EventBus.get_event_bus().emit(
+                        EventInput(self.key_bindings_press[event.key])
+                    )
+
                 self.keys_down[event.key] = True
+
+            elif event.key in self.key_bindings_press:
                 EventBus.get_event_bus().emit(
-                    EventInput(self.key_bindings[event.key], InputState.PRESSED)
+                    EventInput(self.key_bindings_press[event.key])
                 )
 
         elif event.type == pygame.KEYUP:
-            if event.key in self.key_bindings:
+            if event.key in self.keys_down:
+                if event.key in self.key_bindings_release:
+                    EventBus.get_event_bus().emit(
+                        EventInput(self.key_bindings_release[event.key])
+                    )
                 self.keys_down[event.key] = False
+
+            elif event.key in self.key_bindings_release:
                 EventBus.get_event_bus().emit(
-                    EventInput(self.key_bindings[event.key], InputState.RELEASED)
+                    EventInput(self.key_bindings_release[event.key])
                 )
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button in self.mouse_bindings:
-                self.mouse_pressed = True
-                action = self.mouse_bindings[event.button]
+            if event.button in self.mouse_down:
+                self.mouse_down[event.button] = True
+
+            if event.button in self.mouse_bindings_press:
+                action = self.mouse_bindings_press[event.button]
                 pos = self.camera.unapply(event.pos[0], event.pos[1])
-                EventBus.get_event_bus().emit(
-                    EventInput(action, InputState.PRESSED, pos)
-                )
+                EventBus.get_event_bus().emit(EventInput(action, pos))
 
         elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button in self.mouse_bindings:
-                self.mouse_pressed = False
-                action = self.mouse_bindings[event.button]
+            if event.button in self.mouse_down:
+                self.mouse_down[event.button] = False
+
+            if event.button in self.mouse_bindings_release:
+                action = self.mouse_bindings_release[event.button]
                 pos = self.camera.unapply(event.pos[0], event.pos[1])
-                EventBus.get_event_bus().emit(
-                    EventInput(action, InputState.RELEASED, pos)
-                )
+                EventBus.get_event_bus().emit(EventInput(action, pos))
 
         elif event.type == pygame.MOUSEMOTION:
-            if self.mouse_pressed:
-                pos = self.camera.unapply(event.pos[0], event.pos[1])
-                EventBus.get_event_bus().emit(
-                    EventInput(InputAction.SELECT, InputState.HELD, pos)
-                )
+            for key, value in self.mouse_down.items():
+                if value:
+                    pos = self.camera.unapply(event.pos[0], event.pos[1])
+                    EventBus.get_event_bus().emit(
+                        EventInput(self.mouse_bindings_hold[key], pos)
+                    )
 
         elif event.type == pygame.MOUSEWHEEL:
-            EventBus.get_event_bus().emit(
-                EventInput(InputAction.ZOOM, InputState.WHEEL, event.y)
-            )
+            EventBus.get_event_bus().emit(EventInput(InputAction.ZOOM, event.y))
 
         elif event.type == pygame.VIDEORESIZE:
             EventBus.get_event_bus().emit(
-                EventInput(InputAction.RESIZE, InputState.RESIZE, (event.w, event.h))
+                EventInput(InputAction.RESIZE, (event.w, event.h))
             )
