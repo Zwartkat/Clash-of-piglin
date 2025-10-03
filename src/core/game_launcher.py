@@ -32,8 +32,9 @@ from systems.entity_factory import EntityFactory
 from systems.input_manager import InputManager
 from enums.case_type import CaseType
 from core.config import Config
-from systems.game_actions_system import GameActionSystem
+from systems.input_router_system import InputRouterSystem
 from systems.quit_system import QuitSystem
+from systems.camera_system import CameraSystem
 
 tile_size = Config.TILE_SIZE()
 
@@ -198,17 +199,14 @@ def main(screen: pygame.Surface, map_size=24):
     death_handler = DeathEventHandler(event_bus_instance)
     world.add_processor(TargetingSystem())
     world.add_processor(CombatSystem())
+    world.add_processor(CameraSystem(CAMERA))
 
-    input_manager = InputManager(event_bus_instance, CAMERA)
+    input_manager = InputManager(CAMERA)
     render = RenderSystem(screen, game_map, sprites)
 
     world.add_processor(input_manager)
     world.add_processor(render)
-    world.add_processor(
-        GameActionSystem(
-            event_bus_instance, world, player_manager, selection_system, CAMERA
-        )
-    )
+    world.add_processor(InputRouterSystem())
 
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
     game_state = {"running": True}
@@ -226,7 +224,7 @@ def main(screen: pygame.Surface, map_size=24):
         # draw_map(screen,game_map,sprites)
         render.show_map()
         render.process(dt)
-        selection_system.draw_selections(screen, world)
+        selection_system.draw_selections(screen)
         display_current_player(screen, player_manager)
         display_current_player(screen, player_manager)
         pygame.display.flip()

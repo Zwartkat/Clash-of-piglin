@@ -7,6 +7,14 @@ from components.selection import Selection
 from components.team import PLAYER_1_TEAM, PLAYER_2_TEAM, Team
 from components.collider import Collider
 from enums.unit_type import UnitType
+from events.switch_event import SwitchEvent
+from events.start_select_event import StartSelectEvent
+from events.stop_select_event import StopSelectEvent
+from events.select_event import SelectEvent
+from events.move_order_event import MoveOrderEvent
+from events.event_move import EventMoveTo
+from core.event_bus import EventBus
+from core.services import Services
 
 
 class SelectionSystem:
@@ -18,8 +26,19 @@ class SelectionSystem:
         self.selection_start = None
         self.selection_rect = None
         self.drag_threshold = 5  # Minimum pixels to consider it a drag
+        EventBus.get_event_bus().subscribe(SwitchEvent, self.on_switch)
+        EventBus.get_event_bus().subscribe(
+            StartSelectEvent, lambda e: self.handle_mouse_down(e.pos)
+        )
+        EventBus.get_event_bus().subscribe(
+            StopSelectEvent, lambda e: self.handle_mouse_up(e.pos)
+        )
+        EventBus.get_event_bus().subscribe(
+            SelectEvent, lambda e: self.handle_mouse_motion(e.pos)
+        )
+        EventBus.get_event_bus().subscribe(MoveOrderEvent, self.on_move_order)
 
-    def handle_mouse_down(self, mouse_pos, world):
+    def handle_mouse_down(self, mouse_pos):
         """
         Start selection process when mouse button is pressed.
 
@@ -30,7 +49,7 @@ class SelectionSystem:
         self.selection_start = mouse_pos
         self.is_dragging = False
 
-    def handle_mouse_motion(self, mouse_pos, world):
+    def handle_mouse_motion(self, mouse_pos):
         """
         Update selection rectangle while mouse is being dragged.
 
@@ -59,7 +78,7 @@ class SelectionSystem:
 
                 self.selection_rect = pygame.Rect(left, top, width, height)
 
-    def handle_mouse_up(self, mouse_pos, world):
+    def handle_mouse_up(self, mouse_pos):
         """
         Complete selection when mouse button is released.
 
@@ -68,15 +87,15 @@ class SelectionSystem:
             world: Game world to search for entities
         """
         if self.is_dragging:
-            self.select_entities_in_rect(world)
+            self.select_entities_in_rect()
         else:
-            self.select_entity_at_point(mouse_pos, world)
+            self.select_entity_at_point(mouse_pos)
 
         self.selection_start = None
         self.selection_rect = None
         self.is_dragging = False
 
-    def select_entity_at_point(self, mouse_pos, world):
+    def select_entity_at_point(self, mouse_pos):
         """
         Select single entity at mouse click position.
 
@@ -84,7 +103,7 @@ class SelectionSystem:
             mouse_pos: Mouse click position (x, y) on screen
             world: Game world to search for entities
         """
-        self.clear_selection(world)
+        self.clear_selection()
         closest_entity = None
         closest_distance = float("inf")
 
@@ -118,7 +137,7 @@ class SelectionSystem:
             else:
                 esper.add_component(closest_entity, Selection(True))
 
-    def select_entities_in_rect(self, world):
+    def select_entities_in_rect(self):
         """
         Select all entities inside the drag rectangle.
 
@@ -128,7 +147,7 @@ class SelectionSystem:
         if not self.selection_rect:
             return
 
-        self.clear_selection(world)
+        self.clear_selection()
 
         for ent, (pos, team) in esper.get_components(Position, Team):
             # Only select units from current player's team
@@ -141,7 +160,7 @@ class SelectionSystem:
                     else:
                         esper.add_component(ent, Selection(True))
 
-    def clear_selection(self, world):
+    def clear_selection(self):
         """
         Remove selection from all entities.
 
@@ -151,7 +170,7 @@ class SelectionSystem:
         for ent, selection in esper.get_component(Selection):
             selection.is_selected = False
 
-    def get_selected_entities(self, world):
+    def get_selected_entities(self):
         """
         Get list of all currently selected entities.
 
@@ -183,7 +202,7 @@ class SelectionSystem:
             overlay.fill((255, 255, 255))
             screen.blit(overlay, (self.selection_rect.x, self.selection_rect.y))
 
-    def draw_selections(self, screen, world):
+    def draw_selections(self, screen):
         """
         Draw selection indicators and team colors around all entities.
 
@@ -234,3 +253,31 @@ class SelectionSystem:
                     # pygame.draw.rect(screen, (255, 165, 0), selection_rect, 3)
 
         self.draw_selection_rect(screen)
+
+    def on_switch(self, event: SwitchEvent):
+        Services.player_manager.switch_player()
+        self.clear_selection()
+
+    def on_move_order(self, event: MoveOrderEvent):
+        selected_entities = self.get_selected_entities()
+
+        if selected_entities:
+            x, y = event.pos
+            from systems.troop_system import (
+                FormationSystem,
+                TROOP_GRID,
+                TROOP_CIRCLE,
+            )
+
+            positions = FormationSystem.calculate_formation_positions(
+                selected_entities,
+                x,
+                y,
+                spacing=35,
+                formation_type=TROOP_GRID,  # you can change to TROOP_CIRCLE if needed
+            )
+
+            for i, ent in enumerate(selected_entities):
+                if i < len(positions):
+                    target_x, target_y = positions[i]
+                    EventBus.get_event_bus().emit(EventMoveTo(ent, target_x, target_y))

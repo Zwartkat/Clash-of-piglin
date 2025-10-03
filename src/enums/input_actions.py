@@ -2,6 +2,8 @@ from enum import Enum, auto
 
 
 class InputAction(Enum):
+    START_SELECT = auto()
+    STOP_SELECT = auto()
     SELECT = auto()
     MOVE_ORDER = auto()
     SWITCH_TROOP = auto()
