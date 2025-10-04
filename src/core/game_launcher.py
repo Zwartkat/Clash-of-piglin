@@ -8,6 +8,7 @@ from components.team import Team
 from core.event_bus import EventBus
 from core.services import Services
 from enums.entity_type import EntityType
+from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
 from systems.collision_system import CollisionSystem
 from systems.combat_system import CombatSystem
@@ -101,25 +102,17 @@ def main(screen: pygame.Surface, map_size=24):
     dt = 0.05
 
     info = pygame.display.Info()
-    win_w, win_h = info.current_w, info.current_h
-
-    hud_width = 200
-
-    Config.tile_size = (win_w - hud_width * 2) / map_size
-    print(Config.tile_size)
-
-    map_width = tile_size * 2 * map_size
-    map_height = tile_size * 2 * map_size
+    win_w, win_h = 800, 600
 
     screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
 
+    map_width, map_height = resize(screen, map_size)
+
     clock = pygame.time.Clock()
 
-    screen_rect = screen.get_rect()
+    # from ui.hud import HUDSystem
 
-    CAMERA.set_size(screen_rect.width, screen_rect.height)
-    CAMERA.set_world_size(map_width, map_height)
-    CAMERA.set_offset(hud_width, 0)
+    # ui = HUDSystem(screen, hud_width)
 
     # Charger la map et les sprites
     game_map: Map = Map()
@@ -134,13 +127,17 @@ def main(screen: pygame.Surface, map_size=24):
                 case = Case(Position(x * tile_size, y * tile_size), CaseType.LAVA)
                 EntityFactory.create(*case.get_all_components())
 
+    def on_resize(resize_event: ResizeEvent):
+        resize(screen, 24)
+
     # Subscribes
     Services.event_bus = EventBus.get_event_bus()
 
+    Services.event_bus.subscribe(ResizeEvent, on_resize)
     Services.event_bus.subscribe(SpawnUnitEvent, UnitFactory.create_unit_event)
 
     Services.event_bus.emit(
-        SpawnUnitEvent(EntityType.GHAST, Team(1), Position(200, 800))
+        SpawnUnitEvent(EntityType.GHAST, Team(1), Position(200, 700))
     )
 
     player_manager = PlayerManager(
@@ -238,8 +235,27 @@ def main(screen: pygame.Surface, map_size=24):
         render.show_map()
         render.process(dt)
         selection_system.draw_selections(screen)
-        display_current_player(screen, player_manager)
-        display_current_player(screen, player_manager)
+
+        # ui.draw()
         pygame.display.flip()
 
     pygame.quit()
+
+
+def resize(screen: pygame.Surface, map_size: int) -> tuple[int]:
+
+    hud_width = 100
+
+    Config.tile_size = (screen.get_width() - hud_width * 2) / map_size
+    print(Config.tile_size)
+
+    map_width = Config.tile_size * map_size
+    map_height = Config.tile_size * map_size
+
+    screen_rect = screen.get_rect()
+
+    CAMERA.set_size(screen_rect.width - (hud_width * 2) - 20, screen_rect.height)
+    CAMERA.set_world_size(map_width, map_height)
+    CAMERA.set_offset(hud_width + 10, 0)
+
+    return map_width, map_height

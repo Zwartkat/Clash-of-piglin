@@ -29,6 +29,14 @@ class Camera:
 
         self.x = min(max(self.x, 0), max_x)
         self.y = min(max(self.y, 0), max_y)
+        print(
+            "Max:",
+            self.world_width,
+            self.x,
+            self.width / self.zoom_factor,
+            max_x,
+            max_y,
+        )
 
     def zoom(self, dz: float) -> None:
         """
@@ -37,8 +45,8 @@ class Camera:
         Args:
             dz (float): Change in zoom factor (positive = zoom in, negative = zoom out).
         """
-        self.min_zoom = 0.5
-        self.max_zoom = 50.0
+        self.min_zoom = 1.0
+        self.max_zoom = 5.0
         self.zoom_factor += dz
         min_zoom_x = (
             self.width / self.world_width if self.world_width else self.min_zoom
@@ -73,6 +81,9 @@ class Camera:
         """
         self.width = width
         self.height = height
+        print("Size:", self.width, self.height)
+
+        print("World:", self.world_width, self.world_height)
 
     def set_world_size(self, width: int, height: int) -> None:
         """
@@ -84,6 +95,7 @@ class Camera:
         """
         self.world_width = width
         self.world_height = height
+        print("World:", self.world_width, self.world_height)
 
     def set_position(self, x: int, y: int) -> None:
         """
@@ -95,6 +107,7 @@ class Camera:
         """
         self.x = x
         self.y = y
+        print("Position:", self.x, self.y)
 
     def set_zoom(self, zoom: float) -> None:
         """
@@ -148,6 +161,22 @@ class Camera:
         return (x - self.offset_x) / self.zoom_factor + self.x, (
             y - self.offset_y
         ) / self.zoom_factor + self.y
+
+    def is_visible(self, x: float, y: float, w: float = 0, h: float = 0) -> bool:
+        """
+        Vérifie si un objet (x, y, w, h) est visible dans la caméra.
+        Coordonnées en unités du monde.
+        """
+        cam_x1, cam_y1 = self.x, self.y
+        cam_x2 = self.x + (self.width) / self.zoom_factor
+        cam_y2 = self.y + (self.height) / self.zoom_factor
+
+        obj_x1, obj_y1 = x, y
+        obj_x2, obj_y2 = x + w, y + h
+
+        return not (
+            obj_x2 < cam_x1 or obj_x1 > cam_x2 or obj_y2 < cam_y1 or obj_y1 > cam_y2
+        )
 
 
 CAMERA = Camera()
