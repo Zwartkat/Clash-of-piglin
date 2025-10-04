@@ -35,6 +35,7 @@ from core.config import Config
 from systems.input_router_system import InputRouterSystem
 from systems.quit_system import QuitSystem
 from systems.camera_system import CameraSystem
+from systems.hud_system import HudSystem
 
 tile_size = Config.TILE_SIZE()
 
@@ -112,7 +113,7 @@ def main(screen: pygame.Surface, map_size=24):
     map_width = tile_size * map_size
     map_height = tile_size * map_size
 
-    screen = pygame.display.set_mode((win_w, win_h))
+    screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
 
     clock = pygame.time.Clock()
 
@@ -126,6 +127,7 @@ def main(screen: pygame.Surface, map_size=24):
     game_map: Map = Map()
     game_map.generate(map_size)
     sprites = load_terrain_sprites()
+    game_hud = HudSystem(screen)
 
     for y in range(len(game_map.tab)):
         for x in range(len(game_map.tab[y])):
@@ -234,6 +236,7 @@ def main(screen: pygame.Surface, map_size=24):
         selection_system.draw_selections(screen)
         display_current_player(screen, player_manager)
         display_current_player(screen, player_manager)
+        game_hud.draw()
         pygame.display.flip()
 
     pygame.quit()
