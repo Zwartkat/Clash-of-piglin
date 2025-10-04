@@ -1,14 +1,14 @@
 import pygame
 import esper
 
+from core.camera import CAMERA
 from core.event_bus import EventBus
 from enums.input_actions import InputAction
 from events.event_input import EventInput
 
 
 class InputManager(esper.Processor):
-    def __init__(self, camera):
-        self.camera = camera
+    def __init__(self):
 
         self.keys_down = {
             pygame.K_UP: False,
@@ -92,7 +92,7 @@ class InputManager(esper.Processor):
 
             if event.button in self.mouse_bindings_press:
                 action = self.mouse_bindings_press[event.button]
-                pos = self.camera.unapply(event.pos[0], event.pos[1])
+                pos = CAMERA.unapply(event.pos[0], event.pos[1])
                 EventBus.get_event_bus().emit(EventInput(action, pos))
 
         elif event.type == pygame.MOUSEBUTTONUP:
@@ -101,13 +101,13 @@ class InputManager(esper.Processor):
 
             if event.button in self.mouse_bindings_release:
                 action = self.mouse_bindings_release[event.button]
-                pos = self.camera.unapply(event.pos[0], event.pos[1])
+                pos = CAMERA.unapply(event.pos[0], event.pos[1])
                 EventBus.get_event_bus().emit(EventInput(action, pos))
 
         elif event.type == pygame.MOUSEMOTION:
             for key, value in self.mouse_down.items():
                 if value:
-                    pos = self.camera.unapply(event.pos[0], event.pos[1])
+                    pos = CAMERA.unapply(event.pos[0], event.pos[1])
                     EventBus.get_event_bus().emit(
                         EventInput(self.mouse_bindings_hold[key], pos)
                     )
