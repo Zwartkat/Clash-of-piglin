@@ -103,8 +103,8 @@ class RenderSystem(IteratingProcessor):
                 sprite = self.sprites.get(tile.type, self.sprites.get("Netherrack"))
 
                 if tile.type != CaseType.LAVA:
-                    pos_x = x * Config.TILE_SIZE()
-                    pos_y = y * Config.TILE_SIZE()
+                    pos_x = x * 32
+                    pos_y = y * 32
                     self.draw_surface(sprite, pos_x, pos_y)
 
     def _set_animation(self, ent: int, animation: Animation):

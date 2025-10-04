@@ -6,6 +6,7 @@ from enums.config_type import ConfigType
 class Config:
 
     _config = {}
+    tile_size = 0
 
     @staticmethod
     def load(config_file="config.yaml"):
@@ -44,4 +45,6 @@ class Config:
     def TILE_SIZE() -> int:
         if len(Config._config) == 0:
             Config.load()
-        return Config.get("tile_size", default=1)
+        if Config.tile_size == 0:
+            Config.tile_size = Config.get("tile_size", default=1)
+        return Config.tile_size

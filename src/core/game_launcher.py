@@ -5,12 +5,10 @@ import os
 from core.camera import CAMERA
 from components.effects import OnTerrain
 from components.team import Team
-from components.velocity import Velocity
-from core import event_bus
-from core.entity import Entity
+from core.event_bus import EventBus
 from core.services import Services
-from events.event_move import EventMoveTo
-from events.event_input import EventInput
+from enums.entity_type import EntityType
+from events.spawn_unit_event import SpawnUnitEvent
 from systems.collision_system import CollisionSystem
 from systems.combat_system import CombatSystem
 from systems.death_event_handler import DeathEventHandler
@@ -19,7 +17,6 @@ from systems.death_event_handler import DeathEventHandler
 from systems.mouvement_system import MovementSystem
 from components.position import Position
 from systems.player_manager import PlayerManager
-from components.squad import Squad
 from systems.player_move_system import PlayerMoveSystem
 from systems.render_system import RenderSystem
 from systems.targeting_system import TargetingSystem
@@ -29,6 +26,7 @@ from systems.selection_system import SelectionSystem
 from systems.terrain_effect_system import TerrainEffectSystem
 from systems.economy_system import EconomySystem
 from systems.entity_factory import EntityFactory
+from systems.unit_factory import UnitFactory
 from systems.input_manager import InputManager
 from enums.case_type import CaseType
 from core.config import Config
@@ -107,12 +105,13 @@ def main(screen: pygame.Surface, map_size=24):
 
     hud_width = 200
 
-    # map_width = (win_w - hud_width * 2) / map_size
-    # map_height = win_h / map_size
-    map_width = tile_size * map_size
-    map_height = tile_size * map_size
+    Config.tile_size = (win_w - hud_width * 2) / map_size
+    print(Config.tile_size)
 
-    screen = pygame.display.set_mode((win_w, win_h))
+    map_width = tile_size * 2 * map_size
+    map_height = tile_size * 2 * map_size
+
+    screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
 
     clock = pygame.time.Clock()
 
@@ -135,6 +134,15 @@ def main(screen: pygame.Surface, map_size=24):
                 case = Case(Position(x * tile_size, y * tile_size), CaseType.LAVA)
                 EntityFactory.create(*case.get_all_components())
 
+    # Subscribes
+    Services.event_bus = EventBus.get_event_bus()
+
+    Services.event_bus.subscribe(SpawnUnitEvent, UnitFactory.create_unit_event)
+
+    Services.event_bus.emit(
+        SpawnUnitEvent(EntityType.GHAST, Team(1), Position(200, 800))
+    )
+
     player_manager = PlayerManager(
         [
             Position(tile_size, tile_size),
@@ -145,8 +153,6 @@ def main(screen: pygame.Surface, map_size=24):
     Services.player_manager = player_manager
 
     from config.units import UNITS
-    from enums.entity_type import EntityType
-    from systems.unit_factory import UnitFactory
 
     entities_1 = []
 
@@ -200,7 +206,7 @@ def main(screen: pygame.Surface, map_size=24):
     selection_system = SelectionSystem(player_manager)
 
     # Crée l'EventBus et le système de déplacement joueur
-    event_bus_instance = event_bus.EventBus.get_event_bus()
+    event_bus_instance = EventBus.get_event_bus()
     world.add_processor(PlayerMoveSystem())
     world.add_processor(EconomySystem(event_bus_instance))
     death_handler = DeathEventHandler(event_bus_instance)
