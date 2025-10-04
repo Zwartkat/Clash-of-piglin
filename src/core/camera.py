@@ -29,14 +29,6 @@ class Camera:
 
         self.x = min(max(self.x, 0), max_x)
         self.y = min(max(self.y, 0), max_y)
-        print(
-            "Max:",
-            self.world_width,
-            self.x,
-            self.width / self.zoom_factor,
-            max_x,
-            max_y,
-        )
 
     def zoom(self, dz: float) -> None:
         """

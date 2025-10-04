@@ -211,7 +211,7 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(CombatSystem())
     world.add_processor(CameraSystem(CAMERA))
 
-    input_manager = InputManager(CAMERA)
+    input_manager = InputManager()
     render = RenderSystem(screen, game_map, sprites)
 
     world.add_processor(input_manager)
