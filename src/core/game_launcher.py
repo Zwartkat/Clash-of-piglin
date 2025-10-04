@@ -61,6 +61,7 @@ def load_terrain_sprites():
         if os.path.exists(full_path):
             sprite = pygame.image.load(full_path)
             if terrain_type != CaseType.LAVA:
+                print(tile_size)
                 sprite = pygame.transform.scale(sprite, (tile_size, tile_size))
                 sprites[terrain_type] = sprite
 
@@ -100,13 +101,18 @@ def display_current_player(screen, player_manager):
 def main(screen: pygame.Surface, map_size=24):
 
     dt = 0.05
-    map_width = map_size * tile_size
-    map_height = map_size * tile_size
 
     info = pygame.display.Info()
     win_w, win_h = info.current_w, info.current_h
 
-    screen = pygame.display.set_mode((800, 600), pygame.RESIZABLE)
+    hud_width = 200
+
+    # map_width = (win_w - hud_width * 2) / map_size
+    # map_height = win_h / map_size
+    map_width = tile_size * map_size
+    map_height = tile_size * map_size
+
+    screen = pygame.display.set_mode((win_w, win_h))
 
     clock = pygame.time.Clock()
 
@@ -114,6 +120,7 @@ def main(screen: pygame.Surface, map_size=24):
 
     CAMERA.set_size(screen_rect.width, screen_rect.height)
     CAMERA.set_world_size(map_width, map_height)
+    CAMERA.set_offset(hud_width, 0)
 
     # Charger la map et les sprites
     game_map: Map = Map()

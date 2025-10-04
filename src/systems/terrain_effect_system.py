@@ -40,11 +40,10 @@ class TerrainEffectSystem(IteratingProcessor):
             self._clear_terrain_effects(ent)
             try:
                 self._apply_terrain_effects(ent, current_case.type)
+                on_terrain.previous_terrain = on_terrain.terrain_type
+                on_terrain.terrain_type = current_case.type
             except:
-                print(current_case, pos)
-
-            on_terrain.previous_terrain = on_terrain.terrain_type
-            on_terrain.terrain_type = current_case.type
+                print(current_case, type(current_case), pos)
 
     def get_terrain_at_position(self, pos: Position) -> Case | None:
         """
