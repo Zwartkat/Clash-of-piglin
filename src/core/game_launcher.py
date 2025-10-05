@@ -173,14 +173,11 @@ def main(screen: pygame.Surface, map_size=24):
             OnTerrain(),
         )
     )
-    entities_2.append(
-        EntityFactory.create(
-            *UNITS[EntityType.BRUTE].get_all_components(),
-            Position(400, 100),
-            Team(2),
-            OnTerrain(),
+
+    for i in range(6):
+        entities_1.append(
+            UnitFactory.create_unit(EntityType.BRUTE, Team(2), Position(400, 200))
         )
-    )
     #
     # Crée le monde Esper
     world = esper
@@ -232,6 +229,7 @@ def main(screen: pygame.Surface, map_size=24):
         if not victory_handled:
             render.show_map()
             render.process(dt)
+            arrow_system.process(dt)
             selection_system.draw_selections(screen)
             game_hud.draw()
 
