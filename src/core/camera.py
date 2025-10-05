@@ -10,6 +10,8 @@ class Camera:
         self.zoom_factor: float = 1.0
         self.world_width: int = 100
         self.world_height: int = 100
+        self.offset_x: int = 0
+        self.offset_y: int = 0
 
     def move(self, dx: int, dy: int) -> None:
         """
@@ -35,8 +37,8 @@ class Camera:
         Args:
             dz (float): Change in zoom factor (positive = zoom in, negative = zoom out).
         """
-        self.min_zoom = 0.5
-        self.max_zoom = 50.0
+        self.min_zoom = 1.0
+        self.max_zoom = 5.0
         self.zoom_factor += dz
         min_zoom_x = (
             self.width / self.world_width if self.world_width else self.min_zoom
@@ -49,6 +51,17 @@ class Camera:
         self.zoom_factor = max(dynamic_min_zoom, min(self.zoom_factor, self.max_zoom))
         self.x = min(self.x, max(0, self.world_width - self.width / self.zoom_factor))
         self.y = min(self.y, max(0, self.world_height - self.height / self.zoom_factor))
+
+    def set_offset(self, offset_x: int, offset_y: int):
+        """
+        Set the offset of the camera
+
+        Args:
+            offset_x (int): X offset
+            offset_y (int): Y offset
+        """
+        self.offset_x = offset_x
+        self.offset_y = offset_y
 
     def set_size(self, width: int, height: int) -> None:
         """
@@ -104,7 +117,9 @@ class Camera:
         Returns:
             tuple[float, float]: Transformed (x, y) screen coordinates.
         """
-        return (x - self.x) * self.zoom_factor, (y - self.y) * self.zoom_factor
+        return (x - self.x) * self.zoom_factor + self.offset_x, (
+            y - self.y
+        ) * self.zoom_factor + self.offset_y
 
     def apply_position(self, position: Position) -> Position:
         """
@@ -130,7 +145,25 @@ class Camera:
         Returns:
             tuple[float, float]: Transformed (x, y) world coordinates.
         """
-        return x / self.zoom_factor + self.x, y / self.zoom_factor + self.y
+        return (x - self.offset_x) / self.zoom_factor + self.x, (
+            y - self.offset_y
+        ) / self.zoom_factor + self.y
+
+    def is_visible(self, x: float, y: float, w: float = 0, h: float = 0) -> bool:
+        """
+        Vérifie si un objet (x, y, w, h) est visible dans la caméra.
+        Coordonnées en unités du monde.
+        """
+        cam_x1, cam_y1 = self.x, self.y
+        cam_x2 = self.x + (self.width) / self.zoom_factor
+        cam_y2 = self.y + (self.height) / self.zoom_factor
+
+        obj_x1, obj_y1 = x, y
+        obj_x2, obj_y2 = x + w, y + h
+
+        return not (
+            obj_x2 < cam_x1 or obj_x1 > cam_x2 or obj_y2 < cam_y1 or obj_y1 > cam_y2
+        )
 
 
 CAMERA = Camera()

@@ -3,12 +3,15 @@ import esper
 from core.event_bus import EventBus
 from events.attack_event import AttackEvent
 from events.death_event import DeathEvent
+from events.arrow_fired_event import ArrowFiredEvent
 from components.team import Team
 from components.attack import Attack
 from components.health import Health
 from components.target import Target
 from components.position import Position
 from core.iterator_system import IteratingProcessor
+from components.cost import Cost
+from enums.entity_type import EntityType
 
 
 class CombatSystem(IteratingProcessor):
@@ -86,6 +89,20 @@ class CombatSystem(IteratingProcessor):
                 target.target_entity_id, Health
             )
 
+            target_pos: Position = esper.component_for_entity(
+                target.target_entity_id, Position
+            )
+
+            # Fire arrow if attacker is a Crossbowman
+            components = esper.components_for_entity(ent)
+            for component in components:
+                if (
+                    isinstance(component, EntityType)
+                    and component == EntityType.CROSSBOWMAN
+                ):
+                    EventBus.get_event_bus().emit(ArrowFiredEvent(ent, pos, target_pos))
+                    break
+
             # Apply damage to target
             EventBus.get_event_bus().emit(AttackEvent(ent, target.target_entity_id))
 
@@ -98,5 +115,14 @@ class CombatSystem(IteratingProcessor):
             if target_health.remaining <= 0:
                 target_health.remaining = 0
                 dead_entity_id = target.target_entity_id
-                EventBus.get_event_bus().emit(DeathEvent(team, dead_entity_id))
+                # Get entity cost before emitting death event
+
+                entity_cost = 0
+
+                if esper.has_component(dead_entity_id, Cost):
+                    cost_component = esper.component_for_entity(dead_entity_id, Cost)
+                    entity_cost = cost_component.amount
+                    EventBus.get_event_bus().emit(
+                        DeathEvent(team, dead_entity_id, entity_cost)
+                    )
                 target.target_entity_id = None

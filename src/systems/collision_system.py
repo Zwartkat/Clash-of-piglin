@@ -195,8 +195,8 @@ class CollisionSystem(IteratingProcessor):
             pos.y = tile_bottom + collider.height // 2 + 1
 
         # Stop velocity in collision direction
-        vel = esper.component_for_entity(ent, Velocity)
-        if vel:
+        if esper.has_component(ent, Velocity):
+            vel = esper.component_for_entity(ent, Velocity)
             if min_overlap in [overlap_left, overlap_right]:
                 vel.x = 0
             if min_overlap in [overlap_top, overlap_bottom]:

@@ -38,7 +38,7 @@ class CameraSystem(esper.Processor):
     def on_resize(self, event: ResizeEvent):
         win_w, win_h = event.size[0], event.size[1]
         screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
-        self.camera.set_size(win_w, win_h)
+        # self.camera.set_size(win_w, win_h)
 
     def cam_up(self, event: CameraUpEvent):
         self.camera.move(0, -5)

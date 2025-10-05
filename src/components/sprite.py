@@ -13,6 +13,7 @@ class Sprite:
         frame_height: int,
         animations: dict[Animation, dict[Direction, list[int]]],
         frame_duration: float,
+        sprite_size: tuple[int] = None,
         spritesheet_direction: Orientation = Orientation.HORIZONTAL,
         default_animation: Animation = Animation.IDLE,
         default_direction: Direction = Direction.DOWN,
@@ -26,6 +27,7 @@ class Sprite:
             frame_height (int): Height of each frame in the spritesheet.
             animations (dict[Animation,dict[Direction,list[int]]]): A dictionary defining the animations and their frames.
             frame_duration (float): Duration of each frame in seconds.
+            sprite_size (tuple[int]) : Size to display the sprite
             spritesheet_direction (Orientation, optional): Orientation of the spritesheet. Defaults to Orientation.HORIZONTAL.
             default_animation (Animation, optional): The default animation to play. Defaults to Animation.IDLE.
             default_direction (Direction, optional): The default direction to face. Defaults to Direction.DOWN.
@@ -36,6 +38,9 @@ class Sprite:
         self.frame_height: int = frame_height
         self.animations: dict[Animation, dict[Direction, list[int]]] = animations
         self.frame_duration: int = frame_duration
+        self.sprite_size: int = (
+            sprite_size if sprite_size else (frame_width, frame_height)
+        )
         self.sprite_sheet_direction: Orientation = spritesheet_direction
         self.current_animation: Animation = default_animation
         self.current_direction: Direction = default_direction
@@ -86,9 +91,7 @@ class Sprite:
                         self.frame_height,
                     )
                 )
-                frame = pygame.transform.scale(
-                    frame, (Config.TILE_SIZE(), Config.TILE_SIZE())
-                )
+                frame = pygame.transform.scale(frame, self.sprite_size)
                 self.frames.append(frame)
 
     def set_animation(self, animation_name: Animation, direction: Direction) -> None:

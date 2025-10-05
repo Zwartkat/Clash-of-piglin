@@ -9,6 +9,7 @@ Config.load()
 
 pygame.init()
 pygame.display.set_caption(Config.get(key="game_name"))
+
 screen = pygame.display.set_mode((800, 600))
 
 font = pygame.font.Font(Config.get_assets(key="font"), 18)
@@ -27,6 +28,43 @@ selected = 0
 # pygame.mixer.music.load("assets/audio/pigstep.mp3")
 # pygame.mixer.music.set_volume(1)
 # pygame.mixer.music.play(-1)
+
+credits_open = False
+credits_text = [
+    "Crédits",
+    "",
+    "Développeurs:",
+    "- Zwartkat",
+    "- xMegumi",
+    "- darkell",
+    "- WorKrai",
+    "- Sparkness",
+    "- MatthieuPinceel",
+    "Graphismes: Zwartkat,Mojang Studio",
+    "",
+    "Jeu inspiré de la license Minecraft dont les droits",
+    "reviennent à Mojang Studios (Microsoft)",
+]
+scroll_offset = 0
+scroll_speed = 0
+
+
+def draw_credits():
+    global scroll_offset
+
+    overlay = pygame.Surface((800, 600), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 200))
+    screen.blit(overlay, (0, 0))
+
+    start_y = 50 - scroll_offset
+    for line in credits_text:
+        text_surf = font.render(line, True, (255, 255, 255))
+        screen.blit(text_surf, (400 - text_surf.get_width() // 2, start_y))
+        start_y += 40
+
+    scroll_offset += scroll_speed
+    if start_y < 0:
+        scroll_offset = 0
 
 
 # Draw a button
@@ -76,44 +114,48 @@ def draw_menu():
     info_text = info_font.render("Presque pas Minecraft 1.16", True, (220, 220, 220))
     screen.blit(info_text, (20, 580))
 
-    pygame.display.flip()
+
+credits_open = False  # global
 
 
 def handle_click(pos: Tuple[int]):
     """
     Handle click on the main menu.
-
-    Args:
-        pos (tuple): Mouse click position.
-
-    Returns:
-        bool: False if the game should quit, True otherwise.
     """
-    global selected
+    global selected, credits_open
+
+    if credits_open:
+        credits_open = False
+        return True
+
     for i, rect in enumerate(button_rects):
         if rect.collidepoint(pos):
             selected = i
             if menu_items[selected] == menu_items[0]:  # Play
                 print("Play")
                 return game_manager.main(screen)
-            elif menu_items[selected] == menu_items[1]:  # Options
-                print("Options menu not implemented yet.")
-                pass
+            elif menu_items[selected] == menu_items[1]:  # Options ou Crédits
+                print("Credits opened")
+                credits_open = True
             elif menu_items[selected] == menu_items[2]:  # Quit
                 print("Quit")
                 pygame.quit()
                 exit()
-        else:
-            return True
+            break
+    return True
 
 
 running = True
 while running:
     draw_menu()
+    if credits_open:
+        draw_credits()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             print(running)
             running = handle_click(event.pos)
+
+    pygame.display.flip()
 pygame.quit()

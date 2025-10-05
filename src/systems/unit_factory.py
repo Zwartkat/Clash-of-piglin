@@ -7,6 +7,7 @@ from components.team import Team
 from config.units import UNITS
 from core.entity import Entity
 from enums.entity_type import EntityType
+from events.spawn_unit_event import SpawnUnitEvent
 from systems.entity_factory import EntityFactory
 
 
@@ -48,6 +49,10 @@ class UnitFactory:
         ent: int = EntityFactory.create(*components)
 
         return ent
+
+    @staticmethod
+    def create_unit_event(event: SpawnUnitEvent):
+        UnitFactory.create_unit(event.entity_type, event.team, event.position)
 
     @staticmethod
     def create_squad(entity_type: EntityType, positions: list[Position], team: Team):
