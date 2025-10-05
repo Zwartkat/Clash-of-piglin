@@ -1,5 +1,8 @@
+import esper
 import pygame
 from core.services import Services
+from core.player import Player
+from components.health import Health
 
 
 class Hud:
@@ -110,6 +113,16 @@ class Hud:
         )
         self.screen.blit(time_surface, time_rect)
 
+    def get_bastion_health(self, player: Player) -> int:
+        """Récupère la vie du bastion d'un joueur"""
+        try:
+            if esper.has_component(player.bastion, Health):
+                health_component = esper.component_for_entity(player.bastion, Health)
+                return health_component.remaining
+        except:
+            pass
+        return 0
+
     def drawTeamHud(self, team_id: int):
         """Dessine le HUD d'une équipe spécifique"""
         if (
@@ -181,6 +194,33 @@ class Hud:
                 bar_x + 2, bar_y + 2, progress_width, bar_height - 4
             )
             self.screen.fill(self.gold_color, progress_rect)
+
+        # displaying in text the health of the player's bastion
+        bastion_health = self.get_bastion_health(player)
+        health_text = f"Bastion: {bastion_health}/1000"
+        health_color = (255, 100, 100) if bastion_health < 300 else (100, 255, 100)
+        health_surface = self.font_medium.render(health_text, True, health_color)
+        self.screen.blit(health_surface, (hud_x + 15, info_y + 40))
+
+        # displaying a progress bar to show the health of the player's bastion
+        health_progress = bastion_health / 1000.0
+        health_bar_y = info_y + 60
+
+        health_bar_rect = pygame.Rect(bar_x, health_bar_y, bar_width, bar_height)
+        self.drawMinecraftPanel(self.screen, health_bar_rect, dark=True)
+
+        # filling the bar
+        if health_progress > 0:
+            health_width = int((bar_width - 4) * health_progress)
+            health_fill_rect = pygame.Rect(
+                bar_x + 2, health_bar_y + 2, health_width, bar_height - 4
+            )
+            health_bar_color = (
+                (255, 100, 100)
+                if health_progress < 0.3
+                else (255, 200, 100) if health_progress < 0.6 else (100, 255, 100)
+            )
+            self.screen.fill(health_bar_color, health_fill_rect)
 
     def draw(self):
         """Dessine l'interface complète"""

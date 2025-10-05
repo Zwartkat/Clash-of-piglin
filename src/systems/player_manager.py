@@ -11,17 +11,18 @@ class PlayerManager:
     def __init__(self, bastions: list[Position]):
 
         if len(bastions) <= 1:
-            raise Exception("You must have 2 players min")
+            raise Exception("You must have at least 2 players.")
 
         self.players: dict[int,] = {}
-
-        team: int = 0
+        team: int = 1
 
         for bastion_pos in bastions:
             bastion = UnitFactory.create_unit(
-                EntityType.BASTION, Team(team), bastion_pos
+                EntityType.BASTION,
+                Team(team),
+                bastion_pos,
             )
-            self.players[team + 1] = Player(team, bastion)
+            self.players[team] = Player(team, bastion)
             team += 1
 
         self.current_player = 1
