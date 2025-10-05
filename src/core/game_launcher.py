@@ -1,7 +1,9 @@
+import importlib
 import pygame
 import esper
 import os
 
+from config import units
 from core.camera import CAMERA
 from components.effects import OnTerrain
 from components.team import Team
@@ -35,6 +37,7 @@ from systems.input_router_system import InputRouterSystem
 from systems.quit_system import QuitSystem
 from systems.camera_system import CameraSystem
 from systems.hud_system import HudSystem
+from systems.victory_system import VictorySystem
 from systems.arrow_system import ArrowSystem
 
 tile_size = Config.TILE_SIZE()
@@ -82,37 +85,17 @@ def load_terrain_sprites():
     return sprites
 
 
-def display_current_player(screen, player_manager):
-    """Affiche le joueur actuel en haut à gauche"""
-    font = pygame.font.Font(None, 36)
-    player_text = f"Joueur {player_manager.current_player}"
-    color = (0, 255, 0) if player_manager.current_player == 1 else (255, 0, 0)
-    text_surface = font.render(player_text, True, color)
-    screen.blit(text_surface, (10, 10))
-
-    # Instructions
-    instruction_font = pygame.font.Font(None, 24)
-    instruction_text = "Appuyez sur CTRL pour changer de joueur"
-    instruction_surface = instruction_font.render(
-        instruction_text, True, (255, 255, 255)
-    )
-    screen.blit(instruction_surface, (10, 50))
-
-
 def main(screen: pygame.Surface, map_size=24):
+
+    global game_state
 
     dt = 0.05
 
-    info = pygame.display.Info()
-    win_w, win_h = 800, 600
+    win_w, win_h = 1200, 900
 
     screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
 
     clock = pygame.time.Clock()
-
-    # from ui.hud import HUDSystem
-
-    # ui = HUDSystem(screen, hud_width)
 
     # Charger la map et les sprites
     game_map: Map = Map()
@@ -143,10 +126,12 @@ def main(screen: pygame.Surface, map_size=24):
         SpawnUnitEvent(EntityType.GHAST, Team(1), Position(200, 700))
     )
 
+    case_size = Config.get("tile_size")
+
     player_manager = PlayerManager(
         [
-            Position(tile_size, tile_size),
-            Position(map_width - tile_size, map_height - tile_size),
+            Position(case_size, case_size),
+            Position(map_width - case_size * 1.5, map_height - case_size * 1.5),
         ]
     )
 
@@ -216,12 +201,14 @@ def main(screen: pygame.Surface, map_size=24):
 
     input_manager = InputManager()
     render = RenderSystem(screen, game_map, sprites)
+    victory_system = VictorySystem()
     arrow_system = ArrowSystem(render)
 
     world.add_processor(input_manager)
     world.add_processor(render)
     world.add_processor(arrow_system)  # Après le rendu de base
     world.add_processor(InputRouterSystem())
+    world.add_processor(victory_system)
 
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
     game_state = {"running": True}
@@ -242,10 +229,16 @@ def main(screen: pygame.Surface, map_size=24):
         arrow_system.process(dt)  # Dessiner les flèches après le rendu principal
         selection_system.draw_selections(screen)
         for event in pygame.event.get():
-            test_event: bool = game_hud.process_event(event)
-            if not test_event:
-                input_manager.handle_event(event)
-        game_hud.draw()
+            victory_handled = victory_system.handle_victory_input(event)
+            if not victory_handled:
+                hud_handled = game_hud.process_event(event)
+                if not hud_handled:
+                    input_manager.handle_event(event)
+        if not victory_handled:
+            render.show_map()
+            render.process(dt)
+            selection_system.draw_selections(screen)
+            game_hud.draw()
 
         pygame.display.flip()
 

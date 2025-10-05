@@ -2,7 +2,8 @@ import esper
 import pygame
 from components.health import Health
 from components.team import Team
-from events.victory_event import VictoryEvent, DefeatEvent
+from core import game_launcher
+from events.victory_event import VictoryEvent
 from events.death_event import DeathEvent
 from core.services import Services
 from enums.entity_type import EntityType
@@ -38,6 +39,24 @@ class VictorySystem(esper.Processor):
 
                     self.trigger_victory(winning_team, defeated_team)
 
+    def handle_victory_input(self, event):
+        """
+        Manage game end
+
+        Args:
+            event (_type_): An input event
+
+        Returns:
+            bool: Game ended
+        """
+        if not self.game_ended:
+            return False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                game_launcher.game_state["running"] = False
+                return True
+
     def trigger_victory(self, winning_team: int, losing_team: int):
         """
         Trigger a victory
@@ -46,12 +65,10 @@ class VictorySystem(esper.Processor):
             winning_team (int): Id of winning team
             losing_team (int): Id of losing team
         """
-        if not self.game_ended:
-            self.game_ended = True
-            self.victory_message = f"VICTOIRE DE L'EQUIPE {winning_team}!"
-
-            victory_event = VictoryEvent(winning_team, losing_team)
-            Services.event_bus.emit(victory_event)
+        self.game_ended = True
+        victory_event = VictoryEvent(winning_team, losing_team)
+        Services.event_bus.emit(victory_event)
+        Services.finish_time = pygame.time.get_ticks()
 
     def process(self, dt: float):
         if not self.game_ended:
