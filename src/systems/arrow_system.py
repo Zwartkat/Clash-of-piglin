@@ -9,15 +9,14 @@ from components.arrow import Arrow
 from components.position import Position
 from events.arrow_fired_event import ArrowFiredEvent
 from systems.entity_factory import EntityFactory
-from core.camera import CAMERA
 
 
 class ArrowSystem(IteratingProcessor):
     """System that handles arrow movement and rendering for Crossbowman attacks"""
 
-    def __init__(self, screen: pygame.Surface):
+    def __init__(self, render_system):
         super().__init__(Arrow, Position)
-        self.screen = screen
+        self.render_system = render_system
 
         # Subscribe to arrow fired events
         EventBus.get_event_bus().subscribe(ArrowFiredEvent, self.on_arrow_fired)
@@ -72,7 +71,7 @@ class ArrowSystem(IteratingProcessor):
 
     def _draw_arrow(self, position: Position, arrow: Arrow):
         """
-        Draw arrow on screen with trail effect and proper rotation.
+        Draw arrow on screen with proper rotation using RenderSystem.
 
         Args:
             position (Position): Current arrow position in world coordinates
@@ -81,29 +80,5 @@ class ArrowSystem(IteratingProcessor):
         angle = math.degrees(math.atan2(arrow.direction_y, arrow.direction_x))
         rotated_arrow = pygame.transform.rotate(self.arrow_surface, -angle)
 
-        if CAMERA.is_visible(position.x - 16, position.y - 16, 32, 32):
-            screen_x, screen_y = CAMERA.apply(position.x, position.y)
-
-            # Draw trail for better visibility
-            for i in range(3):
-                trail_x = position.x - arrow.direction_x * (i * 8)
-                trail_y = position.y - arrow.direction_y * (i * 8)
-                trail_screen_x, trail_screen_y = CAMERA.apply(trail_x, trail_y)
-
-                alpha = 100 - (i * 30)
-                if alpha > 0:
-                    trail_surface = pygame.Surface((2, 2), pygame.SRCALPHA)
-                    trail_surface.fill((255, 255, 255, alpha))
-                    self.screen.blit(
-                        trail_surface, (trail_screen_x - 1, trail_screen_y - 1)
-                    )
-
-            # Draw arrow with zoom
-            rect = rotated_arrow.get_rect(center=(screen_x, screen_y))
-            zoom = CAMERA.zoom_factor
-            if zoom != 1.0:
-                scaled_size = (int(rect.width * zoom), int(rect.height * zoom))
-                rotated_arrow = pygame.transform.scale(rotated_arrow, scaled_size)
-                rect = rotated_arrow.get_rect(center=(screen_x, screen_y))
-
-            self.screen.blit(rotated_arrow, rect)
+        # Use RenderSystem.draw_surface() which handles camera and zoom automatically
+        self.render_system.draw_surface(rotated_arrow, position.x - 8, position.y - 2)

@@ -216,7 +216,7 @@ def main(screen: pygame.Surface, map_size=24):
 
     input_manager = InputManager()
     render = RenderSystem(screen, game_map, sprites)
-    arrow_system = ArrowSystem(screen)
+    arrow_system = ArrowSystem(render)
 
     world.add_processor(input_manager)
     world.add_processor(render)
