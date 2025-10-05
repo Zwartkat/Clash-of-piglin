@@ -1,7 +1,9 @@
+import importlib
 import pygame
 import esper
 import os
 
+from config import units
 from core.camera import CAMERA
 from components.effects import OnTerrain
 from components.team import Team
@@ -82,24 +84,9 @@ def load_terrain_sprites():
     return sprites
 
 
-def display_current_player(screen, player_manager):
-    """Affiche le joueur actuel en haut à gauche"""
-    font = pygame.font.Font(None, 36)
-    player_text = f"Joueur {player_manager.current_player}"
-    color = (0, 255, 0) if player_manager.current_player == 1 else (255, 0, 0)
-    text_surface = font.render(player_text, True, color)
-    screen.blit(text_surface, (10, 10))
-
-    # Instructions
-    instruction_font = pygame.font.Font(None, 24)
-    instruction_text = "Appuyez sur CTRL pour changer de joueur"
-    instruction_surface = instruction_font.render(
-        instruction_text, True, (255, 255, 255)
-    )
-    screen.blit(instruction_surface, (10, 50))
-
-
 def main(screen: pygame.Surface, map_size=24):
+
+    global game_state
 
     dt = 0.05
 
@@ -242,7 +229,6 @@ def main(screen: pygame.Surface, map_size=24):
                 if not hud_handled:
                     input_manager.handle_event(event)
         if not victory_handled:
-            # draw_map(screen,game_map,sprites)
             render.show_map()
             render.process(dt)
             selection_system.draw_selections(screen)

@@ -2,6 +2,7 @@ import esper
 import pygame
 from components.health import Health
 from components.team import Team
+from core import game_launcher
 from events.victory_event import VictoryEvent
 from events.death_event import DeathEvent
 from core.services import Services
@@ -53,9 +54,7 @@ class VictorySystem(esper.Processor):
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                pygame.quit()
-                import launcher
-
+                game_launcher.game_state["running"] = False
                 return True
 
     def trigger_victory(self, winning_team: int, losing_team: int):
