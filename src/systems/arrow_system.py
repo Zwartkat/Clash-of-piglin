@@ -21,13 +21,16 @@ class ArrowSystem(IteratingProcessor):
         # Subscribe to arrow fired events
         EventBus.get_event_bus().subscribe(ArrowFiredEvent, self.on_arrow_fired)
 
-        # Create Minecraft-style arrow sprite
+        # Create authentic Minecraft-style arrow sprite
         self.arrow_surface = pygame.Surface((16, 4), pygame.SRCALPHA)
-        pygame.draw.rect(self.arrow_surface, (101, 67, 33), (2, 1, 10, 2))  # Wood shaft
+        # Wood shaft (brown)
+        pygame.draw.rect(self.arrow_surface, (139, 69, 19), (2, 1, 10, 2))
+        # Iron arrowhead (gray)
         pygame.draw.polygon(
             self.arrow_surface, (169, 169, 169), [(12, 0), (16, 2), (12, 4)]
-        )  # Metal tip
-        pygame.draw.rect(self.arrow_surface, (220, 220, 220), (0, 1, 2, 2))  # Feathers
+        )
+        # Feathers (white/light gray)
+        pygame.draw.rect(self.arrow_surface, (245, 245, 245), (0, 1, 2, 2))
 
     def on_arrow_fired(self, event: ArrowFiredEvent):
         """

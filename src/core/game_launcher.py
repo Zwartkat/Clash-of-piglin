@@ -221,21 +221,23 @@ def main(screen: pygame.Surface, map_size=24):
 
         dt = min(clock.get_time() / 1000, dt)
 
-        world.process(dt)  # dt = 1/60 pour 60 FPS
-
-        # draw_map(screen,game_map,sprites)
-        render.show_map()
-        render.process(dt)
-        arrow_system.process(dt)  # Dessiner les flèches après le rendu principal
-        selection_system.draw_selections(screen)
+        # Gestion des événements
         for event in pygame.event.get():
             victory_handled = victory_system.handle_victory_input(event)
             if not victory_handled:
                 hud_handled = game_hud.process_event(event)
                 if not hud_handled:
                     input_manager.handle_event(event)
+
+        # Rendu uniquement si le jeu n'est pas en victoire
         if not victory_handled:
             render.show_map()
+
+        # Traitement des systèmes après avoir effacé l'écran
+        world.process(dt)
+
+        # Rendu des entités et UI
+        if not victory_handled:
             render.process(dt)
             selection_system.draw_selections(screen)
             game_hud.draw()
