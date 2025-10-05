@@ -47,8 +47,8 @@ class InputManager(esper.Processor):
         self.mouse_bindings_hold = {1: InputAction.SELECT}
 
     def process(self, dt):
-        for event in pygame.event.get():
-            self.handle_event(event)
+        # for event in pygame.event.get():
+        #     self.handle_event(event)
 
         # Gestion des touches maintenues
         for key, value in self.keys_down.items():

@@ -156,10 +156,10 @@ class TargetingSystem(IteratingProcessor):
             # check if it can attack the target
             target_type = self._get_entity_type(target_ent)
             if not self._can_attack_target(attacker_type, target_type):
-                if attacker_type and target_type:
-                    print(
-                        f"DEBUG: {attacker_type.name if hasattr(attacker_type, 'name') else attacker_type} ne peut pas cibler {target_type.name if hasattr(target_type, 'name') else target_type}"
-                    )
+                # if attacker_type and target_type:
+                #     print(
+                #         f"DEBUG: {attacker_type.name if hasattr(attacker_type, 'name') else attacker_type} ne peut pas cibler {target_type.name if hasattr(target_type, 'name') else target_type}"
+                #     )
                 continue
 
             # Calculate distance

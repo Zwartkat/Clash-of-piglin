@@ -107,8 +107,6 @@ def main(screen: pygame.Surface, map_size=24):
 
     screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
 
-    map_width, map_height = resize(screen, map_size)
-
     clock = pygame.time.Clock()
 
     # from ui.hud import HUDSystem
@@ -121,6 +119,8 @@ def main(screen: pygame.Surface, map_size=24):
     sprites = load_terrain_sprites()
     game_hud = HudSystem(screen)
 
+    map_width, map_height = resize(screen, map_size, game_hud.hud.hud_width)
+
     for y in range(len(game_map.tab)):
         for x in range(len(game_map.tab[y])):
             tile_type = game_map.tab[y][x]
@@ -130,7 +130,7 @@ def main(screen: pygame.Surface, map_size=24):
                 EntityFactory.create(*case.get_all_components())
 
     def on_resize(resize_event: ResizeEvent):
-        resize(screen, 24)
+        resize(screen, 24, game_hud.hud.hud_width)
 
     # Subscribes
     Services.event_bus = EventBus.get_event_bus()
@@ -237,17 +237,18 @@ def main(screen: pygame.Surface, map_size=24):
         render.show_map()
         render.process(dt)
         selection_system.draw_selections(screen)
-        display_current_player(screen, player_manager)
-        display_current_player(screen, player_manager)
+        for event in pygame.event.get():
+            test_event: bool = game_hud.process_event(event)
+            if not test_event:
+                input_manager.handle_event(event)
         game_hud.draw()
+
         pygame.display.flip()
 
     pygame.quit()
 
 
-def resize(screen: pygame.Surface, map_size: int) -> tuple[int]:
-
-    hud_width = 100
+def resize(screen: pygame.Surface, map_size: int, hud_width: int = 100) -> tuple[int]:
 
     Config.tile_size = (screen.get_width() - hud_width * 2) / map_size
     print(Config.tile_size)
