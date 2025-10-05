@@ -90,7 +90,9 @@ class RenderSystem(IteratingProcessor):
 
                     self._draw_diamond(position, color)
 
-                self._draw_health_bar(position, esper.component_for_entity(ent, Health))
+                self._draw_health_bar(
+                    ent, position, esper.component_for_entity(ent, Health)
+                )
 
             self.draw_surface(frame, x, y)
         sprite.update(dt)
@@ -258,29 +260,45 @@ class RenderSystem(IteratingProcessor):
         ]
         self.draw_polygon(diamond_points, color)
 
-    def _draw_health_bar(self, position: Position, health: Health):
+    def _draw_health_bar(self, ent: int, position: Position, health: Health):
         """
         Draw a health bar above the entity's position.
 
         Args:
+            ent (int): Entity ID
             position (Position): Position of the linked entity.
             health (Health): Health of the linked entity.
         """
+        # Vérification simple de la santé
+        if not health or health.full <= 0:
+            return
+
         bar_width: int = Config.TILE_SIZE() - Config.TILE_SIZE() // 2
         bar_height: int = 4
 
         bar_x: int = int(position.x - bar_width // 2)
         bar_y: int = int(position.y - Config.TILE_SIZE() // 2 - 3)
 
-        # Border of the health bar
-        self.draw_rect((bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2))
+        # Border of the health bar (black background)
+        self.draw_rect((bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2), (0, 0, 0))
 
-        # Red part of health bar (HP lost)
-        if health.remaining < health.full and health.remaining > 0:
-            self.draw_rect((bar_x, bar_y, bar_width, bar_height), (255, 0, 0))
+        # Couleurs universelles pour toutes les équipes
+        health_color = (50, 200, 50)  # Vert pour la vie
+        damage_color = (200, 50, 50)  # Rouge pour les dégâts
 
-        # Green part of health bar (HP remaining)
-        hp_ratio = max(0, health.remaining / health.full)  # between 0 and 1
-        green_width = int(bar_width * hp_ratio)
-        if green_width > 0:
-            self.draw_rect((bar_x, bar_y, green_width, bar_height), (0, 255, 0))
+        # Background of health bar (dark gray)
+        self.draw_rect((bar_x, bar_y, bar_width, bar_height), (60, 60, 60))
+
+        # Red part for lost health
+        if health.remaining < health.full:
+            self.draw_rect((bar_x, bar_y, bar_width, bar_height), damage_color)
+
+        # Debug temporaire
+        if health.remaining == 0 and health.full > 0:
+            print(f"Unit {ent} has 0/{health.full} HP!")
+
+        # Green part for remaining health
+        hp_ratio = max(0, min(1.0, health.remaining / health.full))
+        health_width = int(bar_width * hp_ratio)
+        if health_width > 0:
+            self.draw_rect((bar_x, bar_y, health_width, bar_height), health_color)
