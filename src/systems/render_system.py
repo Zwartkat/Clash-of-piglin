@@ -100,11 +100,13 @@ class RenderSystem(IteratingProcessor):
         for y in range(len(self.map)):
             for x in range(len(self.map[y])):
                 tile: Case = self.map[y][x]
-                sprite = self.sprites.get(tile.type, self.sprites.get("Netherrack"))
+                sprite: pygame.Surface = self.sprites.get(
+                    tile.type, self.sprites.get("Netherrack")
+                )
 
                 if tile.type != CaseType.LAVA:
-                    pos_x = x * Config.TILE_SIZE()
-                    pos_y = y * Config.TILE_SIZE()
+                    pos_x = x * Config.get("tile_size")
+                    pos_y = y * Config.get("tile_size")
                     self.draw_surface(sprite, pos_x, pos_y)
 
     def _set_animation(self, ent: int, animation: Animation):
@@ -149,7 +151,7 @@ class RenderSystem(IteratingProcessor):
 
     def draw_surface(
         self, image: pygame.Surface, x: int = None, y: int = None
-    ) -> tuple[int]:
+    ) -> tuple[int] | None:
         """Draws a surface (image) considering the camera position and zoom.
 
         Args:
@@ -158,22 +160,24 @@ class RenderSystem(IteratingProcessor):
             y (int, optional): World y position. If None → taken from `image.get_rect()`.
 
         Returns:
-            tuple[int]: The final (x, y) position of the image after applying the camera transform.
+            tuple[int]: The final (x, y) position of the image after applying the camera transform. None if there is not visible.
         """
 
         rect: pygame.Rect = image.get_rect()
         x = x if x else rect.x
         y = y if y else rect.y
 
-        pos: Tuple[int] = CAMERA.apply(x, y)
-        zoom: float = CAMERA.zoom_factor
-        image = pygame.transform.scale(
-            image,
-            (round(rect.width * zoom + 0.9999), round(rect.height * zoom + 0.9999)),
-        )
+        if CAMERA.is_visible(x, y, rect.width, rect.height):
+            pos: Tuple[int] = CAMERA.apply(x, y)
+            zoom: float = CAMERA.zoom_factor
+            image = pygame.transform.scale(
+                image,
+                (round(rect.width * zoom + 0.9999), round(rect.height * zoom + 0.9999)),
+            )
 
-        self.screen.blit(image, (pos[0], pos[1]))
-        return pos
+            self.screen.blit(image, (pos[0], pos[1]))
+            return pos
+        return None
 
     def draw_rect(self, rect_value, color: Tuple[int] = (0, 0, 0)):
         """Draws a rectangle considering the camera position and zoom.
@@ -183,15 +187,19 @@ class RenderSystem(IteratingProcessor):
             rect_value (tuple[int]): (x, y, width, height) in world coordinates.
             color (Tuple[int], optional): RGB color of the rectangle (default: black).
         """
-        x, y = CAMERA.apply(rect_value[0], rect_value[1])
-        zoom = CAMERA.zoom_factor
-        rect = pygame.Rect(
-            x,
-            y,
-            round(rect_value[2] * zoom + 0.9999),
-            round(rect_value[3] * zoom + 0.9999),
-        )
-        pygame.draw.rect(self.screen, color, rect)
+
+        if CAMERA.is_visible(
+            rect_value[0], rect_value[1], rect_value[2], rect_value[3]
+        ):
+            x, y = CAMERA.apply(rect_value[0], rect_value[1])
+            zoom = CAMERA.zoom_factor
+            rect = pygame.Rect(
+                x,
+                y,
+                round(rect_value[2] * zoom + 0.9999),
+                round(rect_value[3] * zoom + 0.9999),
+            )
+            pygame.draw.rect(self.screen, color, rect)
 
     def draw_polygon(self, sequence: list[tuple[int]], color: Tuple[int] = (0, 0, 0)):
         """Draws a polygon considering the camera position.
@@ -201,10 +209,17 @@ class RenderSystem(IteratingProcessor):
             color (Tuple[int], optional): RGB color of the polygon (default: black).
         """
 
-        camera_sequence: list[tuple[int]] = []
-        for x, y in sequence:
-            camera_sequence.append(CAMERA.apply(x, y))
-        pygame.draw.polygon(self.screen, color, camera_sequence)
+        min_x = min(x for x, y in sequence)
+        max_x = max(x for x, y in sequence)
+        min_y = min(y for x, y in sequence)
+        max_y = max(y for x, y in sequence)
+
+        if CAMERA.is_visible(min_x, min_y, max_x - min_x, max_y - min_y):
+
+            camera_sequence: list[tuple[int]] = []
+            for x, y in sequence:
+                camera_sequence.append(CAMERA.apply(x, y))
+            pygame.draw.polygon(self.screen, color, camera_sequence)
 
     def _get_direction_from_velocity(self, velocity: Velocity) -> Direction:
         """

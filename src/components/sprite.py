@@ -86,9 +86,7 @@ class Sprite:
                         self.frame_height,
                     )
                 )
-                frame = pygame.transform.scale(
-                    frame, (Config.TILE_SIZE(), Config.TILE_SIZE())
-                )
+                frame = pygame.transform.scale(frame, (32, 32))
                 self.frames.append(frame)
 
     def set_animation(self, animation_name: Animation, direction: Direction) -> None:
