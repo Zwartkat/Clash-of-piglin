@@ -54,7 +54,8 @@ class VictorySystem(esper.Processor):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()
-                exit()
+                import launcher
+
                 return True
 
     def trigger_victory(self, winning_team: int, losing_team: int):
@@ -65,13 +66,10 @@ class VictorySystem(esper.Processor):
             winning_team (int): Id of winning team
             losing_team (int): Id of losing team
         """
-        if not self.game_ended:
-            self.game_ended = True
-            self.victory_message = f"VICTOIRE DE L'EQUIPE {winning_team}!"
-
-            victory_event = VictoryEvent(winning_team, losing_team)
-            Services.event_bus.emit(victory_event)
-            print("victory")
+        self.game_ended = True
+        victory_event = VictoryEvent(winning_team, losing_team)
+        Services.event_bus.emit(victory_event)
+        Services.finish_time = pygame.time.get_ticks()
 
     def process(self, dt: float):
         if not self.game_ended:

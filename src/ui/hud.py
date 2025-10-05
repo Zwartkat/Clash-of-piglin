@@ -3,6 +3,7 @@ import pygame
 from core.services import Services
 from core.player import Player
 from components.health import Health
+from events.victory_event import VictoryEvent
 
 
 class Hud:
@@ -12,6 +13,9 @@ class Hud:
         self.screen = screen
         self.screen_width = screen.get_width()
         self.screen_height = screen.get_height()
+
+        self.victory_team: int = None
+        self.lose_team: int = None
 
         try:
             self.font_large = pygame.font.Font(
@@ -56,6 +60,8 @@ class Hud:
         )
         self.hud_y = round(self.screen_height * 0.01)
 
+        Services.event_bus.subscribe(VictoryEvent, self.on_victory)
+
     def drawMinecraftPanel(
         self, surface: pygame.Surface, rect: pygame.Rect, dark=False
     ):
@@ -82,7 +88,10 @@ class Hud:
 
     def getGameTime(self) -> str:
         """Retourne le temps de jeu formaté."""
-        elapsed_ms = pygame.time.get_ticks() - Services.start_time
+        if self.victory_team:
+            elapsed_ms = Services.finish_time - Services.start_time
+        else:
+            elapsed_ms = pygame.time.get_ticks() - Services.start_time
         elapsed_seconds = elapsed_ms // 1000
         minutes = elapsed_seconds // 60
         seconds = elapsed_seconds % 60
@@ -224,8 +233,65 @@ class Hud:
             )
             self.screen.fill(health_bar_color, health_fill_rect)
 
+    def draw_victory_screen(self):
+        """
+        Draw victory screen
+
+        Args:
+            victory_event (VictoryEvent): An emit VictoryEvent
+        """
+        victory_message = f"VICTOIRE DE L'EQUIPE {self.victory_team}!"
+
+        overlay = pygame.Surface(
+            (self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA
+        )
+        overlay.fill((0, 0, 0, 180))
+        self.screen.blit(overlay, (0, 0))
+
+        victory_surface = self.font_large.render(victory_message, True, (255, 215, 0))
+        victory_rect = victory_surface.get_rect(
+            center=(self.screen.get_width() // 2, self.screen.get_height() // 2 - 50)
+        )
+
+        # Ombre du texte
+        shadow_surface = self.font_large.render(victory_message, True, (0, 0, 0))
+        shadow_rect = shadow_surface.get_rect(
+            center=(
+                self.screen.get_width() // 2 + 3,
+                self.screen.get_height() // 2 - 47,
+            )
+        )
+
+        self.screen.blit(shadow_surface, shadow_rect)
+        self.screen.blit(victory_surface, victory_rect)
+
+        # Message secondaire
+        sub_message = "Appuyez sur ECHAP pour quitter"
+        sub_surface = self.font_medium.render(sub_message, True, (255, 255, 255))
+        sub_rect = sub_surface.get_rect(
+            center=(self.screen.get_width() // 2, self.screen.get_height() // 2 + 20)
+        )
+        self.screen.blit(sub_surface, sub_rect)
+
+        # Temps écoulé depuis la victoire
+        elapsed_time = (Services.finish_time - Services.start_time) // 1000
+        time_message = (
+            f"Partie terminee en {elapsed_time // 60}:{elapsed_time % 60:02d}"
+        )
+        time_surface = self.font_medium.render(time_message, True, (200, 200, 200))
+        time_rect = time_surface.get_rect(
+            center=(self.screen.get_width() // 2, self.screen.get_height() // 2 + 60)
+        )
+        self.screen.blit(time_surface, time_rect)
+
+    def on_victory(self, victory_event: VictoryEvent):
+        self.victory_team = victory_event.winning_team
+        self.lose_team = victory_event.losing_team
+
     def draw(self):
         """Dessine l'interface complète"""
         self.drawTimeDisplay()
         self.drawTeamHud(1)
         self.drawTeamHud(2)
+        if self.victory_team:
+            self.draw_victory_screen()

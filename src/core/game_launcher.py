@@ -235,17 +235,18 @@ def main(screen: pygame.Surface, map_size=24):
 
         world.process(dt)  # dt = 1/60 pour 60 FPS
 
-        # draw_map(screen,game_map,sprites)
-        render.show_map()
-        render.process(dt)
-        selection_system.draw_selections(screen)
         for event in pygame.event.get():
             victory_handled = victory_system.handle_victory_input(event)
             if not victory_handled:
                 hud_handled = game_hud.process_event(event)
                 if not hud_handled:
                     input_manager.handle_event(event)
-        game_hud.draw()
+        if not victory_handled:
+            # draw_map(screen,game_map,sprites)
+            render.show_map()
+            render.process(dt)
+            selection_system.draw_selections(screen)
+            game_hud.draw()
 
         pygame.display.flip()
 
