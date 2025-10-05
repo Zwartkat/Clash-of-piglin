@@ -30,7 +30,7 @@ class UnitFactory:
         Raises:
             ValueError: If entity_type is not found in unit config
         """
-        entity: Entity = copy.deepcopy(UNITS.get(entity_type, None))
+        entity: Entity = UNITS.get(entity_type, None)
         if not entity:
             raise ValueError(f"Unknown unit type: {entity_type}")
 
@@ -38,7 +38,11 @@ class UnitFactory:
 
         # Copy all base components from unit template
         for comp in entity.get_all_components():
-            components.append(copy.deepcopy(comp))
+            try:
+                components.append(copy.deepcopy(comp))
+            except:
+                # Si ça marche pas, on prend l'original
+                components.append(comp)
 
         # Replace template position/team with actual values
         components = [c for c in components if not isinstance(c, (Position, Team))]

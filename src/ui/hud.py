@@ -586,26 +586,15 @@ class Hud:
             spawn_pos = self._get_spawn_position(player)
             team = Team(team_id)
 
-            print(unit_type)
-            # try:
-            # Créer l'unité
-            unit_entity = Services.event_bus.emit(
-                SpawnUnitEvent(unit_entity, team, spawn_pos)
-            )
+            # Créer l'unité via l'événement
+            Services.event_bus.emit(SpawnUnitEvent(unit_type, team, spawn_pos))
 
             # Déduire le coût
             player.money -= cost
-
-            print(
-                f"Unité {self._get_unit_display_name(unit_type)} créée pour l'équipe {team_id} (player.team_number={player.team_number}) à la position ({spawn_pos.x}, {spawn_pos.y})"
-            )
             return True
             # except Exception as e:
             #     print(f"Erreur lors de la création de l'unité: {e}")
-        else:
-            print(f"Pas assez d'or! Coût: {cost}, Disponible: {int(player.money)}")
-
-        return True
+        return False
 
     def _get_spawn_position(self, player: Player) -> Position:
         """Détermine la position de spawn devant le bastion du joueur"""
