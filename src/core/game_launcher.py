@@ -35,6 +35,7 @@ from systems.input_router_system import InputRouterSystem
 from systems.quit_system import QuitSystem
 from systems.camera_system import CameraSystem
 from systems.hud_system import HudSystem
+from systems.arrow_system import ArrowSystem
 
 tile_size = Config.TILE_SIZE()
 
@@ -215,9 +216,11 @@ def main(screen: pygame.Surface, map_size=24):
 
     input_manager = InputManager()
     render = RenderSystem(screen, game_map, sprites)
+    arrow_system = ArrowSystem(screen)
 
     world.add_processor(input_manager)
     world.add_processor(render)
+    world.add_processor(arrow_system)  # Après le rendu de base
     world.add_processor(InputRouterSystem())
 
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
@@ -236,6 +239,7 @@ def main(screen: pygame.Surface, map_size=24):
         # draw_map(screen,game_map,sprites)
         render.show_map()
         render.process(dt)
+        arrow_system.process(dt)  # Dessiner les flèches après le rendu principal
         selection_system.draw_selections(screen)
         for event in pygame.event.get():
             test_event: bool = game_hud.process_event(event)
