@@ -38,6 +38,7 @@ from systems.quit_system import QuitSystem
 from systems.camera_system import CameraSystem
 from systems.hud_system import HudSystem
 from systems.victory_system import VictorySystem
+from systems.arrow_system import ArrowSystem
 
 tile_size = Config.TILE_SIZE()
 
@@ -201,8 +202,11 @@ def main(screen: pygame.Surface, map_size=24):
     input_manager = InputManager()
     render = RenderSystem(screen, game_map, sprites)
     victory_system = VictorySystem()
+    arrow_system = ArrowSystem(render)
+
     world.add_processor(input_manager)
     world.add_processor(render)
+    world.add_processor(arrow_system)  # Après le rendu de base
     world.add_processor(InputRouterSystem())
     world.add_processor(victory_system)
 
@@ -219,6 +223,11 @@ def main(screen: pygame.Surface, map_size=24):
 
         world.process(dt)  # dt = 1/60 pour 60 FPS
 
+        # draw_map(screen,game_map,sprites)
+        render.show_map()
+        render.process(dt)
+        arrow_system.process(dt)  # Dessiner les flèches après le rendu principal
+        selection_system.draw_selections(screen)
         for event in pygame.event.get():
             victory_handled = victory_system.handle_victory_input(event)
             if not victory_handled:
