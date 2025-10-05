@@ -9,3 +9,4 @@ class Services:
     event_bus: EventBus = None
     camera: Camera = None
     player_manager: PlayerManager = None
+    start_time: int = 0

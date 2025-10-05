@@ -38,7 +38,9 @@ class Hud:
             2: (255, 85, 85),
         }
 
-        self.start_time = pygame.time.get_ticks()
+        self.start_time = (
+            Services.start_time if Services.start_time else pygame.time.get_ticks()
+        )
 
         # TODO :
         # Faire en sorte que la fenêtre devienne responsive et modifier le commentaire/code
@@ -80,7 +82,7 @@ class Hud:
 
     def getGameTime(self) -> str:
         """Retourne le temps de jeu formaté."""
-        elapsed_ms = pygame.time.get_ticks() - self.start_time
+        elapsed_ms = pygame.time.get_ticks() - Services.start_time
         elapsed_seconds = elapsed_ms // 1000
         minutes = elapsed_seconds // 60
         seconds = elapsed_seconds % 60

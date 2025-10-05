@@ -35,6 +35,7 @@ from systems.input_router_system import InputRouterSystem
 from systems.quit_system import QuitSystem
 from systems.camera_system import CameraSystem
 from systems.hud_system import HudSystem
+from systems.victory_system import VictorySystem
 
 tile_size = Config.TILE_SIZE()
 
@@ -215,10 +216,11 @@ def main(screen: pygame.Surface, map_size=24):
 
     input_manager = InputManager()
     render = RenderSystem(screen, game_map, sprites)
-
+    victory_system = VictorySystem()
     world.add_processor(input_manager)
     world.add_processor(render)
     world.add_processor(InputRouterSystem())
+    world.add_processor(victory_system)
 
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
     game_state = {"running": True}
@@ -238,9 +240,11 @@ def main(screen: pygame.Surface, map_size=24):
         render.process(dt)
         selection_system.draw_selections(screen)
         for event in pygame.event.get():
-            test_event: bool = game_hud.process_event(event)
-            if not test_event:
-                input_manager.handle_event(event)
+            victory_handled = victory_system.handle_victory_input(event)
+            if not victory_handled:
+                hud_handled = game_hud.process_event(event)
+                if not hud_handled:
+                    input_manager.handle_event(event)
         game_hud.draw()
 
         pygame.display.flip()
