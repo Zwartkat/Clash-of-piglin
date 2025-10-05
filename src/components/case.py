@@ -1,3 +1,4 @@
+from core.config import Config
 from core.entity import Entity
 
 from enums.case_type import CaseType
@@ -33,6 +34,7 @@ class Case(Entity):
                         }
                     },
                     0.06,
+                    sprite_size=(Config.get("tile_size"), Config.get("tile_size")),
                     default_animation=Animation.NONE,
                     default_direction=Direction.NONE,
                 ),

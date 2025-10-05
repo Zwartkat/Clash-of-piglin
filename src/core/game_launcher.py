@@ -90,16 +90,11 @@ def main(screen: pygame.Surface, map_size=24):
 
     dt = 0.05
 
-    info = pygame.display.Info()
-    win_w, win_h = 800, 600
+    win_w, win_h = 1200, 900
 
     screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
 
     clock = pygame.time.Clock()
-
-    # from ui.hud import HUDSystem
-
-    # ui = HUDSystem(screen, hud_width)
 
     # Charger la map et les sprites
     game_map: Map = Map()
@@ -130,10 +125,12 @@ def main(screen: pygame.Surface, map_size=24):
         SpawnUnitEvent(EntityType.GHAST, Team(1), Position(200, 700))
     )
 
+    case_size = Config.get("tile_size")
+
     player_manager = PlayerManager(
         [
-            Position(tile_size, tile_size),
-            Position(map_width - tile_size, map_height - tile_size),
+            Position(case_size, case_size),
+            Position(map_width - case_size * 1.5, map_height - case_size * 1.5),
         ]
     )
 

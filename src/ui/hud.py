@@ -144,6 +144,7 @@ class Hud:
 
         player = Services.player_manager.players[team_id]
         current_player = Services.player_manager.get_current_player()
+        print("Team", team_id, current_player)
 
         # adjust the position of the hud depending on the current team
         hud_x = self.team1_hud_x if team_id == 1 else self.team2_hud_x
@@ -151,7 +152,7 @@ class Hud:
         # create the panel for the team
         main_panel = pygame.Rect(hud_x, self.hud_y, self.hud_width, self.hud_height)
         self.drawMinecraftPanel(
-            self.screen, main_panel, dark=(team_id == current_player)
+            self.screen, main_panel, dark=(team_id != current_player)
         )
 
         # text for the title
@@ -172,6 +173,7 @@ class Hud:
         self.screen.blit(title_surface, title_rect)
 
         # adding the current team indicator
+        print("Current", team_id == current_player, current_player)
         if team_id == current_player:
             active_text = ">>> TOUR ACTUEL <<<"
             active_surface = self.font_small.render(active_text, True, self.gold_color)

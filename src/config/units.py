@@ -53,7 +53,8 @@ UNITS = {
                         Direction.RIGHT: [0, 8, 0, 9],
                     },
                 },
-                0.3,
+                1,
+                sprite_size=(32, 32),
                 priority=ENTITY_LAYER[UnitType.WALK],
             ),
         ]
@@ -93,7 +94,8 @@ UNITS = {
                         Direction.RIGHT: [0, 16, 17],
                     },
                 },
-                0.5,
+                1,
+                sprite_size=(32, 32),
                 priority=ENTITY_LAYER[UnitType.WALK],
             ),
         ]
@@ -128,7 +130,8 @@ UNITS = {
                         Direction.RIGHT: [1, 9],
                     },
                 },
-                0.3,
+                1,
+                sprite_size=(32, 32),
                 priority=ENTITY_LAYER[UnitType.FLY],
             ),
         ]
@@ -145,6 +148,7 @@ UNITS = {
                 500,
                 {Animation.NONE: {Direction.NONE: [0]}},
                 1000,
+                sprite_size=(64, 64),
                 priority=ENTITY_LAYER[UnitType.STRUCTURE],
                 default_animation=Animation.NONE,
                 default_direction=Direction.NONE,
