@@ -1,5 +1,6 @@
 import pygame
 import esper
+from components.velocity import Velocity
 from core.camera import CAMERA
 from components.health import Health
 from components.position import Position
@@ -66,15 +67,15 @@ class SelectionSystem:
             if distance > self.drag_threshold:
                 self.is_dragging = True
 
-                start_x, start_y = self.selection_start
-                end_x, end_y = mouse_pos
+                start_x, start_y = CAMERA.apply(
+                    self.selection_start[0], self.selection_start[1]
+                )
+                end_x, end_y = CAMERA.apply(mouse_pos[0], mouse_pos[1])
 
                 left = min(start_x, end_x)
                 top = min(start_y, end_y)
                 width = abs(end_x - start_x)
                 height = abs(end_y - start_y)
-
-                left, top = CAMERA.apply(left, top)
 
                 self.selection_rect = pygame.Rect(left, top, width, height)
 
@@ -149,7 +150,9 @@ class SelectionSystem:
 
         self.clear_selection()
 
-        for ent, (pos, team) in esper.get_components(Position, Team):
+        for ent, (pos, team, velocity) in esper.get_components(
+            Position, Team, Velocity
+        ):
             # Only select units from current player's team
             if team.team_id == self.player_manager.get_current_player():
                 pos = CAMERA.apply_position(pos)
@@ -210,7 +213,6 @@ class SelectionSystem:
             screen: Pygame screen surface to draw on
             world: Game world (not used but kept for consistency)
         """
-        current_team = self.player_manager.get_current_player()
 
         for ent, pos in esper.get_component(Position):
             if not esper.has_component(ent, Team):
@@ -222,35 +224,6 @@ class SelectionSystem:
 
             if not esper.has_component(ent, Collider):
                 continue
-
-            collider = esper.component_for_entity(ent, Collider)
-
-            left = int(pos.x - collider.width // 2)
-            top = int(pos.y - collider.height // 2)
-
-            # Set team colors: green for player 1, red for player 2
-            if team.team_id == PLAYER_1_TEAM:
-                team_outline = (0, 255, 0)
-            else:
-                team_outline = (255, 0, 0)
-
-            entity_rect = pygame.Rect(left, top, collider.width, collider.height)
-
-            # Draw team outline (thicker for current player)
-            if team.team_id == current_team:
-                pygame.draw.rect(screen, team_outline, entity_rect, 2)
-            else:
-                pygame.draw.rect(screen, team_outline, entity_rect, 1)
-
-            # Draw selection highlight for selected units
-            if team.team_id == current_team and esper.has_component(ent, Selection):
-                selection = esper.component_for_entity(ent, Selection)
-                if selection.is_selected:
-                    selection_rect = pygame.Rect(
-                        left - 3, top - 3, collider.width + 6, collider.height + 6
-                    )
-                    # Uncomment to draw orange selection border
-                    # pygame.draw.rect(screen, (255, 165, 0), selection_rect, 3)
 
         self.draw_selection_rect(screen)
 

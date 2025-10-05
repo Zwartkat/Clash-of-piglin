@@ -73,9 +73,6 @@ class Camera:
         """
         self.width = width
         self.height = height
-        print("Size:", self.width, self.height)
-
-        print("World:", self.world_width, self.world_height)
 
     def set_world_size(self, width: int, height: int) -> None:
         """
@@ -87,7 +84,6 @@ class Camera:
         """
         self.world_width = width
         self.world_height = height
-        print("World:", self.world_width, self.world_height)
 
     def set_position(self, x: int, y: int) -> None:
         """
@@ -99,7 +95,6 @@ class Camera:
         """
         self.x = x
         self.y = y
-        print("Position:", self.x, self.y)
 
     def set_zoom(self, zoom: float) -> None:
         """

@@ -33,6 +33,7 @@ class Hud:
             self.font_small = pygame.font.Font(None, 16)
 
         # colors used in the huds
+        self.background_color = (67, 37, 36)
         self.nether_brick_color = (44, 23, 26)
         self.netherrack_color = (97, 37, 36)
         self.gold_color = (255, 215, 0)
@@ -51,7 +52,7 @@ class Hud:
 
         # huds dimensions (should be responsive - aren't)
         self.hud_width = round(self.screen_width * 0.2)
-        self.hud_height = round(self.screen_height * 0.9)
+        self.hud_height = round(self.screen_height * 0.98)
 
         # huds coordonates to ensure they are on the side of the screen
         self.team1_hud_x = round(self.screen_height * 0.01)
@@ -144,7 +145,14 @@ class Hud:
 
         player = Services.player_manager.players[team_id]
         current_player = Services.player_manager.get_current_player()
-        print("Team", team_id, current_player)
+
+        hud_pos = 0 if team_id == 1 else self.screen_width - self.hud_width
+
+        pygame.draw.rect(
+            self.screen,
+            self.background_color,
+            (hud_pos, 0, self.hud_width, self.screen_height),
+        )
 
         # adjust the position of the hud depending on the current team
         hud_x = self.team1_hud_x if team_id == 1 else self.team2_hud_x
@@ -173,7 +181,6 @@ class Hud:
         self.screen.blit(title_surface, title_rect)
 
         # adding the current team indicator
-        print("Current", team_id == current_player, current_player)
         if team_id == current_player:
             active_text = ">>> TOUR ACTUEL <<<"
             active_surface = self.font_small.render(active_text, True, self.gold_color)

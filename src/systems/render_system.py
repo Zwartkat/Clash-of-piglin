@@ -1,4 +1,5 @@
 from typing import Tuple
+from components.team import Team
 from core.camera import CAMERA, Camera
 from components.case import Case
 from components.health import Health
@@ -81,7 +82,9 @@ class RenderSystem(IteratingProcessor):
                 frame = pygame.transform.scale(
                     frame, (Config.get("tile_size"), Config.get("tile_size"))
                 )
-                if esper.has_component(ent, Selection):
+                if Services.player_manager.current_player == (
+                    esper.component_for_entity(ent, Team)
+                ).team_id and esper.has_component(ent, Selection):
                     selection: Selection = esper.component_for_entity(ent, Selection)
                     color = (0, 255, 0) if selection.is_selected else (255, 0, 0)
 
@@ -96,7 +99,7 @@ class RenderSystem(IteratingProcessor):
         """
         Draws the game map on the screen using the provided sprites for each terrain type.
         """
-        self.screen.fill((0, 0, 0))
+        self.screen.fill((67, 37, 36))
         for y in range(len(self.map)):
             for x in range(len(self.map[y])):
                 tile: Case = self.map[y][x]

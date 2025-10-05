@@ -44,6 +44,5 @@ class HudSystem:
         if event.type == pygame.VIDEORESIZE:
             # Recréer le HUD avec les nouvelles dimensions
             self.hud = Hud(self.screen)
-            print("Resized.")
             return False
         return False

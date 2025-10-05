@@ -65,7 +65,6 @@ def load_terrain_sprites():
         if os.path.exists(full_path):
             sprite = pygame.image.load(full_path)
             if terrain_type != CaseType.LAVA:
-                print(tile_size)
                 sprite = pygame.transform.scale(sprite, (tile_size, tile_size))
                 sprites[terrain_type] = sprite
 
@@ -221,7 +220,6 @@ def main(screen: pygame.Surface, map_size=24):
 
         dt = min(clock.get_time() / 1000, dt)
 
-        # Gestion des événements
         for event in pygame.event.get():
             victory_handled = victory_system.handle_victory_input(event)
             if not victory_handled:
@@ -229,15 +227,10 @@ def main(screen: pygame.Surface, map_size=24):
                 if not hud_handled:
                     input_manager.handle_event(event)
 
-        # Rendu uniquement si le jeu n'est pas en victoire
-        if not victory_handled:
-            render.show_map()
-
-        # Traitement des systèmes après avoir effacé l'écran
         world.process(dt)
 
-        # Rendu des entités et UI
         if not victory_handled:
+            render.show_map()
             render.process(dt)
             selection_system.draw_selections(screen)
             game_hud.draw()
@@ -250,8 +243,6 @@ def main(screen: pygame.Surface, map_size=24):
 def resize(screen: pygame.Surface, map_size: int, hud_width: int = 100) -> tuple[int]:
 
     Config.tile_size = (screen.get_width() - hud_width * 2) / map_size
-    print(Config.tile_size)
-
     map_width = Config.tile_size * map_size
     map_height = Config.tile_size * map_size
 
