@@ -9,6 +9,7 @@ from components.health import Health
 from components.target import Target
 from components.position import Position
 from core.iterator_system import IteratingProcessor
+from components.cost import Cost
 
 
 class CombatSystem(IteratingProcessor):
@@ -98,5 +99,14 @@ class CombatSystem(IteratingProcessor):
             if target_health.remaining <= 0:
                 target_health.remaining = 0
                 dead_entity_id = target.target_entity_id
-                EventBus.get_event_bus().emit(DeathEvent(team, dead_entity_id))
+                # Get entity cost before emitting death event
+
+                entity_cost = 0
+
+                if esper.has_component(dead_entity_id, Cost):
+                    cost_component = esper.component_for_entity(dead_entity_id, Cost)
+                    entity_cost = cost_component.amount
+                    EventBus.get_event_bus().emit(
+                        DeathEvent(team, dead_entity_id, entity_cost)
+                    )
                 target.target_entity_id = None

@@ -35,6 +35,8 @@ class Hud:
             2: (255, 85, 85),
         }
 
+        self.start_time = pygame.time.get_ticks()
+
         # TODO :
         # Faire en sorte que la fenêtre devienne responsive et modifier le commentaire/code
 
@@ -73,6 +75,41 @@ class Hud:
             surface, tuple(max(0, c - 10) for c in base_color), inner_rect, 1
         )
 
+    def getGameTime(self) -> str:
+        """Retourne le temps de jeu formaté."""
+        elapsed_ms = pygame.time.get_ticks() - self.start_time
+        elapsed_seconds = elapsed_ms // 1000
+        minutes = elapsed_seconds // 60
+        seconds = elapsed_seconds % 60
+        return f"{minutes:02d}:{seconds:02d}"
+
+    def drawTimeDisplay(self):
+        """Affiche le temps de jeu au centre en haut de l'écran."""
+        time_text = f"Temps: {self.getGameTime()}"
+        time_surface = self.font_large.render(time_text, True, self.gold_color)
+
+        # panel for the clock
+        panel_width = time_surface.get_width() + 30
+        panel_height = time_surface.get_height() + 20
+        panel_x = (self.screen_width - panel_width) // 2
+        panel_y = 10
+
+        time_panel = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
+        self.drawMinecraftPanel(self.screen, time_panel)
+
+        # Ombre du texte
+        shadow_surface = self.font_large.render(time_text, True, self.shadow_color)
+        shadow_rect = shadow_surface.get_rect(
+            centerx=self.screen_width // 2 + 2, y=panel_y + 12
+        )
+        self.screen.blit(shadow_surface, shadow_rect)
+
+        # diaplaying the title
+        time_rect = time_surface.get_rect(
+            centerx=self.screen_width // 2, y=panel_y + 10
+        )
+        self.screen.blit(time_surface, time_rect)
+
     def drawTeamHud(self, team_id: int):
         """Dessine le HUD d'une équipe spécifique"""
         if (
@@ -81,6 +118,7 @@ class Hud:
         ):
             return
 
+        player = Services.player_manager.players[team_id]
         current_player = Services.player_manager.get_current_player()
 
         # adjust the position of the hud depending on the current team
@@ -118,7 +156,34 @@ class Hud:
             )
             self.screen.blit(active_surface, active_rect)
 
+        # parameter used to place the player's info
+        info_y = self.hud_y + 70
+
+        # creating the text to show the amount of gold the player has
+        money_text = f"Or: {int(player.money)}/1500"
+        money_surface = self.font_medium.render(money_text, True, self.gold_color)
+        self.screen.blit(money_surface, (hud_x + 15, info_y))
+
+        # displaying a progress bar to show the amount of gold the player has
+        money_progress = min(player.money / 1500.0, 1.0)
+        bar_width = self.hud_width - 30
+        bar_height = 12
+        bar_x = hud_x + 15
+        bar_y = info_y + 20
+
+        bar_rect = pygame.Rect(bar_x, bar_y, bar_width, bar_height)
+        self.drawMinecraftPanel(self.screen, bar_rect, dark=True)
+
+        # filling the bar
+        if money_progress > 0:
+            progress_width = int((bar_width - 4) * money_progress)
+            progress_rect = pygame.Rect(
+                bar_x + 2, bar_y + 2, progress_width, bar_height - 4
+            )
+            self.screen.fill(self.gold_color, progress_rect)
+
     def draw(self):
         """Dessine l'interface complète"""
+        self.drawTimeDisplay()
         self.drawTeamHud(1)
         self.drawTeamHud(2)
