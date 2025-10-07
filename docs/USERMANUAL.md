@@ -129,9 +129,9 @@ Le champ de bataille du Nether influence vos unités :
 | Type de terrain | Apparence | Effet principal |
 |------------------|------------|-----------------|
 | **Netherrack** | ![Netherrack](../assets/images/Netherrack.png) | Terrain neutre |
-| **Blue Netherrack** | ![Blue Netherrack](../assets/images/blue_netherrack.png) | Terrain décoratif |
+| **Blue Netherrack** | ![Blue Netherrack](../assets/images/Blue_netherrack.png) | Terrain décoratif |
 | **Red Netherrack** | ![Red Netherrack](../assets/images/Red_netherrack.png) | Zone symbolique ennemie |
-| **Soul Sand** | ![Soul Sand](../assets/images/soulsand.png) | Ralentit les unités terrestres |
+| **Soul Sand** | ![Soul Sand](../assets/images/Soulsand.png) | Ralentit les unités terrestres |
 | **Lava** | ![Lava](lava.png) | Inflige des dégâts continus |
 
 
