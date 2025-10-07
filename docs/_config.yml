@@ -1,0 +1,29 @@
+# _config.yml
+
+title: Clash of piglin
+description: Un site statique déployé avec GitHub Pages
+url: "https://zwartkat.github.io/Clash-of-piglin/"
+
+theme: minima 
+
+# Navigation (menu du haut, si ton thème le gère)
+nav:
+  - title: "Accueil"
+    url: /
+
+# Plugins activés
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Options de build
+markdown: kramdown
+kramdown:
+  input: GFM
+
+# Exclusions (fichiers à ne pas inclure dans le site)
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
