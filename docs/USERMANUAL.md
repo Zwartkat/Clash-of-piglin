@@ -49,7 +49,7 @@ Votre **revenu d’or** augmente automatiquement avec le temps :
 | 1:00 → 2:00 | +0.16 |
 | 2:00 → 3:00 | +0.20 |
 | 3:00 → 4:00 | +0.25 |
-| 4:00 | +30 |
+| 4:00 | +0.30 |
 
 > 💡 Le revenu est cumulé automatiquement. Plus la partie avance, plus votre économie devient puissante.
 
@@ -70,21 +70,21 @@ Vous pourrez obtenir sur les unités adverses vaincus des récompenses correspon
 #### 🪓 Piglin Brute
 - **Forces :** Grande résistance, dégâts élevés au corps à corps  
 - **Faiblesses :** Lent, vulnérable à distance  
-- **Coût :** 100 or  
+- **Coût :** 350 or  
 - **Vitesse :** moyenne  
 - **Rôle :** Encaisser les dégâts et protéger les unités à distance  
 
 #### 🏹 Piglin Arbalétrier
 - **Forces :** Polyvalent, peut viser au sol et dans les airs  
 - **Faiblesses :** Défense faible  
-- **Coût :** 120 or  
+- **Coût :** 425 or  
 - **Vitesse :** moyenne  
 - **Rôle :** Soutenir les Brutes et contrer les Ghasts  
 
 #### 👁️ Ghast
 - **Forces :** Volant, ignore les obstacles au sol  
 - **Faiblesses :** Ne vise que les bâtiments  
-- **Coût :** 200 or  
+- **Coût :** 820 or  
 - **Vitesse :** rapide  
 - **Rôle :** Attaquer le bastion adverse à distance  
 
