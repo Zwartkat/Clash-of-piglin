@@ -7,7 +7,7 @@ Clash of piglin is a game inspired on Minecraft Nether, you fight an another bas
 - xMegumi / lorenzovdkn
 - yciolk
 - SparkasseLaBank
-- Workrai
+- WorKai
 - MathieuPinceel
 
 ## Installation
