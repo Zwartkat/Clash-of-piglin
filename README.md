@@ -7,7 +7,7 @@ Clash of piglin is a game inspired on Minecraft Nether, you fight an another bas
 - xMegumi / lorenzovdkn
 - yciolk
 - SparkasseLaBank
-- Workrai
+- WorKai
 - MathieuPinceel
 
 ## Installation
@@ -16,7 +16,7 @@ Clone the repository and install the dependencies:
 
 ```bash
 git clone https://github.com/Zwartkat/Clash-of-piglin.git
-cd Clash-Of-Piglins
+cd Clash-of-piglin
 pip install -r requirements.txt
 python -m pre_commit install # To set pre commit hooks
 ```
@@ -42,5 +42,5 @@ python -m pre_commit install # To set pre commit hooks
 To start the game, run the main file:
 
 ```bash
-python main.py
+python ./src/main.py
 ```
