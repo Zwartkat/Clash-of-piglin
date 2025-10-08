@@ -2,8 +2,8 @@
 
 title: Clash of piglin
 description: Un site statique déployé avec GitHub Pages
-url: "https://zwartkat.github.io/Clash-of-piglin"
-baseurl: "/assets/images/"
+url: "https://zwartkat.github.io/"
+baseurl: "Clash-of-piglin/assets/images/"
 
 theme: minima 
 
