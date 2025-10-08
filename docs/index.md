@@ -18,8 +18,8 @@ Chaque joueur doit gérer son armée de Piglins et de Ghasts pour **anéantir le
 Le jeu combine **gestion tactique**, **contrôle direct des unités** et **progression économique**.  
 Votre réussite dépendra de votre sens de la stratégie et de votre capacité à exploiter les particularités du terrain du Nether.
 
-![Menu principal]({{ site.baseurl }}/launcher.png)
-![Vue d'une partie]({{ site.baseurl }}/map.png)
+![Menu principal](../launcher.png)
+![Vue d'une partie](../map.png)
 
 ---
 
