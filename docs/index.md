@@ -1,4 +1,8 @@
-# ⚔️ Clash of piglin
+---
+title: "Présentation du jeu"
+layout: default
+---
+
 ### Un RTS inspiré du Nether de *Minecraft*
 
 ![Logo](../assets/images/logo.png)
@@ -12,8 +16,8 @@ Chaque joueur doit gérer ses troupes de Piglins et de Ghasts pour **anéantir l
 Le jeu combine **gestion tactique**, **contrôle direct des unités** et **progression économique**.  
 Votre réussite dépendra de votre sens de la stratégie et de votre capacité à exploiter les particularités du terrain du Nether.
 
-![Vue du launcher](launcher.png)
-![Vue du champs de bataille](map.png)
+![Menu principal](launcher.png)
+![Vue d'une partie](map.png)
 
 ---
 
@@ -174,7 +178,7 @@ La partie se termine lorsque :
 ## 📜 Crédits
 
 **Nether Conquest** est un projet de développement indépendant inspiré de l’univers de *Minecraft* (© Mojang Studios).  
-Conçu et programmé par **[Ton nom / Ton studio]**.  
+Conçu et programmé par Mallevaey Adrien, Vandenkoornhuyse Lorenzo, Ciolkowski Yann, Pruvost Scotty, Vandewalle Jérome et Pinceel Matthieu.  
 
 ![Logo](../assets/images/logo.png)
 
