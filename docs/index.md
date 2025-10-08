@@ -13,7 +13,7 @@ layout: default
 ## 🧭 Introduction
 
 Bienvenue dans **Clash of piglin**, un **jeu de stratégie en temps réel** où deux armées s’affrontent dans les profondeurs du Nether.  
-Chaque joueur doit gérer ses troupes de Piglins et de Ghasts pour **anéantir le bastion ennemi** situé à l’extrémité opposée de la carte.
+Chaque joueur doit gérer son armée de Piglins et de Ghasts pour **anéantir le bastion ennemi** situé à l’extrémité opposée de la carte.
 
 Le jeu combine **gestion tactique**, **contrôle direct des unités** et **progression économique**.  
 Votre réussite dépendra de votre sens de la stratégie et de votre capacité à exploiter les particularités du terrain du Nether.
@@ -47,7 +47,7 @@ L’interface de **Clash of piglin** est divisée en plusieurs sections :
 ![Interface du joueur](game_view.png)
 
 ### 🪙 Ressources
-Votre **revenu d’or** augmente automatiquement avec le temps :
+La **génération d’or** augmente automatiquement en fonction de la durée de la partie :
 
 | Temps écoulé (minutes) | Revenu par seconde |
 |-------------------------|------------------|
@@ -57,9 +57,9 @@ Votre **revenu d’or** augmente automatiquement avec le temps :
 | 3:00 → 4:00 | +0.25 |
 | 4:00 | +0.30 |
 
-> 💡 Le revenu est cumulé automatiquement. Plus la partie avance, plus votre économie devient puissante.
+> 💡 Basez une stratégie basée sur la quantité d'or que vous possédez. Économiser de l'or sera parfois la meilleure chose à faire. 
 
-Vous pourrez obtenir sur les unités adverses vaincus des récompenses correspondant à 10% du coût de l'unité
+Vous pourrez obtenir sur les unités adverses vaincus des récompenses correspondant à 10% du coût de l'unité.
 
 ---
 
@@ -69,30 +69,30 @@ Vous pourrez obtenir sur les unités adverses vaincus des récompenses correspon
 |--------|--------|-------|----------|----------------|
 | **Piglin Brute** | ![Piglin Brute](brute.png) | Corps à corps | Troupes terrestres | Attaquant puissant de première ligne |
 | **Piglin Arbalétrier** | ![Piglin Arbalétrier](piglin.png) | Distance | Troupes terrestres et aériennes | Soutien à moyenne portée |
-| **Ghast** | ![Ghast](ghast.png) | Aérien | Bâtiments uniquement | Bombardement du bastion ennemi |
+| **Ghast** | ![Ghast](ghast.png) | Aérien | Bâtiments uniquement | Bombardement des structures ennemies |
 
 ### 💥 Détails des unités
 
 #### 🪓 Piglin Brute
-- **Forces :** Grande résistance, dégâts élevés au corps à corps  
-- **Faiblesses :** Lent, vulnérable à distance  
+- **Forces :** Grande résistance, dégâts élevés au corps à corps, rapide  
+- **Faiblesses :** Incapable de toucher les unités aériennes, limité au corps-à-corps  
 - **Coût :** 350 or  
-- **Vitesse :** moyenne  
+- **Vitesse :** rapide  
 - **Rôle :** Encaisser les dégâts et protéger les unités à distance  
 
 #### 🏹 Piglin Arbalétrier
-- **Forces :** Polyvalent, peut viser au sol et dans les airs  
-- **Faiblesses :** Défense faible  
+- **Forces :** Polyvalent, portée moyenne  
+- **Faiblesses :** Faible défense, DPS moyen
 - **Coût :** 425 or  
 - **Vitesse :** moyenne  
 - **Rôle :** Soutenir les Brutes et contrer les Ghasts  
 
 #### 👁️ Ghast
-- **Forces :** Volant, ignore les obstacles au sol  
-- **Faiblesses :** Ne vise que les bâtiments  
+- **Forces :** Vole, bonne portée, dégats élevés, cible directement les bâtiments 
+- **Faiblesses :** Incapable de se défendre, faible vitesse d'attaque 
 - **Coût :** 820 or  
-- **Vitesse :** rapide  
-- **Rôle :** Attaquer le bastion adverse à distance  
+- **Vitesse :** moyenne  
+- **Rôle :** Détruire les bâtiments et assiéger le bastion adverse
 
 ---
 
@@ -135,13 +135,13 @@ Le champ de bataille du Nether influence vos unités :
 | Type de terrain | Apparence | Effet principal |
 |------------------|------------|-----------------|
 | **Netherrack** | ![Netherrack](../assets/images/Netherrack.png) | Terrain neutre |
-| **Blue Netherrack** | ![Blue Netherrack](../assets/images/Blue_netherrack.png) | Terrain décoratif |
-| **Red Netherrack** | ![Red Netherrack](../assets/images/Red_netherrack.png) | Zone symbolique ennemie |
+| **Blue Netherrack** | ![Blue Netherrack](../assets/images/Blue_netherrack.png) | Terrain décoratif (présent sous votre bastion) |
+| **Red Netherrack** | ![Red Netherrack](../assets/images/Red_netherrack.png) | Terrain décoratif (présent sous le bastion adverse) |
 | **Soul Sand** | ![Soul Sand](../assets/images/Soulsand.png) | Ralentit les unités terrestres |
-| **Lava** | ![Lava](lava.png) | Inflige des dégâts continus |
+| **Lava** | ![Lava](lava.png) | Infranchissable par les unités terrestres |
 
 
-> ⚠️ Attention : les troupes terrestres subissent des ralentissements sur le **Soul Sand** et des dégâts sur la **Lava**.
+> 💡 Les unités volantes ne sont pas affectées par le terrain.
 
 ---
 
@@ -163,7 +163,7 @@ Le champ de bataille du Nether influence vos unités :
 - 🏹 **Placez vos arbalétriers** légèrement en retrait.  
 - 👁️ **Envoyez les Ghasts** sur les bâtiments pendant que vos unités au sol occupent l’ennemi.  
 - 💰 **Surveillez vos ressources** : un bon rythme d’achat garantit la supériorité numérique.  
-- ⚡ **Ne restez pas statique !** Déplacez vos troupes selon la situation du champ de bataille.  
+- ⚡ **Ne restez pas statique !** Déplacez vos troupes selon la situation du champ de bataille.
 
 ---
 
@@ -179,7 +179,7 @@ La partie se termine lorsque :
 
 ## 📜 Crédits
 
-**Nether Conquest** est un projet de développement indépendant inspiré de l’univers de *Minecraft* (© Mojang Studios).  
+**Clash of Piglin** est un projet de développement indépendant inspiré de l’univers de *Minecraft* (© Mojang Studios).  
 Conçu et programmé par Mallevaey Adrien, Vandenkoornhuyse Lorenzo, Ciolkowski Yann, Pruvost Scotty, Vandewalle Jérome et Pinceel Matthieu.  
 
 ![Logo](../assets/images/logo.png)
