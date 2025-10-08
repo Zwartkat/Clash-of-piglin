@@ -3,6 +3,8 @@ title: "Présentation du jeu"
 layout: default
 ---
 
+# ⚔️ Clash of piglin
+
 ### Un RTS inspiré du Nether de *Minecraft*
 
 ![Logo](../assets/images/logo.png)
