@@ -121,9 +121,11 @@ def main(screen: pygame.Surface, map_size=24):
     Services.event_bus.subscribe(ResizeEvent, on_resize)
     Services.event_bus.subscribe(SpawnUnitEvent, UnitFactory.create_unit_event)
 
+    """"
     Services.event_bus.emit(
         SpawnUnitEvent(EntityType.GHAST, Team(1), Position(200, 700))
     )
+    """
 
     case_size = Config.get("tile_size")
 
@@ -138,6 +140,7 @@ def main(screen: pygame.Surface, map_size=24):
 
     from config.units import UNITS
 
+    """
     entities_1 = []
 
     for i in range(6):
@@ -178,6 +181,7 @@ def main(screen: pygame.Surface, map_size=24):
         entities_1.append(
             UnitFactory.create_unit(EntityType.BRUTE, Team(2), Position(400, 200))
         )
+    """
     #
     # Crée le monde Esper
     world = esper
