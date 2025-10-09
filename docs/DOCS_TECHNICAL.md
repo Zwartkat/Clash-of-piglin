@@ -119,6 +119,34 @@ Toutes les entités sont définis par des composants, ceux-ci servent de stockag
 
 ### Case
 
+L'entité `Case` permet de créer des cases, qui en nombre composent la carte de jeu (`Map`).<br> <br>
+On peut en créer sans communiquer de paramètres. La case sera alors créée avec des coordonnées (`Position`) et un type (`CaseType`) par défaut.
+On peut cependant également créer une `Case` à partir d'une autre (la nouvelle copiera alors les coordonnées et le type du modèle) via la méthode `initFromModel`.
+
+Les propriétés d'une `Case` sont : <br>
+
+- `coordonnees` (Position) : La position de la case. Sera utilisée pour déterminer son placement dans le `tab` de la carte de jeu, ainsi que pour l'affichage de ladite carte.
+- `type` (CaseType) : Le type de la case. Sera notamment utilisé dans la carte de jeu afin de permettre toute sortes d'opérations, dont la vérification de la génération d'une carte valide. Si la case est de type `LAVA`, elle reçoit un composant `Sprite` qui sera utilisé pour gérer une animation lors de l'affichage. 
+
+Les fonctions d'une carte sont : <br>
+
+- `getPosition` () -> list[list[Case]] : retourne le `tab` représentant le contenu de la carte.
+- `getType` () -> int : retourne l'index de la carte.
+- `setPosition` (modèle : list[list[Case]]) -> None : copie le contenu du tableau fourni dans le `tab` de la carte.
+- `setType` (modèle : Case) -> None : remplace la case du `tab` dont la position est celle du modèle par une copie de la case fournie.
+- `__str__` () -> str : méthode permettant d'afficher une case comme une chaîne de caractères décrivant sa position et son type.
+
+Exemple d'implémentation d'une carte : 
+
+```py
+
+from components.map import Map
+
+carte = Map()
+carte.generate(24)
+print(carte)
+```
+
 ### Collider
 
 ### Cost
