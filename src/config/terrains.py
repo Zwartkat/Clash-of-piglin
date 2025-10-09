@@ -1,6 +1,6 @@
-from core.terrain import Terrain
+from core.game.terrain import Terrain
 
-from enums.unit_type import UnitType
+from enums.entity.unit_type import UnitType
 from enums.case_type import *
 
 TERRAIN = {

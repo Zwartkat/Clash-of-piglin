@@ -2,18 +2,18 @@ import esper
 import pygame
 from typing import Tuple
 from core.services import Services
-from core.player import Player
-from components.health import Health
+from core.game.player import Player
+from components.base.health import Health
 from events.victory_event import VictoryEvent
-from enums.entity_type import EntityType
+from enums.entity.entity_type import EntityType
 from config.units import UNITS
-from components.cost import Cost
-from components.position import Position
-from systems.unit_factory import UnitFactory
-from components.team import Team
+from components.base.cost import Cost
+from components.base.position import Position
+from factories.unit_factory import UnitFactory
+from components.base.team import Team
 from events.spawn_unit_event import SpawnUnitEvent
 
-# from components.sprite import Sprite
+# from components.rendering.sprite import Sprite
 
 
 class Hud:

@@ -58,7 +58,7 @@ Cette classe est sous la forme d'un singleton et peut être récupérée avec `E
 La méthode `subscribe` permet en fournissant une classe `Event` et une méthode sous forme de `Callable`. Pour désabonner, il faut utiliser `unsubcribe`. <br>
 Pour émettre un événement, il doit être donné à la méthode `emit` qui exécutera toutes les objets méthodes abonnés. Ces méthodes doivent posséder en argument l'event qui lui sera transmis<br>
 ```py
-from core.event_bus import EventBus
+from core.ecs.event_bus import EventBus
 
 render = RenderSystem()
 
@@ -105,7 +105,7 @@ Pour utiliser la caméra, il est impératif d'executer ces deux fonctions : `set
 
 ```py
 
-from core.camera import CAMERA
+from core.game.camera import CAMERA
 
 CAMERA.set_size(300,300)
 CAMERA.set_world_size(700,800)
@@ -181,7 +181,7 @@ Exemple d'implémentation d'une carte :
 
 ```py
 
-from components.map import Map
+from core.game.map import Map
 
 carte = Map()
 carte.generate(24)

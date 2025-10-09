@@ -1,7 +1,7 @@
-from core.camera import Camera
+from core.game.camera import Camera
 from core.config import Config
-from core.event_bus import EventBus
-from systems.player_manager import PlayerManager
+from core.ecs.event_bus import EventBus
+from core.game.player_manager import PlayerManager
 
 
 class Services:

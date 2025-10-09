@@ -1,5 +1,5 @@
-from core.component import Component
-from components.position import Position
+from core.ecs.component import Component
+from components.base.position import Position
 
 
 class Arrow(Component):

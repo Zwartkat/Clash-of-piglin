@@ -1,12 +1,12 @@
 from core.config import Config
-from core.entity import Entity
+from core.ecs.entity import Entity
 
 from enums.case_type import CaseType
-from enums.animation import Animation
-from enums.direction import Direction
+from enums.entity.animation import Animation
+from enums.entity.direction import Direction
 
-from components.sprite import Sprite
-from components.position import Position
+from components.rendering.sprite import Sprite
+from components.base.position import Position
 
 
 class Case(Entity):

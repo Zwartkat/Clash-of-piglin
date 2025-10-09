@@ -1,6 +1,6 @@
-from components.position import Position
-from components.team import Team
-from enums.entity_type import EntityType
+from components.base.position import Position
+from components.base.team import Team
+from enums.entity.entity_type import EntityType
 
 
 class SpawnUnitEvent:

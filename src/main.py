@@ -1,7 +1,7 @@
 from typing import Tuple
 import esper
 import pygame
-import core.game_launcher as game_manager
+import core.engine as game_manager
 
 from core.config import Config
 

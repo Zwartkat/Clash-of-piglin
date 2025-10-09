@@ -1,4 +1,4 @@
-from core.event import Event
+from core.ecs.event import Event
 
 
 class StopEvent(Event):
