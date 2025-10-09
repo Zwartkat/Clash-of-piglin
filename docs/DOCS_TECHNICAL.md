@@ -119,6 +119,33 @@ Toutes les entités sont définis par des composants, ceux-ci servent de stockag
 
 ### Case
 
+L'entité `Case` permet de créer des cases, qui en nombre composent la carte de jeu (`Map`).<br> <br>
+On peut en créer sans communiquer de paramètres. La case sera alors créée avec des coordonnées (`Position`) et un type (`CaseType`) par défaut.
+On peut cependant également créer une `Case` à partir d'une autre (la nouvelle copiera alors les coordonnées et le type du modèle) via la méthode `initFromModel`.
+
+Les propriétés d'une `Case` sont : <br>
+
+- `coordonnees` (Position) : La position de la case. Sera utilisée pour déterminer son placement dans le `tab` de la carte de jeu, ainsi que pour l'affichage de ladite carte.
+- `type` (CaseType) : Le type de la case. Sera notamment utilisé dans la carte de jeu afin de permettre toute sortes d'opérations, dont la vérification de la génération d'une carte valide. Si la case est de type `LAVA`, elle reçoit un composant `Sprite` qui sera utilisé pour gérer une animation lors de l'affichage. 
+
+Les fonctions d'une carte sont : <br>
+
+- `getPosition` () -> Position : retourne les coordonnées de la case.
+- `getType` () -> CaseType : retourne le type de la case.
+- `setPosition` (modèle : Position) -> None : copie la position fourni dans les coordonnees de la case.
+- `setType` (modèle : CaseType) -> None : copie le type fourni dans le type de la case.
+- `__str__` () -> str : méthode permettant d'afficher une case comme une chaîne de caractères décrivant sa position et son type.
+
+Exemple d'implémentation d'une carte : 
+
+```py
+
+from components.case import Case
+
+case = Case()
+print(carte)
+```
+
 ### Collider
 
 ### Cost
@@ -139,14 +166,27 @@ Les propriétés d'une carte sont : <br>
 - `tab` (list[list[Case]]) : Le tableau représentant le contenu de la carte.
 - `index` (int) : Un index généré à partir d'un compteur statique, permettant d'identifier la carte. 
 
-Les propriétés statiques des cartes sont :
+Les détails des propriétés statiques sont présentés dans le code source, celles-ci étant utilisées de façon interne. 
 
-- `counter` (int) : compteur statique s'incrémentant à chaque création de carte, utilisé pour déterminer l'index des cartes créée.
-- `list_frequencies` (dict[CaseType, int]) : liste statique définissant la fréquence des différents type de cases sur la carte.
-- `generate_on_base` (list[CaseType]) : liste statique définissant les types de case à générer sous les emplacements des bastions.
-- `restricted_cases` (list[CaseType]) : liste statique définissant les types de case dont la génération doit être contrôlée, de sorte que toutes les cases de la carte n'étant pas d'un des types présent dans `restricted_cases` soient accessibles sans passer par une case d'un des types présent dans `restricted_cases`.
-- `default_block` (CaseType) : type de case statique qui sera utilisé pour générer la carte avant l'ajout des autres types de cases.
-- `limit_of_generation_for_type` (int) : nombre statique représentant la limite supérieure du nombre de groupe de cases possible pour chaque type de case (Si `limit_of_generation_for_type` vaut 2, pour chaque type de cases généré dans la fonction `generate`, les cases de ce type peuvent être réparties en 1 à 2 groupes de tailles identiques).
+Les méthodes d'une carte sont : <br>
+
+- `getTab` () -> list[list[Case]] : retourne le tab représentant le contenu de la carte.
+- `getIndex` () -> int : retourne l'index de la carte.
+- `setTab` (modèle : list[list[Case]]) -> None : copie le contenu du tableau fourni dans le tab de la carte.
+- `changeCase` (modèle : Case) -> None : remplace la case du tab dont la position est celle du modèle par une copie de la case fournie.
+- `generate` (taille : int) -> None : réinitialise tab et le remplit d'une carte carrée de longueur et largeur égale au nombre fourni, générée aléatoirement à partir de nombreuses propriétés internes (voir code source).
+- `__str__` () -> str : méthode permettant d'afficher une carte comme une chaîne de caractères décrivant le contenu de son tab.
+
+Exemple d'implémentation d'une carte : 
+
+```py
+
+from components.map import Map
+
+carte = Map()
+carte.generate(24)
+print(carte)
+```
 
 ### Money
 
