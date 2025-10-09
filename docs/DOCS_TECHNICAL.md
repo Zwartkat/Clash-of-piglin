@@ -130,20 +130,19 @@ Les propriétés d'une `Case` sont : <br>
 
 Les fonctions d'une carte sont : <br>
 
-- `getPosition` () -> list[list[Case]] : retourne le `tab` représentant le contenu de la carte.
-- `getType` () -> int : retourne l'index de la carte.
-- `setPosition` (modèle : list[list[Case]]) -> None : copie le contenu du tableau fourni dans le `tab` de la carte.
-- `setType` (modèle : Case) -> None : remplace la case du `tab` dont la position est celle du modèle par une copie de la case fournie.
+- `getPosition` () -> Position : retourne les coordonnées de la case.
+- `getType` () -> CaseType : retourne le type de la case.
+- `setPosition` (modèle : Position) -> None : copie la position fourni dans les coordonnees de la case.
+- `setType` (modèle : CaseType) -> None : copie le type fourni dans le type de la case.
 - `__str__` () -> str : méthode permettant d'afficher une case comme une chaîne de caractères décrivant sa position et son type.
 
 Exemple d'implémentation d'une carte : 
 
 ```py
 
-from components.map import Map
+from components.case import Case
 
-carte = Map()
-carte.generate(24)
+case = Case()
 print(carte)
 ```
 
@@ -171,12 +170,12 @@ Les détails des propriétés statiques sont présentés dans le code source, ce
 
 Les méthodes d'une carte sont : <br>
 
-- `getTab` () -> list[list[Case]] : retourne le `tab` représentant le contenu de la carte.
+- `getTab` () -> list[list[Case]] : retourne le tab représentant le contenu de la carte.
 - `getIndex` () -> int : retourne l'index de la carte.
-- `setTab` (modèle : list[list[Case]]) -> None : copie le contenu du tableau fourni dans le `tab` de la carte.
-- `changeCase` (modèle : Case) -> None : remplace la case du `tab` dont la position est celle du modèle par une copie de la case fournie.
-- `generate` (taille : int) -> None : réinitialise `tab` et le remplit d'une carte carrée de longueur et largeur égale au nombre fourni, générée aléatoirement à partir de nombreuses propriétés internes (voir code source).
-- `__str__` () -> str : méthode permettant d'afficher une carte comme une chaîne de caractères décrivant le contenu de son `tab`.
+- `setTab` (modèle : list[list[Case]]) -> None : copie le contenu du tableau fourni dans le tab de la carte.
+- `changeCase` (modèle : Case) -> None : remplace la case du tab dont la position est celle du modèle par une copie de la case fournie.
+- `generate` (taille : int) -> None : réinitialise tab et le remplit d'une carte carrée de longueur et largeur égale au nombre fourni, générée aléatoirement à partir de nombreuses propriétés internes (voir code source).
+- `__str__` () -> str : méthode permettant d'afficher une carte comme une chaîne de caractères décrivant le contenu de son tab.
 
 Exemple d'implémentation d'une carte : 
 
