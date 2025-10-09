@@ -4,5 +4,4 @@ commitizen==4.9.1
 esper==3.4
 pre_commit==4.3.0
 pygame==2.6.1
-pylint==3.3.8
 PyYAML==6.0.3
