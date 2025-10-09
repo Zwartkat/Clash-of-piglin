@@ -3,15 +3,16 @@ title: "Présentation du jeu"
 layout: default
 ---
 
-# ⚔️ Clash of piglin
+<div style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap;">
+    <img src="./logo.png" alt="Logo" height="50" />
+    <h1 style="margin: 0;padding-left:10; text-align: center;">  Clash of Piglin</h1>
+</div>
 
 ### Un RTS inspiré du Nether de *Minecraft*
 
-<img src="./logo.png" alt="Logo" height="100"/>
-
 ---
 
-## 🧭 Introduction
+## Introduction
 
 Bienvenue dans **Clash of piglin**, un **jeu de stratégie en temps réel** où deux armées s’affrontent dans les profondeurs du Nether.  
 Chaque joueur doit gérer son armée de Piglins et de Ghasts pour **anéantir le bastion ennemi** situé à l’extrémité opposée de la carte.
@@ -24,7 +25,7 @@ Votre réussite dépendra de votre sens de la stratégie et de votre capacité �
 
 ---
 
-## 🎯 Objectif
+## Objectif
 
 > **Détruisez le bastion ennemi avant que le vôtre ne tombe.**
 
@@ -34,7 +35,7 @@ Chaque joueur défend un bastion :
 
 ---
 
-## 🧱 Interface du jeu
+## Interface du jeu
 
 L’interface de **Clash of piglin** est divisée en plusieurs sections :
 
@@ -47,7 +48,7 @@ L’interface de **Clash of piglin** est divisée en plusieurs sections :
 
 ![Interface du joueur](./game_view.png)
 
-### 🪙 Ressources
+### Ressources
 La **génération d’or** augmente automatiquement en fonction de la durée de la partie :
 
 | Temps écoulé (minutes) | Revenu par seconde |
@@ -58,13 +59,13 @@ La **génération d’or** augmente automatiquement en fonction de la durée de 
 | 3:00 → 4:00 | +0.25 |
 | 4:00 | +0.30 |
 
-> 💡 Basez une stratégie basée sur la quantité d'or que vous possédez. Économiser de l'or sera parfois la meilleure chose à faire. 
+> Basez une stratégie basée sur la quantité d'or que vous possédez. Économiser de l'or sera parfois la meilleure chose à faire. 
 
 Vous pourrez obtenir sur les unités adverses vaincus des récompenses correspondant à 10% du coût de l'unité.
 
 ---
 
-## 🪖 Les unités
+## Les unités
 
 | Unité | Image | Type | Cibles | Rôle principal |
 |--------|--------|-------|----------|----------------|
@@ -72,23 +73,23 @@ Vous pourrez obtenir sur les unités adverses vaincus des récompenses correspon
 | **Piglin Arbalétrier** | ![Piglin Arbalétrier](./piglin.png) | Distance | Troupes terrestres et aériennes | Soutien à moyenne portée |
 | **Ghast** | ![Ghast](./ghast.png) | Aérien | Bâtiments uniquement | Bombardement des structures ennemies |
 
-### 💥 Détails des unités
+### Détails des unités
 
-#### 🪓 Piglin Brute
+#### Piglin Brute
 - **Forces :** Grande résistance, dégâts élevés au corps à corps, rapide  
 - **Faiblesses :** Incapable de toucher les unités aériennes, limité au corps-à-corps  
 - **Coût :** 350 or  
 - **Vitesse :** rapide  
 - **Rôle :** Encaisser les dégâts et protéger les unités à distance  
 
-#### 🏹 Piglin Arbalétrier
+#### Piglin Arbalétrier
 - **Forces :** Polyvalent, portée moyenne  
 - **Faiblesses :** Faible défense, DPS moyen
 - **Coût :** 425 or  
 - **Vitesse :** moyenne  
 - **Rôle :** Soutenir les Brutes et contrer les Ghasts  
 
-#### 👁️ Ghast
+#### Ghast
 - **Forces :** Vole, bonne portée, dégats élevés, cible directement les bâtiments 
 - **Faiblesses :** Incapable de se défendre, faible vitesse d'attaque 
 - **Coût :** 820 or  
@@ -97,7 +98,7 @@ Vous pourrez obtenir sur les unités adverses vaincus des récompenses correspon
 
 ---
 
-## 🕹️ Commandes
+## Commandes
 
 | Action | Commande |
 |--------|-----------|
@@ -114,7 +115,7 @@ Vous pourrez obtenir sur les unités adverses vaincus des récompenses correspon
 
 ---
 
-## 🏗️ Interface d’achat
+## Interface d’achat
 
 ![Interface d'achat](./buy_ui.png)
 
@@ -128,7 +129,7 @@ Les troupes apparaissent à proximité de votre bastion.
 
 ---
 
-## 🔥 Terrain et effets
+## Terrain et effets
 
 
 Le champ de bataille du Nether influence vos unités :
@@ -142,11 +143,11 @@ Le champ de bataille du Nether influence vos unités :
 | **Lava** | ![Lava](./lava.png) | Infranchissable par les unités terrestres |
 
 
-> 💡 Les unités volantes ne sont pas affectées par le terrain.
+> Les unités volantes ne sont pas affectées par le terrain.
 
 ---
 
-## ⚔️ Déroulement d’une partie
+## Déroulement d’une partie
 
 1. **Chaque joueur démarre** avec un bastion et un revenu initial.  
 2. **Achetez vos premières unités** via l’interface latérale.  
@@ -158,17 +159,17 @@ Le champ de bataille du Nether influence vos unités :
 
 ---
 
-## 🧩 Conseils stratégiques
+## Conseils stratégiques
 
-- 🧱 **Protégez votre bastion** avec un mur de Piglins Brute.  
-- 🏹 **Placez vos arbalétriers** légèrement en retrait.  
-- 👁️ **Envoyez les Ghasts** sur les bâtiments pendant que vos unités au sol occupent l’ennemi.  
-- 💰 **Surveillez vos ressources** : un bon rythme d’achat garantit la supériorité numérique.  
-- ⚡ **Ne restez pas statique !** Déplacez vos troupes selon la situation du champ de bataille.
+- **Protégez votre bastion** avec un mur de Piglins Brute.  
+- **Placez vos arbalétriers** légèrement en retrait.  
+- **Envoyez les Ghasts** sur les bâtiments pendant que vos unités au sol occupent l’ennemi.  
+- **Surveillez vos ressources** : un bon rythme d’achat garantit la supériorité numérique.  
+- **Ne restez pas statique !** Déplacez vos troupes selon la situation du champ de bataille.
 
 ---
 
-## 🏁 Fin de partie
+## Fin de partie
 
 La partie se termine lorsque :
 - La **vie d’un bastion** tombe à zéro.  
@@ -178,10 +179,9 @@ La partie se termine lorsque :
 
 ---
 
-## 📜 Crédits
+## Crédits
 
 **Clash of Piglin** est un projet de développement indépendant inspiré de l’univers de *Minecraft* (© Mojang Studios).  
 Conçu et programmé par Mallevaey Adrien, Vandenkoornhuyse Lorenzo, Ciolkowski Yann, Pruvost Scotty, Vandewalle Jérome et Pinceel Matthieu.  
-
 
 ---
