@@ -130,6 +130,24 @@ Toutes les entités sont définis par des composants, ceux-ci servent de stockag
 ### Health
 
 ### Map
+Le composant `Map` permet de créer des cartes de jeu, représentées par des tables de `Case`.<br> <br>
+On peut en créer sans communiquer de paramètres. Le tableau représentant le contenu de la carte sera alors initialisé comme vide.
+On peut cependant également créer une carte à partir d'une autre (la nouvelle copiera alors le tableau du modèle) via la méthode `initFromModel`, ou créer une carte à partir d'un tableau (list[list[CaseType]) (la carte utilisera le tableau pour initialiser le sien) via la méthode `initFromTab`.
+
+Les propriétés d'une carte sont : <br>
+
+- `tab` (list[list[Case]]) : Le tableau représentant le contenu de la carte.
+- `index` (int) : Un index généré à partir d'un compteur statique, permettant d'identifier la carte. 
+
+Les propriétés statiques des cartes sont :
+
+- `counter` (int) : compteur statique s'incrémentant à chaque création de carte, utilisé pour déterminer l'index des cartes créée.
+- `list_frequencies` (dict[CaseType, int]) : liste statique définissant la fréquence des différents type de cases sur la carte.
+- `generate_on_base` (list[CaseType]) : liste statique définissant les types de case à générer sous les emplacements des bastions.
+- `restricted_cases` (list[CaseType]) : liste statique définissant les types de case dont la génération doit être contrôlée, de sorte que toutes les cases de la carte n'étant pas d'un des types présent dans `restricted_cases` soient accessibles sans passer par une case d'un des types présent dans `restricted_cases`.
+- `default_block` (CaseType) : type de case statique qui sera utilisé pour générer la carte avant l'ajout des autres types de cases.
+- `limit_of_generation_for_type` (int) : nombre statique représentant la limite supérieure du nombre de groupe de cases possible pour chaque type de case (Si `limit_of_generation_for_type` vaut 2, pour chaque type de cases généré dans la fonction `generate`, les cases de ce type peuvent être réparties en 1 à 2 groupes de tailles identiques).
+```
 
 ### Money
 
