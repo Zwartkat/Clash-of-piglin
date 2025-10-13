@@ -39,6 +39,8 @@ from systems.camera_system import CameraSystem
 from systems.hud_system import HudSystem
 from systems.victory_system import VictorySystem
 from systems.arrow_system import ArrowSystem
+from entities.ia_ghast import IAGhast
+from components.health import Health
 
 tile_size = Config.TILE_SIZE()
 
@@ -113,17 +115,13 @@ def main(screen: pygame.Surface, map_size=24):
                 EntityFactory.create(*case.get_all_components())
 
     def on_resize(resize_event: ResizeEvent):
-        resize(screen, 24, game_hud.hud.hud_width)
+        resize(screen, map_size, game_hud.hud.hud_width)
 
     # Subscribes
     Services.event_bus = EventBus.get_event_bus()
 
     Services.event_bus.subscribe(ResizeEvent, on_resize)
     Services.event_bus.subscribe(SpawnUnitEvent, UnitFactory.create_unit_event)
-
-    Services.event_bus.emit(
-        SpawnUnitEvent(EntityType.GHAST, Team(1), Position(200, 700))
-    )
 
     case_size = Config.get("tile_size")
 
@@ -140,45 +138,16 @@ def main(screen: pygame.Surface, map_size=24):
 
     entities_1 = []
 
-    for i in range(6):
-
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
-        )
-    for i in range(6):
-
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
-        )
-    for i in range(6):
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
-        )
+    entities_1.append(
+        UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
+    )
 
     entities_2 = []
 
     entities_2.append(
-        EntityFactory.create(
-            *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
-            Position(100, 200),
-            Team(2),
-            OnTerrain(),
-        )
-    )
-    entities_2.append(
-        EntityFactory.create(
-            *UNITS[EntityType.GHAST].get_all_components(),
-            Position(300, 200),
-            Team(2),
-            OnTerrain(),
-        )
+        UnitFactory.create_unit(EntityType.BRUTE, Team(2), Position(400, 200))
     )
 
-    for i in range(6):
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.BRUTE, Team(2), Position(400, 200))
-        )
-    #
     # Crée le monde Esper
     world = esper
     world.add_processor(MovementSystem())
@@ -211,6 +180,13 @@ def main(screen: pygame.Surface, map_size=24):
 
     world.add_processor(QuitSystem(event_bus_instance, game_state))
 
+    ghast_ias = []
+
+    ghast_entity_id = UnitFactory.create_unit(
+        EntityType.GHAST, Team(1), Position(200, 400)
+    )
+    ghast_ias.append(IAGhast(ghast_entity_id, world))
+
     while game_state["running"]:
 
         clock.tick(60)
@@ -224,7 +200,10 @@ def main(screen: pygame.Surface, map_size=24):
                 if not hud_handled:
                     input_manager.handle_event(event)
 
-        world.process(dt)
+        for ia in ghast_ias:
+            ia.update()
+
+        world.process(1 / 60)
 
         if not victory_handled:
             render.show_map()
@@ -234,6 +213,7 @@ def main(screen: pygame.Surface, map_size=24):
             game_hud.draw()
 
         pygame.display.flip()
+        clock.tick(60)
 
     pygame.quit()
 
