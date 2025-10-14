@@ -46,6 +46,7 @@ class Hud:
 
         # colors used in the huds
         self.background_color = (67, 37, 36)
+        self.background_color_2 = (0, 102, 153)
         self.nether_brick_color = (44, 23, 26)
         self.netherrack_color = (97, 37, 36)
         self.gold_color = (255, 215, 0)
@@ -340,7 +341,7 @@ class Hud:
 
         # create the panel for the team, with a background
         black_background = pygame.Rect(hud_x, 0, self.hud_width, self.screen_height)
-        self.screen.fill(self.background_color, black_background)
+        self.screen.fill(self.background_color_2, black_background)
         main_panel = pygame.Rect(hud_x, self.hud_y, self.hud_width, self.hud_height)
         self.drawMinecraftPanel(
             self.screen, main_panel, dark=(team_id != current_player)

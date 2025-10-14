@@ -14,6 +14,8 @@ from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
 from systems.collision_system import CollisionSystem
 from systems.combat_system import CombatSystem
+from systems.crossbowman_ai_system_enemy import CrossbowmanAISystemEnemy
+from systems.pathfinding_system import PathfindingSystem
 from systems.death_event_handler import DeathEventHandler
 from systems.combat_system import CombatSystem
 from systems.death_event_handler import DeathEventHandler
@@ -140,52 +142,15 @@ def main(screen: pygame.Surface, map_size=24):
 
     from config.units import UNITS
 
-    """
-    entities_1 = []
-
-    for i in range(6):
-
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
-        )
-    for i in range(6):
-
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
-        )
-    for i in range(6):
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
-        )
-
-    entities_2 = []
-
-    entities_2.append(
-        EntityFactory.create(
-            *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
-            Position(100, 200),
-            Team(2),
-            OnTerrain(),
-        )
-    )
-    entities_2.append(
-        EntityFactory.create(
-            *UNITS[EntityType.GHAST].get_all_components(),
-            Position(300, 200),
-            Team(2),
-            OnTerrain(),
-        )
-    )
-
-    for i in range(6):
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.BRUTE, Team(2), Position(400, 200))
-        )
-    """
+    # Pas d'unités créées automatiquement - la carte sera vide au lancement
+    # Les unités seront créées via l'interface utilisateur :
+    # Touches 1, 2, 3 : Créer unités équipe 1 (joueur)
+    # Touches 7, 8, 9 : Créer unités équipe 2 (IA)
     #
     # Crée le monde Esper
     world = esper
-    world.add_processor(MovementSystem())
+    movement_system = MovementSystem()
+    world.add_processor(movement_system)
     world.add_processor(TerrainEffectSystem(game_map))
     world.add_processor(CollisionSystem(game_map))
     selection_system = SelectionSystem(player_manager)
@@ -195,7 +160,8 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(PlayerMoveSystem())
     world.add_processor(EconomySystem(event_bus_instance))
     death_handler = DeathEventHandler(event_bus_instance)
-    world.add_processor(TargetingSystem())
+    targeting_system = TargetingSystem()
+    world.add_processor(targeting_system)
     world.add_processor(CombatSystem())
     world.add_processor(CameraSystem(CAMERA))
 
@@ -209,6 +175,15 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(arrow_system)  # Après le rendu de base
     world.add_processor(InputRouterSystem())
     world.add_processor(victory_system)
+    # Pathfinding system (doit être traité avant les systèmes d'IA)
+    pathfinding_system = PathfindingSystem()
+    world.add_processor(pathfinding_system)
+
+    world.add_processor(
+        CrossbowmanAISystemEnemy(
+            targeting_system, movement_system, arrow_system, pathfinding_system
+        )
+    )
 
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
     game_state = {"running": True}
