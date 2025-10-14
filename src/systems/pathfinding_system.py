@@ -9,49 +9,99 @@ from enums.case_type import CaseType
 
 
 class Node:
+    """
+    Represents a node in the A* pathfinding algorithm.
+
+    Attributes:
+        x (int): Grid X coordinate
+        y (int): Grid Y coordinate
+        g (float): Distance from start node
+        h (float): Heuristic distance to goal
+        f (float): Total cost (g + h)
+        parent (Node): Parent node in the path
+    """
+
     def __init__(self, x: int, y: int, g: float = 0, h: float = 0, parent=None):
+        """
+        Initialize a new pathfinding node.
+
+        Args:
+            x (int): Grid X coordinate
+            y (int): Grid Y coordinate
+            g (float): Distance from start node
+            h (float): Heuristic distance to goal
+            parent (Node, optional): Parent node in the path
+        """
         self.x = x
         self.y = y
-        self.g = g  # Distance depuis le départ
-        self.h = h  # Heuristique vers l'arrivée
-        self.f = g + h  # Coût total
+        self.g = g  # Distance from start
+        self.h = h  # Heuristic to goal
+        self.f = g + h  # Total cost
         self.parent = parent
 
     def __lt__(self, other):
+        """Compare nodes by total cost for priority queue."""
         return self.f < other.f
 
     def __eq__(self, other):
+        """Check if two nodes are at the same position."""
         return self.x == other.x and self.y == other.y
 
     def __hash__(self):
+        """Hash function for set operations."""
         return hash((self.x, self.y))
 
 
 class PathfindingSystem(esper.Processor):
-    def __init__(self, tile_size=24):
+    """
+    A* pathfinding system for navigating units around terrain obstacles.
+
+    This system handles pathfinding requests from AI entities, calculates optimal
+    paths around obstacles like lava, and manages terrain data loading.
+
+    Attributes:
+        tile_size (int): Size of each grid tile in pixels
+        map_width (int): Width of the game map in tiles
+        map_height (int): Height of the game map in tiles
+        terrain_map (dict): Dictionary mapping grid coordinates to terrain types
+    """
+
+    def __init__(self, tile_size: int = 24):
+        """
+        Initialize the pathfinding system.
+
+        Args:
+            tile_size (int): Size of each grid tile in pixels. Defaults to 24.
+        """
         super().__init__()
         self.tile_size = tile_size
         self.map_width = 24
         self.map_height = 24
-        self.terrain_map = {}  # Stockage du terrain
+        self.terrain_map = {}  # Terrain data storage
         self._load_terrain_map()
 
     def _load_terrain_map(self):
-        """Charge la carte du terrain depuis la Map existante"""
-        # Réinitialiser la carte
-        self.terrain_map = {}
-        print("[Pathfinding] Chargement de la carte du terrain...")
+        """
+        Load terrain data from the game map.
 
-        # Chercher la Map dans les composants
+        Attempts to extract terrain information from Map components in the ECS.
+        If no map is found, creates a default terrain map with some lava obstacles
+        for testing purposes.
+        """
+        # Reset the terrain map
+        self.terrain_map = {}
+        print("[Pathfinding] Loading terrain map...")
+
+        # Search for Map component in ECS
         try:
             from components.map import Map
 
             for ent, map_comp in esper.get_components(Map):
-                print(f"[Pathfinding] Map trouvée avec entité {ent}")
-                # La Map utilise self.tab[i][j] avec des objets Case
+                print(f"[Pathfinding] Map found with entity {ent}")
+                # Map uses self.tab[i][j] with Case objects
                 if hasattr(map_comp, "tab"):
                     print(
-                        f"[Pathfinding] Taille de la carte: {len(map_comp.tab)}x{len(map_comp.tab[0]) if map_comp.tab else 0}"
+                        f"[Pathfinding] Map size: {len(map_comp.tab)}x{len(map_comp.tab[0]) if map_comp.tab else 0}"
                     )
                     for i in range(len(map_comp.tab)):
                         for j in range(len(map_comp.tab[i])):
@@ -60,20 +110,20 @@ class PathfindingSystem(esper.Processor):
                                 case_type = case.getType()
                                 self.terrain_map[(i, j)] = case_type
                                 if case_type == CaseType.LAVA:
-                                    print(f"[Pathfinding] Lave détectée à ({i}, {j})")
+                                    print(f"[Pathfinding] Lava detected at ({i}, {j})")
                     print(
-                        f"[Pathfinding] Carte chargée avec {len(self.terrain_map)} cases"
+                        f"[Pathfinding] Map loaded with {len(self.terrain_map)} tiles"
                     )
-                break  # Prendre la première carte trouvée
+                break  # Take the first map found
         except Exception as e:
-            print(f"[Pathfinding] Erreur lors du chargement: {e}")
+            print(f"[Pathfinding] Error during loading: {e}")
 
-        # Si aucune carte trouvée, créer une carte par défaut
+        # If no map found, create a default terrain map
         if not self.terrain_map:
-            print("[Pathfinding] Utilisation de la carte par défaut")
+            print("[Pathfinding] Using default terrain map")
             for x in range(self.map_width):
                 for y in range(self.map_height):
-                    # Créer quelques zones de lave pour tester
+                    # Create some lava zones for testing
                     if (x in [5, 6, 7] and y in [10, 11, 12]) or (
                         x in [15, 16] and y in [8, 9]
                     ):
@@ -81,27 +131,44 @@ class PathfindingSystem(esper.Processor):
                     else:
                         self.terrain_map[(x, y)] = CaseType.NETHERRACK
         else:
-            print(
-                f"[Pathfinding] Carte réelle chargée avec {len(self.terrain_map)} cases"
-            )
+            print(f"[Pathfinding] Real map loaded with {len(self.terrain_map)} tiles")
 
     def _is_walkable(self, x: int, y: int) -> bool:
-        """Vérifie si une case est franchissable"""
-        # Vérifier les limites de la carte
+        """
+        Check if a grid tile is walkable for units.
+
+        Args:
+            x (int): Grid X coordinate
+            y (int): Grid Y coordinate
+
+        Returns:
+            bool: True if the tile is walkable, False otherwise
+        """
+        # Check map boundaries
         if x < 0 or x >= self.map_width or y < 0 or y >= self.map_height:
             return False
 
-        # Vérifier le type de terrain
+        # Check terrain type
         terrain_type = self.terrain_map.get((x, y), CaseType.NETHERRACK)
 
-        # CORRECTION CRITIQUE: Considérer UNKNOWN comme marchable pour éviter le blocage
+        # CRITICAL FIX: Consider UNKNOWN as walkable to avoid blocking
         if terrain_type is None or terrain_type == "UNKNOWN":
-            return True  # Par défaut, si on ne connaît pas le terrain, on peut passer
+            return True  # Default: if terrain unknown, allow passage
 
-        return (
-            terrain_type != CaseType.LAVA
-        )  # Seule la lave est infranchissable    def _is_occupied_by_unit(self, x: int, y: int, current_entity: int) -> bool:
-        """Vérifie si une case est occupée par une autre unité"""
+        return terrain_type != CaseType.LAVA  # Only lava is impassable
+
+    def _is_occupied_by_unit(self, x: int, y: int, current_entity: int) -> bool:
+        """
+        Check if a grid tile is occupied by another unit.
+
+        Args:
+            x (int): Grid X coordinate to check
+            y (int): Grid Y coordinate to check
+            current_entity (int): Entity ID to exclude from check
+
+        Returns:
+            bool: True if tile is occupied by another unit, False otherwise
+        """
         from components.team import Team
         from enums.entity_type import EntityType
 
@@ -114,7 +181,7 @@ class PathfindingSystem(esper.Processor):
             if ent == current_entity:
                 continue
 
-            # Vérifier si une unité est sur cette case (avec une tolérance)
+            # Check if a unit is on this tile (with tolerance)
             unit_grid_x = int(pos.x // self.tile_size)
             unit_grid_y = int(pos.y // self.tile_size)
 
@@ -123,37 +190,39 @@ class PathfindingSystem(esper.Processor):
 
         return False
 
-    def _heuristic(self, x1: int, y1: int, x2: int, y2: int) -> float:
-        """Distance euclidienne comme heuristique"""
-        return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    def _heuristic(self, node1: Node, node2: Node) -> float:
+        """
+        Calculate Manhattan distance between two nodes for A* heuristic.
 
-    def _get_neighbors(self, node: Node, current_entity: int) -> List[Node]:
-        """Retourne les voisins valides d'un nœud"""
+        Args:
+            node1 (Node): First node
+            node2 (Node): Second node
+
+        Returns:
+            float: Manhattan distance between the two nodes
+        """
+        return abs(node1.x - node2.x) + abs(node1.y - node2.y)
+
+    def _get_neighbors(self, node: Node, entity_id: int) -> List[Node]:
+        """
+        Get valid neighboring nodes for pathfinding.
+
+        Args:
+            node (Node): Current node to find neighbors for
+            entity_id (int): ID of entity for collision checking
+
+        Returns:
+            List[Node]: List of walkable neighboring nodes
+        """
         neighbors = []
-
-        # 8 directions (incluant diagonales)
-        directions = [
-            (-1, -1),
-            (-1, 0),
-            (-1, 1),
-            (0, -1),
-            (0, 1),
-            (1, -1),
-            (1, 0),
-            (1, 1),
-        ]
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Left, right, up, down
 
         for dx, dy in directions:
             new_x = node.x + dx
             new_y = node.y + dy
 
-            # Vérifier si la case est franchissable
-            if self._is_walkable(new_x, new_y):
-                # Ne pas considérer les cases occupées par des unités statiques
-                if not self._is_occupied_by_unit(new_x, new_y, current_entity):
-                    # Coût de déplacement (diagonale coûte plus cher)
-                    cost = 1.414 if abs(dx) + abs(dy) == 2 else 1.0
-                    neighbors.append(Node(new_x, new_y, node.g + cost, 0))
+            if self._is_walkable(new_x, new_y, entity_id):
+                neighbors.append(Node(new_x, new_y))
 
         return neighbors
 
@@ -244,7 +313,7 @@ class PathfindingSystem(esper.Processor):
                 neighbor.f = neighbor.g + neighbor.h
                 neighbor.parent = current
 
-                # Vérifier si ce voisin est déjà dans open_set avec un meilleur coût
+                # Check if this neighbor is already in open_set with a better cost
                 existing = None
                 for node in open_set:
                     if node.x == neighbor.x and node.y == neighbor.y:
@@ -257,14 +326,24 @@ class PathfindingSystem(esper.Processor):
                     heapq.heappush(open_set, neighbor)
 
         print(
-            f"  A* échoué après {iterations} itérations, open_set: {len(open_set)}, closed_set: {len(closed_set)}"
+            f"  A* failed after {iterations} iterations, open_set: {len(open_set)}, closed_set: {len(closed_set)}"
         )
-        return None  # Aucun chemin trouvé
+        return None  # No path found
 
     def _find_nearest_walkable(
         self, x: int, y: int, max_radius: int = 5
     ) -> Tuple[Optional[int], Optional[int]]:
-        """Trouve la case franchissable la plus proche"""
+        """
+        Find the nearest walkable tile within a given radius.
+
+        Args:
+            x (int): Starting X grid coordinate
+            y (int): Starting Y grid coordinate
+            max_radius (int): Maximum search radius
+
+        Returns:
+            Tuple[Optional[int], Optional[int]]: (x, y) coordinates of nearest walkable tile, or (None, None) if none found
+        """
         for radius in range(1, max_radius + 1):
             for dx in range(-radius, radius + 1):
                 for dy in range(-radius, radius + 1):
@@ -274,8 +353,16 @@ class PathfindingSystem(esper.Processor):
         return None, None
 
     def process(self, dt):
-        """Traite les demandes de pathfinding"""
-        # Recharger la carte si nécessaire (tous les 60 frames ~ 1 seconde)
+        """
+        Process pathfinding requests from entities.
+
+        Handles path requests, reloads terrain map periodically,
+        and executes A* pathfinding for entities with PathRequest components.
+
+        Args:
+            dt: Delta time (not used in current implementation)
+        """
+        # Reload map if necessary (every 60 frames ~ 1 second)
         if not hasattr(self, "_map_reload_counter"):
             self._map_reload_counter = 0
 
@@ -285,7 +372,7 @@ class PathfindingSystem(esper.Processor):
             self._map_reload_counter = 0
 
         for ent, (path_req, pos) in esper.get_components(PathRequest, Position):
-            # Si une nouvelle destination est demandée
+            # If a new destination is requested
             if path_req.destination and not path_req.path:
                 dest_pos = Position(path_req.destination[0], path_req.destination[1])
                 new_path = self.find_path(pos, dest_pos, ent)
@@ -298,4 +385,4 @@ class PathfindingSystem(esper.Processor):
                     )
                 else:
                     print(f"[Pathfinding] Aucun chemin trouvé pour entité {ent}")
-                    path_req.destination = None  # Réinitialiser la demande
+                    path_req.destination = None  # Reset the request

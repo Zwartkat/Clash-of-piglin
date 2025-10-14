@@ -179,11 +179,7 @@ def main(screen: pygame.Surface, map_size=24):
     pathfinding_system = PathfindingSystem()
     world.add_processor(pathfinding_system)
 
-    world.add_processor(
-        CrossbowmanAISystemEnemy(
-            targeting_system, movement_system, arrow_system, pathfinding_system
-        )
-    )
+    world.add_processor(CrossbowmanAISystemEnemy(targeting_system))
 
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
     game_state = {"running": True}
