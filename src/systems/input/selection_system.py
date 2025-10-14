@@ -1,5 +1,6 @@
 import pygame
 import esper
+from components.ai_controller import AIController
 from components.base.velocity import Velocity
 from core.game.camera import CAMERA
 from components.base.health import Health

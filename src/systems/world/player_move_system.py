@@ -1,4 +1,6 @@
 import esper
+from ai.behaviors.brute_actions import move_to
+from components.ai_controller import AIController
 from components.base.position import Position
 from components.base.velocity import Velocity
 from events.event_move import EventMoveTo
@@ -51,6 +53,11 @@ class PlayerMoveSystem(IteratingProcessor):
             vel: Entity velocity to update
         """
         if ent in self.target:
+            if esper.has_component(ent, AIController):
+                move_to(
+                    ent, Position(self.target[ent][0], self.target[ent][1]), force=True
+                )
+                return
             tx, ty = self.target[ent]
             dx = tx - pos.x
             dy = ty - pos.y

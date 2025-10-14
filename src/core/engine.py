@@ -3,15 +3,16 @@ import pygame
 import esper
 import os
 
+from core.services import Services
 from config import units
 from core.game.camera import CAMERA
 from components.gameplay.effects import OnTerrain
 from components.base.team import Team
 from core.ecs.event_bus import EventBus
-from core.services import Services
 from enums.entity.entity_type import EntityType
 from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
+from systems.ai_system import AiSystem
 from systems.world.collision_system import CollisionSystem
 from systems.combat.combat_system import CombatSystem
 from systems.death_event_handler import DeathEventHandler
@@ -96,9 +97,13 @@ def main(screen: pygame.Surface, map_size=24):
 
     clock = pygame.time.Clock()
 
+    Services.config = Config
+
     # Charger la map et les sprites
     game_map: Map = Map()
     game_map.generate(map_size)
+
+    Services.map = game_map.getTab()
     sprites = load_terrain_sprites()
     game_hud = HudSystem(screen)
 
@@ -145,15 +150,15 @@ def main(screen: pygame.Surface, map_size=24):
         entities_1.append(
             UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
         )
-    for i in range(6):
-
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
-        )
-    for i in range(6):
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
-        )
+    # for i in range(6):
+    #
+    #    entities_1.append(
+    #        UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
+    #    )
+    # for i in range(6):
+    #    entities_1.append(
+    #        UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
+    #    )
 
     entities_2 = []
 
@@ -174,7 +179,7 @@ def main(screen: pygame.Surface, map_size=24):
         )
     )
 
-    for i in range(6):
+    for i in range(1):
         entities_1.append(
             UnitFactory.create_unit(EntityType.BRUTE, Team(2), Position(400, 200))
         )
@@ -184,6 +189,7 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(MovementSystem())
     world.add_processor(TerrainEffectSystem(game_map))
     world.add_processor(CollisionSystem(game_map))
+    world.add_processor(AiSystem())
     selection_system = SelectionSystem(player_manager)
 
     # Crée l'EventBus et le système de déplacement joueur

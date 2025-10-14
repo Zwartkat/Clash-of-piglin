@@ -22,7 +22,7 @@ class PlayerManager:
                 Team(team),
                 bastion_pos,
             )
-            self.players[team] = Player(team, bastion)
+            self.players[team] = Player(team, bastion, start_money=1000)
             team += 1
 
         self.current_player = 1
@@ -36,6 +36,9 @@ class PlayerManager:
     #        return self.players[self.current_player]
     #    else :
     #        return None
+
+    def get_enemy_player(self, team: int) -> Player:
+        return self.players[team + 1 % self.players.__len__()]
 
     def get_current_player(self) -> int:
         return self.current_player

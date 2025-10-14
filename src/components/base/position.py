@@ -1,3 +1,4 @@
+import math
 from core.ecs.component import Component
 
 
@@ -24,6 +25,31 @@ class Position(Component):
 
     def setY(self, value: int) -> None:
         self.y = value
+
+    def to_grid(self):
+        from core.services import Services
+
+        tile_size = Services.config.get("tile_size")
+        return (int(self.x // tile_size), int(self.y // tile_size))
+
+    @staticmethod
+    def from_grid(pos: tuple[float]):
+
+        from core.services import Services
+
+        tile_size = Services.config.get("tile_size")
+        return Position(int(pos[0] * tile_size), int(pos[1] * tile_size))
+
+    def direction_to(self, target):
+        dx, dy = target.x - self.x, target.y - self.y
+        dist = self.distance_to(target)
+        if dist == 0:
+            return 0, 0
+        return dx / dist, dy / dist
+
+    def distance_to(self, target):
+        dx, dy = target.x - self.x, target.y - self.y
+        return math.hypot(dx, dy)
 
     def __str__(self):
         return f"Position of coordonates {self.x}, {self.y}.\n"

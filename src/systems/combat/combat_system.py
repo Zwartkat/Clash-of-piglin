@@ -1,5 +1,6 @@
 # src/systems/combat_system.py
 import esper
+from components.ai_controller import AIController
 from core.ecs.event_bus import EventBus
 from events.attack_event import AttackEvent
 from events.death_event import DeathEvent
@@ -76,6 +77,9 @@ class CombatSystem(IteratingProcessor):
             team: Attacker team for death event
         """
         self.frame_count += 1
+
+        if esper.has_component(ent, AIController):
+            return
 
         if not target.target_entity_id:
             return

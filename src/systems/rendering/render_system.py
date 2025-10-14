@@ -293,10 +293,6 @@ class RenderSystem(IteratingProcessor):
         if health.remaining < health.full:
             self.draw_rect((bar_x, bar_y, bar_width, bar_height), damage_color)
 
-        # Debug temporaire
-        if health.remaining == 0 and health.full > 0:
-            print(f"Unit {ent} has 0/{health.full} HP!")
-
         # Green part for remaining health
         hp_ratio = max(0, min(1.0, health.remaining / health.full))
         health_width = int(bar_width * hp_ratio)
