@@ -1,26 +1,26 @@
-from components.fly import Fly
+from components.gameplay.fly import Fly
 from config.layer import ENTITY_LAYER
-from enums.entity_type import *
+from enums.entity.entity_type import *
 
-from core.entity import Entity
+from core.ecs.entity import Entity
 
 from core.config import Config
 
-from enums.animation import *
-from enums.orientation import *
-from enums.direction import *
-from enums.unit_type import UnitType
+from enums.entity.animation import *
+from enums.entity.orientation import *
+from enums.entity.direction import *
+from enums.entity.unit_type import UnitType
 
-from components.description import Description
-from components.attack import Attack
-from components.health import Health
-from components.position import Position
-from components.velocity import Velocity
-from components.cost import Cost
-from components.collider import Collider
-from components.sprite import Sprite
-from components.selection import Selection
-from components.team import Team, PLAYER_1_TEAM
+from components.base.description import Description
+from components.gameplay.attack import Attack
+from components.base.health import Health
+from components.base.position import Position
+from components.base.velocity import Velocity
+from components.base.cost import Cost
+from components.gameplay.collider import Collider
+from components.rendering.sprite import Sprite
+from components.gameplay.selection import Selection
+from components.base.team import Team, PLAYER_1_TEAM
 
 UNITS = {
     EntityType.CROSSBOWMAN: Entity(

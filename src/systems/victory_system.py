@@ -1,12 +1,12 @@
 import esper
 import pygame
-from components.health import Health
-from components.team import Team
-from core import game_launcher
+from components.base.health import Health
+from components.base.team import Team
+from core import engine
 from events.victory_event import VictoryEvent
 from events.death_event import DeathEvent
 from core.services import Services
-from enums.entity_type import EntityType
+from enums.entity.entity_type import EntityType
 
 
 class VictorySystem(esper.Processor):
@@ -54,7 +54,7 @@ class VictorySystem(esper.Processor):
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                game_launcher.game_state["running"] = False
+                engine.game_state["running"] = False
                 return True
 
     def trigger_victory(self, winning_team: int, losing_team: int):

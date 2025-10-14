@@ -1,5 +1,5 @@
-from core.event import Event
-from components.position import Position
+from core.ecs.event import Event
+from components.base.position import Position
 
 
 class ArrowFiredEvent(Event):

@@ -1,6 +1,6 @@
 import esper
 from events.death_event import DeathEvent
-from components.target import Target
+from components.gameplay.target import Target
 
 
 class DeathEventHandler:

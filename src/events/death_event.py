@@ -1,4 +1,4 @@
-from components.team import Team
+from components.base.team import Team
 
 
 class DeathEvent:
