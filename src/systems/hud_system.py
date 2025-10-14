@@ -10,9 +10,9 @@ class HudSystem:
         self.screen = screen
         self.hud = Hud(screen)
 
-    def draw(self):
-        """Dessine l'interface"""
-        self.hud.draw()
+    def draw(self, dt=0.016):
+        """Draw the interface with delta time for animations"""
+        self.hud.draw(dt)
 
     def process_event(self, event):
         """Traite les événements liés à l'interface"""

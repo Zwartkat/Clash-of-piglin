@@ -91,60 +91,79 @@ class Hud:
         Services.event_bus.subscribe(VictoryEvent, self.on_victory)
 
     def _load_textures(self):
-        """Charge les textures nécessaires pour le HUD"""
+        """Load textures needed for the HUD with animated sprites"""
+        from components.sprite import Sprite
+        from enums.animation import Animation
+        from enums.direction import Direction
+
         self.textures = {}
+        self.unit_sprites = {}
+        self.unit_icons = {}
 
         try:
-            # Charger les sprites des unités pour les boutons
-            self.textures["crossbowman"] = pygame.image.load(
-                "assets/sprites/spritesheet-piglin.png"
-            )
-            self.textures["brute"] = pygame.image.load(
-                "assets/sprites/spritesheet-brute.png"
-            )
-            self.textures["ghast"] = pygame.image.load(
-                "assets/sprites/spritesheet-ghast.png"
-            )
-
-            # Redimensionner pour les boutons
-            self.unit_icons = {}
+            # Create sprite objects for each unit type to extract animated frames
             icon_size = 32
 
-            # Extraire les icônes des spritesheets
-            self.unit_icons[EntityType.CROSSBOWMAN] = pygame.Surface(
-                (icon_size, icon_size), pygame.SRCALPHA
+            # CROSSBOWMAN sprite configuration
+            crossbow_sprite = Sprite(
+                "assets/sprites/spritesheet-piglin.png",
+                24,
+                24,
+                {
+                    Animation.IDLE: {
+                        Direction.DOWN: [1, 5],
+                        Direction.UP: [3, 7],
+                        Direction.LEFT: [2, 6],
+                        Direction.RIGHT: [0, 4],
+                    }
+                },
+                0.5,  # frame duration
+                (icon_size, icon_size),
             )
-            crossbow_sprite = pygame.transform.scale(
-                self.textures["crossbowman"], (24 * 8, 24 * 8)
-            )
-            self.unit_icons[EntityType.CROSSBOWMAN].blit(
-                crossbow_sprite, (0, 0), (0, 0, 24, 24)
-            )
-            self.unit_icons[EntityType.CROSSBOWMAN] = pygame.transform.scale(
-                self.unit_icons[EntityType.CROSSBOWMAN], (icon_size, icon_size)
-            )
+            crossbow_sprite.set_animation(Animation.IDLE, Direction.DOWN)
+            self.unit_sprites[EntityType.CROSSBOWMAN] = crossbow_sprite
 
-            self.unit_icons[EntityType.BRUTE] = pygame.Surface(
-                (icon_size, icon_size), pygame.SRCALPHA
+            # BRUTE sprite configuration
+            brute_sprite = Sprite(
+                "assets/sprites/spritesheet-brute.png",
+                24,
+                24,
+                {
+                    Animation.IDLE: {
+                        Direction.DOWN: [1, 5],
+                        Direction.UP: [3, 7],
+                        Direction.LEFT: [2, 6],
+                        Direction.RIGHT: [0, 4],
+                    }
+                },
+                0.5,
+                (icon_size, icon_size),
             )
-            brute_sprite = pygame.transform.scale(
-                self.textures["brute"], (24 * 8, 24 * 8)
-            )
-            self.unit_icons[EntityType.BRUTE].blit(brute_sprite, (0, 0), (0, 0, 24, 24))
-            self.unit_icons[EntityType.BRUTE] = pygame.transform.scale(
-                self.unit_icons[EntityType.BRUTE], (icon_size, icon_size)
-            )
+            brute_sprite.set_animation(Animation.IDLE, Direction.DOWN)
+            self.unit_sprites[EntityType.BRUTE] = brute_sprite
 
-            self.unit_icons[EntityType.GHAST] = pygame.Surface(
-                (icon_size, icon_size), pygame.SRCALPHA
+            # GHAST sprite configuration (using correct animation frames)
+            ghast_sprite = Sprite(
+                "assets/sprites/spritesheet-ghast.png",
+                24,
+                24,
+                {
+                    Animation.IDLE: {
+                        Direction.DOWN: [0, 4],
+                        Direction.UP: [2, 6],
+                        Direction.LEFT: [3, 7],
+                        Direction.RIGHT: [1, 5],
+                    }
+                },
+                1.0,  # Same frame duration as original
+                (icon_size, icon_size),
             )
-            ghast_sprite = pygame.transform.scale(
-                self.textures["ghast"], (24 * 8, 24 * 8)
-            )
-            self.unit_icons[EntityType.GHAST].blit(ghast_sprite, (0, 0), (0, 0, 24, 24))
-            self.unit_icons[EntityType.GHAST] = pygame.transform.scale(
-                self.unit_icons[EntityType.GHAST], (icon_size, icon_size)
-            )
+            ghast_sprite.set_animation(Animation.IDLE, Direction.DOWN)
+            self.unit_sprites[EntityType.GHAST] = ghast_sprite
+
+            # Initialize current frames
+            for unit_type, sprite in self.unit_sprites.items():
+                self.unit_icons[unit_type] = sprite.get_frame()
 
         except Exception as e:
             print(f"Erreur lors du chargement des textures: {e}")
@@ -704,8 +723,16 @@ class Hud:
 
         return team1_area.collidepoint(mouse_pos) or team2_area.collidepoint(mouse_pos)
 
-    def draw(self):
-        """Dessine l'interface complète"""
+    def _update_unit_animations(self, dt):
+        """Update unit sprite animations for HUD icons"""
+        if hasattr(self, "unit_sprites"):
+            for unit_type, sprite in self.unit_sprites.items():
+                sprite.update(dt)
+                self.unit_icons[unit_type] = sprite.get_frame()
+
+    def draw(self, dt=0.016):  # Default to ~60 FPS
+        """Draw the complete interface with animated unit icons"""
+        self._update_unit_animations(dt)
         self.drawTimeDisplay()
         self.drawTeamHud(1)
         self.drawTeamHud(2)

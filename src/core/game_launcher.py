@@ -206,7 +206,7 @@ def main(screen: pygame.Surface, map_size=24):
             render.process(dt)
             arrow_system.process(dt)
             selection_system.draw_selections(screen)
-            game_hud.draw()
+            game_hud.draw(dt)
 
         pygame.display.flip()
 
