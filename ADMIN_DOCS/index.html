@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>🧾 Documentation Technique – Clash of piglin - Clash of piglin</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../css/brands.min.css" rel="stylesheet">
+        <link href="../css/solid.min.css" rel="stylesheet">
+        <link href="../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">Clash of piglin</a>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#documentation-technique-clash-of-piglin" class="nav-link">🧾 Documentation Technique – Clash of piglin</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#1-informations-generales" class="nav-link">1. Informations générales</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#2-objet-du-document" class="nav-link">2. Objet du document</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#3-references-normatives" class="nav-link">3. Références normatives</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#4-vue-densemble-du-jeu" class="nav-link">4. Vue d’ensemble du jeu</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#5-environnement-logiciel-requis" class="nav-link">5. Environnement logiciel requis</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#6-procedure-dinstallation" class="nav-link">6. Procédure d’installation</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="documentation-technique-clash-of-piglin">🧾 Documentation Technique – <strong>Clash of piglin</strong></h1>
+<h2 id="1-informations-generales">1. Informations générales</h2>
+<table>
+<thead>
+<tr>
+<th>Élément</th>
+<th>Détail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Titre</strong></td>
+<td>Documentation Administrateur - Clash of piglin</td>
+</tr>
+<tr>
+<td><strong>Version</strong></td>
+<td>1.0</td>
+</tr>
+<tr>
+<td><strong>Auteur</strong></td>
+<td>Zwartkat</td>
+</tr>
+<tr>
+<td><strong>Date de révision</strong></td>
+<td>09/10/2025</td>
+</tr>
+<tr>
+<td><strong>Référence du document</strong></td>
+<td>DOC-GD-TECH-001</td>
+</tr>
+<tr>
+<td><strong>Public cible</strong></td>
+<td>Développeurs, testeurs, intégrateurs</td>
+</tr>
+<tr>
+<td><strong>Langage</strong></td>
+<td>Python 3.11+</td>
+</tr>
+<tr>
+<td><strong>Bibliothèques principales</strong></td>
+<td>Pygame 2.6, esper</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-objet-du-document">2. Objet du document</h2>
+<p>Ce document décrit l’<strong>architecture logicielle</strong>, les <strong>modules</strong>, la <strong>procédure d’installation</strong>, les <strong>configurations</strong>, et la <strong>structure du code</strong> du jeu <strong>Clash of piglin</strong>.</p>
+<p>L’objectif est de permettre à tout développeur de comprendre le fonctionnement interne du jeu, de le modifier ou de le maintenir.</p>
+<hr />
+<h2 id="3-references-normatives">3. Références normatives</h2>
+<ul>
+<li>ISO/IEC/IEEE 26514:2008 — <em>Design and development of information for users</em>  </li>
+<li><a href="https://www.pygame.org/docs/">Documentation Pygame</a>  </li>
+<li><a href="https://docs.python.org/3/library/">Python 3.11 Standard Library Reference</a></li>
+</ul>
+<hr />
+<h2 id="4-vue-densemble-du-jeu">4. Vue d’ensemble du jeu</h2>
+<p><strong>Clash of piglin</strong> est un jeu type RTS inspiré de Minecraft Deux joueurs s'affrontent dans l'objectif de détruire le bastion de l'adversaire.</p>
+<h3 id="fonctionnalites-principales">Fonctionnalités principales</h3>
+<ul>
+<li>Déplacement des troupes </li>
+<li>Achat de troupes</li>
+<li>Système de génération d'argent automatique</li>
+<li>Interface graphique simple avec menus.  </li>
+</ul>
+<hr />
+<h2 id="5-environnement-logiciel-requis">5. Environnement logiciel requis</h2>
+<table>
+<thead>
+<tr>
+<th>Composant</th>
+<th>Spécification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Langage</strong></td>
+<td>Python 3.11 ou supérieur</td>
+</tr>
+<tr>
+<td><strong>Bibliothèque graphique</strong></td>
+<td>Pygame 2.6</td>
+</tr>
+<tr>
+<td><strong>OS compatibles</strong></td>
+<td>Windows, macOS, Linux</td>
+</tr>
+<tr>
+<td><strong>Dépendances</strong></td>
+<td><code>pip install -r requirements.txt</code></td>
+</tr>
+<tr>
+<td><strong>IDE recommandé</strong></td>
+<td>VS Code</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-procedure-dinstallation">6. Procédure d’installation</h2>
+<h3 id="61-cloner-le-depot">6.1. Cloner le dépôt</h3>
+<pre><code class="language-bash">git clone https://github.com/Zwartkat/Clash-of-Piglin
+cd Clash-of-Piglin
+</code></pre></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js"></script>
+        <script src="../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
