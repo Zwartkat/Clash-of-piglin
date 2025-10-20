@@ -104,6 +104,34 @@ def main(screen: pygame.Surface, map_size=24):
     sprites = load_terrain_sprites()
     game_hud = HudSystem(screen)
 
+    # Add the generated map to the ECS as a component for pathfinding system
+    map_entity = esper.create_entity()
+    esper.add_component(map_entity, game_map)
+    print(
+        f"[GameLauncher] Map entity {map_entity} created with {len(game_map.tab)}x{len(game_map.tab[0]) if game_map.tab else 0} grid"
+    )
+
+    # 🗺️ AFFICHER LA CARTE GÉNÉRÉE POUR DEBUG
+    print("[DEBUG] 🗺️ CARTE GÉNÉRÉE PAR LE JEU:")
+    for y in range(len(game_map.tab)):
+        line = ""
+        for x in range(len(game_map.tab[y])):
+            case_type = game_map.tab[y][x].getType()
+            if case_type == CaseType.LAVA:
+                line += "L"
+            elif case_type == CaseType.BLUE_NETHERRACK:
+                line += "B"
+            elif case_type == CaseType.RED_NETHERRACK:
+                line += "R"
+            elif case_type == CaseType.NETHERRACK:
+                line += "N"
+            elif case_type == CaseType.SOULSAND:
+                line += "S"
+            else:
+                line += "?"
+        print(f"[DEBUG]   {y:2d}: {line}")
+    print("[DEBUG] 🏁 FIN DE LA CARTE")
+
     map_width, map_height = resize(screen, map_size, game_hud.hud.hud_width)
 
     for y in range(len(game_map.tab)):
@@ -179,7 +207,7 @@ def main(screen: pygame.Surface, map_size=24):
     pathfinding_system = PathfindingSystem()
     world.add_processor(pathfinding_system)
 
-    world.add_processor(CrossbowmanAISystemEnemy(targeting_system))
+    world.add_processor(CrossbowmanAISystemEnemy(pathfinding_system))
 
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
     game_state = {"running": True}
