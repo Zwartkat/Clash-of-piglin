@@ -4,7 +4,7 @@ from components.base.cost import Cost
 from components.gameplay.effects import OnTerrain
 from components.base.position import Position
 from components.base.team import Team
-from config.units import UNITS
+from core.accessors import get_debugger, get_entity
 from core.ecs.entity import Entity
 from enums.entity.entity_type import EntityType
 from events.spawn_unit_event import SpawnUnitEvent
@@ -30,7 +30,7 @@ class UnitFactory:
         Raises:
             ValueError: If entity_type is not found in unit config
         """
-        entity: Entity = UNITS.get(entity_type, None)
+        entity: Entity = get_entity(entity_type)
         if not entity:
             raise ValueError(f"Unknown unit type: {entity_type}")
 
@@ -41,7 +41,9 @@ class UnitFactory:
             try:
                 components.append(copy.deepcopy(comp))
             except:
-                # Si ça marche pas, on prend l'original
+                get_debugger().error(
+                    f"Failed to copy component {comp} for unit {entity_type}"
+                )
                 components.append(comp)
 
         # Replace template position/team with actual values
@@ -89,7 +91,7 @@ class UnitFactory:
         Returns:
             int: Gold cost amount, or 0 if unit type not found
         """
-        entity: Entity = UNITS.get(entity_type, None)
+        entity: Entity = get_entity(entity_type)
         if not entity:
             return 0
         cost: Cost = entity.get_component(Cost)

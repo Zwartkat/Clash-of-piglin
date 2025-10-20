@@ -1,0 +1,12 @@
+from enum import Enum, auto
+
+
+class DataBusKey(Enum):
+    DEBUGGER = "DEBUGGER"
+    CONFIG = "CONFIG"
+    MAP = "MAP"
+    EVENT_BUS = "EVENT_BUS"
+    CAMERA = "CAMERA"
+    PLAYER_MANAGER = "PLAYER_MANAGER"
+    START_TIME = "START_TIME"
+    FINISH_TIME = "FINISH_TIME"

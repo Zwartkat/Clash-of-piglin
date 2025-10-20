@@ -3,6 +3,7 @@ import pygame
 import math
 from typing import Tuple
 
+from core.accessors import get_event_bus
 from core.ecs.iterator_system import IteratingProcessor
 from core.ecs.event_bus import EventBus
 from components.arrow import Arrow
@@ -19,7 +20,7 @@ class ArrowSystem(IteratingProcessor):
         self.render_system = render_system
 
         # Subscribe to arrow fired events
-        EventBus.get_event_bus().subscribe(ArrowFiredEvent, self.on_arrow_fired)
+        get_event_bus().subscribe(ArrowFiredEvent, self.on_arrow_fired)
 
         # Create authentic Minecraft-style arrow sprite
         self.arrow_surface = pygame.Surface((16, 4), pygame.SRCALPHA)

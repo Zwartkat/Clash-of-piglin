@@ -1,6 +1,7 @@
 import esper
 from components.base.position import Position
 from components.base.velocity import Velocity
+from core.accessors import get_event_bus
 from events.event_move import EventMoveTo
 from core.ecs.iterator_system import IteratingProcessor
 from systems.combat.troop_system import TROOP_CIRCLE, TROOP_GRID, FormationSystem
@@ -15,7 +16,7 @@ class PlayerMoveSystem(IteratingProcessor):
 
     def __init__(self):
         super().__init__(Position, Velocity)
-        EventBus.get_event_bus().subscribe(EventMoveTo, self.on_move)
+        get_event_bus().subscribe(EventMoveTo, self.on_move)
         self.target = {}
         self.last_group_order = None
 
@@ -61,7 +62,7 @@ class PlayerMoveSystem(IteratingProcessor):
                 vel.x = 0
                 vel.y = 0
                 del self.target[ent]
-                EventBus.get_event_bus().emit(StopEvent(ent))
+                get_event_bus().emit(StopEvent(ent))
 
                 # Deselect unit when it reaches destination
                 selection = esper.component_for_entity(ent, Selection)

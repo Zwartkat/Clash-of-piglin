@@ -3,6 +3,7 @@ from typing import Tuple
 import esper
 
 from components.gameplay.fly import Fly
+from core.accessors import get_debugger
 from core.ecs.iterator_system import IteratingProcessor
 from core.config import Config
 

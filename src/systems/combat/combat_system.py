@@ -1,5 +1,6 @@
 # src/systems/combat_system.py
 import esper
+from core.accessors import get_event_bus
 from core.ecs.event_bus import EventBus
 from events.attack_event import AttackEvent
 from events.death_event import DeathEvent
@@ -100,11 +101,11 @@ class CombatSystem(IteratingProcessor):
                     isinstance(component, EntityType)
                     and component == EntityType.CROSSBOWMAN
                 ):
-                    EventBus.get_event_bus().emit(ArrowFiredEvent(ent, pos, target_pos))
+                    get_event_bus().emit(ArrowFiredEvent(ent, pos, target_pos))
                     break
 
             # Apply damage to target
-            EventBus.get_event_bus().emit(AttackEvent(ent, target.target_entity_id))
+            get_event_bus().emit(AttackEvent(ent, target.target_entity_id))
 
             # Deal damage
             old_hp: int = target_health.remaining
@@ -122,7 +123,5 @@ class CombatSystem(IteratingProcessor):
                 if esper.has_component(dead_entity_id, Cost):
                     cost_component = esper.component_for_entity(dead_entity_id, Cost)
                     entity_cost = cost_component.amount
-                    EventBus.get_event_bus().emit(
-                        DeathEvent(team, dead_entity_id, entity_cost)
-                    )
+                    get_event_bus().emit(DeathEvent(team, dead_entity_id, entity_cost))
                 target.target_entity_id = None
