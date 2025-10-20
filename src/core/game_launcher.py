@@ -134,8 +134,6 @@ def main(screen: pygame.Surface, map_size=24):
 
     Services.player_manager = player_manager
 
-    from config.units import UNITS
-
     entities_1 = []
 
     entities_1.append(

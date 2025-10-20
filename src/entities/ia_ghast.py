@@ -2,29 +2,53 @@ import random
 from components.position import Position
 from components.health import Health
 from components.team import Team
+from components.attack import Attack
+from components.velocity import Velocity
 from enums.entity_type import EntityType
+from config.units import UNITS
 
 
 class IAGhast:
     """
     IA avancée pour Ghast :
-    - Se dirige vers la structure la plus proche.
+    - Se dirige vers la structure ennemie la plus proche.
     - Fuit si trop d'ennemis proches ou PV faibles.
     - Reste derrière ses alliés si possible.
+    - S'arrête à portée d'attaque (range défini dans units.py).
     """
 
-    ENEMY_RADIUS = 120  # Distance de détection des ennemis
-    ALLY_RADIUS = 80  # Distance pour se protéger derrière alliés
-    LOW_HEALTH = 40  # Seuil de PV faible
+    ENEMY_RADIUS = 120
+    ALLY_RADIUS = 80
+    LOW_HEALTH = 40
 
     def __init__(self, ghast_entity, world):
         self.ghast = ghast_entity
         self.world = world
+        self.target_building = None
+
+        # 🔍 Récupération des stats du Ghast depuis UNITS
+        ghast_base = UNITS[EntityType.GHAST]
+        print(ghast_base._components)
+        self.stats = {}
+        for comp in ghast_base._components:
+            if isinstance(comp, Attack):
+                self.stats["attack_range"] = comp.range
+                print(comp.attack_speed, comp.range, comp.damage)
+
+                self.stats["attack_speed"] = comp.attack_speed
+                self.stats["damage"] = comp.damage
+            elif isinstance(comp, Velocity):
+                self.stats["speed"] = comp.speed
+            elif isinstance(comp, Health):
+                self.stats["max_health"] = comp.full
 
     def update(self):
         pos = self.world.component_for_entity(self.ghast, Position)
         health = self.world.component_for_entity(self.ghast, Health)
         team = self.world.component_for_entity(self.ghast, Team)
+
+        if not (pos and health and team):
+            return
 
         enemies = self._get_nearby_enemies(pos, team.team_id)
         if health.remaining < self.LOW_HEALTH or len(enemies) > 3:
@@ -36,10 +60,35 @@ class IAGhast:
             self._stay_behind_allies(pos, allies)
             return
 
-        # Aller vers le bâtiment ennemi le plus proche
-        enemy_building_pos = self._find_enemy_building(team.team_id)
-        if enemy_building_pos:
-            self._move_towards(pos, enemy_building_pos)
+        # Sélectionne le bâtiment ennemi le plus proche
+        if not self.target_building or not self._entity_exists(self.target_building):
+            self.target_building = self._find_enemy_building(team.team_id)
+
+        if not self.target_building:
+            return
+
+        building_pos = self.world.component_for_entity(self.target_building, Position)
+        if not building_pos:
+            return
+
+        # Vérifie la distance
+        dist = ((building_pos.x - pos.x) ** 2 + (building_pos.y - pos.y) ** 2) ** 0.5
+
+        if dist > self.stats["attack_range"]:
+            self._move_towards(pos, building_pos)
+        else:
+            pass
+
+    # ------------------------
+    # Fonctions utilitaires
+    # ------------------------
+
+    def _entity_exists(self, entity_id):
+        try:
+            self.world.component_for_entity(entity_id, Position)
+            return True
+        except KeyError:
+            return False
 
     def _get_nearby_enemies(self, pos, my_team):
         enemies = []
@@ -62,7 +111,6 @@ class IAGhast:
         return allies
 
     def _flee(self, pos, enemies):
-        # Fuit dans la direction opposée à la moyenne des ennemis
         if not enemies:
             return
         avg_x = sum(
@@ -78,7 +126,6 @@ class IAGhast:
         self._move_towards(pos, Position(flee_x, flee_y))
 
     def _stay_behind_allies(self, pos, allies):
-        # Se place derrière le groupe d'alliés
         avg_x = sum(
             self.world.component_for_entity(a, Position).x for a in allies
         ) / len(allies)
@@ -91,29 +138,28 @@ class IAGhast:
 
     def _find_enemy_building(self, my_team_id):
         min_dist = float("inf")
-        target_pos = None
+        target_ent = None
         ghast_pos = self.world.component_for_entity(self.ghast, Position)
+
         for ent, t in self.world.get_component(Team):
             if t.team_id != my_team_id:
-                # Vérifie que l'entité est un bastion ennemi
-                if self.world.has_component(ent, EntityType):
+                try:
                     entity_type = self.world.component_for_entity(ent, EntityType)
-                    if entity_type == EntityType.BASTION:
-                        ent_pos = self.world.component_for_entity(ent, Position)
-                        dist = (
-                            (ent_pos.x - ghast_pos.x) ** 2
-                            + (ent_pos.y - ghast_pos.y) ** 2
-                        ) ** 0.5
-                        if dist < min_dist:
-                            min_dist = dist
-                            target_pos = ent_pos
-        return target_pos
+                except KeyError:
+                    continue
+                if entity_type == EntityType.BASTION:
+                    ent_pos = self.world.component_for_entity(ent, Position)
+                    dist = (
+                        (ent_pos.x - ghast_pos.x) ** 2 + (ent_pos.y - ghast_pos.y) ** 2
+                    ) ** 0.5
+                    if dist < min_dist:
+                        min_dist = dist
+                        target_ent = ent
+
+        return target_ent
 
     def _move_towards(self, pos, target_pos):
-        """
-        Déplace le Ghast vers la position cible.
-        """
-        speed = 2  # Vitesse de déplacement
+        speed = self.stats["speed"]
         dx = target_pos.x - pos.x
         dy = target_pos.y - pos.y
         dist = (dx**2 + dy**2) ** 0.5
