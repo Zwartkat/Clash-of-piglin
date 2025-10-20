@@ -30,7 +30,7 @@ UNITS = {
             Description("Piglin Arbalétrier", "Guerrier d'attaque à distance"),
             Attack(damage=20, range=3, attack_speed=2.0),
             Health(90),
-            Velocity(x=0, y=0, speed=2),
+            Velocity(x=0, y=0, speed=0.5),
             Position(x=10, y=10),
             Cost(amount=425),
             Selection(),

@@ -26,7 +26,6 @@ class IAGhast:
         self.world = world
         self.target_building = None
 
-        # 🔍 Récupération des stats du Ghast depuis UNITS
         ghast_base = UNITS[EntityType.GHAST]
         print(ghast_base._components)
         self.stats = {}
