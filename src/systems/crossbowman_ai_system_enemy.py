@@ -35,6 +35,7 @@ from components.velocity import Velocity
 from enums.case_type import CaseType
 from enums.entity_type import EntityType
 from core.event_bus import EventBus
+from enums.unit_type import UnitType
 from events.event_move import EventMoveTo
 
 
@@ -63,41 +64,20 @@ class CrossbowmanAISystemEnemy(esper.Processor):
 
     def process(self, dt):
         """Main AI processing with pathfinding integration."""
-        # Debug: Count all units
-        total_units = 0
-        crossbowman_count = 0
-        enemy_crossbowman_count = 0
-
         # Add AI components to team 2 CROSSBOWMAN units
         for ent, (team, entity_type, pos, attack, health) in esper.get_components(
             Team, EntityType, Position, Attack, Health
         ):
-            total_units += 1
-
-            if entity_type == EntityType.CROSSBOWMAN:
-                crossbowman_count += 1
-                print(
-                    f"[AI DEBUG] Found CROSSBOWMAN {ent} on team {team.team_id} at ({pos.x:.1f}, {pos.y:.1f})"
-                )
-
-                if team.team_id == 2:  # Enemy team
-                    enemy_crossbowman_count += 1
-
-                    # Add AI components if missing
-                    if not esper.has_component(ent, AIState):
-                        esper.add_component(ent, AIState())
-                        print(f"[AI DEBUG] Added AIState to CROSSBOWMAN {ent}")
-                    if not esper.has_component(ent, AIMemory):
-                        esper.add_component(ent, AIMemory())
-                        print(f"[AI DEBUG] Added AIMemory to CROSSBOWMAN {ent}")
-                    if not esper.has_component(ent, PathRequest):
-                        esper.add_component(ent, PathRequest())
-                        print(f"[AI DEBUG] Added PathRequest to CROSSBOWMAN {ent}")
-
-        if total_units > 1:  # Skip if only map entity
-            print(
-                f"[AI DEBUG] Total: {total_units} units, CROSSBOWMAN: {crossbowman_count}, Enemy CROSSBOWMAN: {enemy_crossbowman_count}"
-            )
+            if (
+                entity_type == EntityType.CROSSBOWMAN and team.team_id == 2
+            ):  # Enemy team
+                # Add AI components if missing
+                if not esper.has_component(ent, AIState):
+                    esper.add_component(ent, AIState())
+                if not esper.has_component(ent, AIMemory):
+                    esper.add_component(ent, AIMemory())
+                if not esper.has_component(ent, PathRequest):
+                    esper.add_component(ent, PathRequest())
 
         # Process all units with AI
         for ent, (
@@ -111,18 +91,19 @@ class CrossbowmanAISystemEnemy(esper.Processor):
             if team.team_id != 2 or entity_type != EntityType.CROSSBOWMAN:
                 continue
 
-            print(f"[AI DEBUG] Processing AI for CROSSBOWMAN {ent}")
             # Smart AI logic with pathfinding
             self._smart_ai_behavior(ent, pos, attack, team.team_id)
 
     def _smart_ai_behavior(self, ent, pos, attack, team_id):
-        """Main AI decision making with smart movement and pathfinding.
+        """Main AI decision making with advanced tactical behavior.
 
-        Decision hierarchy:
+        New Tactical Logic:
         0. If following an A* path -> Continue following path
-        1. If enemies are in range -> Attack the closest enemy with optimal positioning
-        2. If ally BRUTE exists -> Follow the BRUTE for support
-        3. Otherwise -> Move to map center and wait for targets
+        1. If enemies in range -> Attack them
+        2. Evaluate tactical situation:
+           - If have BRUTE allies -> Attack with them (offensive)
+           - If solo and outnumbered -> Retreat to base (defensive)
+           - Otherwise -> Attack enemy base (aggressive)
 
         Args:
             ent: Entity ID
@@ -136,42 +117,38 @@ class CrossbowmanAISystemEnemy(esper.Processor):
             if self._follow_astar_path(ent, pos, path_request):
                 return  # Still following path, skip other behaviors
 
-        # Priority 1: Look for enemies
+        # Priority 1: Attack enemies in range
         enemies = self._find_enemies_in_range(ent, pos, attack, team_id)
-
-        # Priority 2: Look for ally BRUTEs
-        ally_brute = self._find_nearest_ally_brute(ent, pos, team_id)
-
         if enemies:
-            # Enemies found - attack the closest one
             closest_enemy = min(enemies, key=lambda e: self._distance(pos, e[1]))
             self._attack_enemy(ent, pos, closest_enemy, attack)
+            return
 
-        elif ally_brute:
-            # No enemies but ally BRUTE exists - follow it
-            self._follow_brute_smart(ent, pos, ally_brute)
+        # Priority 2: Tactical decision making
+        self._make_tactical_decision(ent, pos, attack, team_id)
 
-        else:
-            # Nothing to do - move towards center intelligently
-            center_x = 12 * 32  # Center of 24x24 map with 32px tiles
-            center_y = 12 * 32
-            distance_to_center = self._distance(pos, Position(center_x, center_y))
+    def _make_tactical_decision(self, ent, pos, attack, team_id):
+        """Make tactical decisions based on battlefield situation."""
+        # Analyze battlefield
+        ally_brutes = self._count_ally_brutes(team_id)
+        ally_crossbowmen = self._count_ally_crossbowmen(ent, team_id)
+        nearby_enemies = self._count_nearby_enemies(pos, team_id, range_distance=200)
 
-            print(
-                f"[AI DEBUG] Unit {ent} at ({pos.x:.1f}, {pos.y:.1f}), center: ({center_x}, {center_y}), distance: {distance_to_center:.1f}"
-            )
+        # Decision 1: If we have BRUTE allies, fight with them
+        if ally_brutes > 0:
+            ally_brute_result = self._find_nearest_ally_brute(ent, pos, team_id)
+            if ally_brute_result:
+                brute_ent, brute_pos = ally_brute_result
+                self._follow_brute_for_combat(ent, pos, brute_pos)
+                return
 
-            if distance_to_center > 25:  # Lower threshold to ensure movement
-                print(
-                    f"[AI DEBUG] Unit {ent} moving towards center (distance: {distance_to_center:.1f})"
-                )
-                self._move_to_center_smart(ent, pos)
-            else:
-                # Close to center - stop and wait
-                print(
-                    f"[AI DEBUG] Unit {ent} close to center, stopping (distance: {distance_to_center:.1f})"
-                )
-                self._stop_movement(ent)
+        # Decision 2: If we're solo crossbowmen and outnumbered, retreat
+        if ally_crossbowmen == 1 and ally_brutes == 0 and nearby_enemies >= 2:
+            self._retreat_to_base(ent, pos, team_id)
+            return
+
+        # Decision 3: Otherwise, attack enemy base
+        self._attack_enemy_base(ent, pos, team_id)
 
     def _find_enemies_in_range(self, ent, pos, attack, team_id):
         """Find all enemies within attack range for targeting.
@@ -329,6 +306,94 @@ class CrossbowmanAISystemEnemy(esper.Processor):
             # Close enough - stop
             self._stop_movement(ent)
 
+    def _count_ally_brutes(self, team_id):
+        """Count allied BRUTE units."""
+        count = 0
+        for ent, (team, entity_type) in esper.get_components(Team, EntityType):
+            if team.team_id == team_id and entity_type == EntityType.BRUTE:
+                count += 1
+        return count
+
+    def _count_ally_crossbowmen(self, current_ent, team_id):
+        """Count allied CROSSBOWMAN units (excluding self)."""
+        count = 0
+        for ent, (team, entity_type) in esper.get_components(Team, EntityType):
+            if (
+                ent != current_ent
+                and team.team_id == team_id
+                and entity_type == EntityType.CROSSBOWMAN
+            ):
+                count += 1
+        return count + 1  # +1 for self
+
+    def _count_nearby_enemies(self, pos, team_id, range_distance=200):
+        """Count enemies within range."""
+        count = 0
+        for ent, (enemy_pos, enemy_team) in esper.get_components(Position, Team):
+            if enemy_team.team_id != team_id:
+                distance = self._distance(pos, enemy_pos)
+                if distance <= range_distance:
+                    count += 1
+        return count
+
+    def _follow_brute_for_combat(self, ent, pos, brute_pos):
+        """Follow BRUTE ally for coordinated combat."""
+        # Stay at optimal range behind BRUTE (support position)
+        distance = self._distance(pos, brute_pos)
+        if distance > 80:  # Too far from BRUTE
+            self._smart_move_to(ent, pos, brute_pos)
+        else:
+            self._stop_movement(ent)
+
+    def _retreat_to_base(self, ent, pos, team_id):
+        """Retreat to friendly base."""
+        # Find friendly base (BASTION of same team)
+        base_pos = self._find_friendly_base(team_id)
+        if base_pos:
+            self._smart_move_to(ent, pos, base_pos)
+        else:
+            # Fallback: retreat to team spawn corner
+            if team_id == 2:  # Team 2 spawns bottom-right
+                corner_x, corner_y = 20 * 32, 20 * 32
+            else:  # Team 1 spawns top-left
+                corner_x, corner_y = 4 * 32, 4 * 32
+            retreat_pos = Position(corner_x, corner_y)
+            self._smart_move_to(ent, pos, retreat_pos)
+
+    def _attack_enemy_base(self, ent, pos, team_id):
+        """Attack enemy base."""
+        enemy_team_id = 1 if team_id == 2 else 2
+        enemy_base = self._find_enemy_base(enemy_team_id)
+
+        if enemy_base:
+            self._smart_move_to(ent, pos, enemy_base)
+        else:
+            # Fallback: attack enemy spawn corner
+            if enemy_team_id == 1:  # Attack team 1 corner (top-left)
+                corner_x, corner_y = 4 * 32, 4 * 32
+            else:  # Attack team 2 corner (bottom-right)
+                corner_x, corner_y = 20 * 32, 20 * 32
+            attack_pos = Position(corner_x, corner_y)
+            self._smart_move_to(ent, pos, attack_pos)
+
+    def _find_friendly_base(self, team_id):
+        """Find friendly BASTION."""
+        for ent, (pos, team, entity_type) in esper.get_components(
+            Position, Team, EntityType
+        ):
+            if team.team_id == team_id and entity_type == EntityType.BASTION:
+                return pos
+        return None
+
+    def _find_enemy_base(self, enemy_team_id):
+        """Find enemy BASTION."""
+        for ent, (pos, team, entity_type) in esper.get_components(
+            Position, Team, EntityType
+        ):
+            if team.team_id == enemy_team_id and entity_type == EntityType.BASTION:
+                return pos
+        return None
+
     def _move_to_center_smart(self, ent, pos):
         """Move towards the center using smart movement."""
         center_x = 12 * 32  # Center of 24x24 map in pixels
@@ -350,32 +415,22 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         try:
             # Get map entities directly from esper
             map_entities = list(esper.get_components(Map))
-            print(f"[AI DEBUG] Found {len(map_entities)} map entities")
 
             for map_entity, map_comp in map_entities:
                 # IMPORTANT: esper returns a list containing the Map object!
                 # We need to access the first element if it's a list
                 if isinstance(map_comp, list) and len(map_comp) > 0:
                     actual_map = map_comp[0]  # Get the actual Map object
-                    print(f"[AI DEBUG] Extracted Map from list: {type(actual_map)}")
                 elif isinstance(map_comp, Map):
                     actual_map = map_comp
-                    print(f"[AI DEBUG] Direct Map object: {type(actual_map)}")
                 else:
-                    print(
-                        f"[AI DEBUG] Skipping unknown component type: {type(map_comp)}"
-                    )
                     continue
 
                 # Now we should have the actual Map object
                 if not hasattr(actual_map, "tab") or not actual_map.tab:
-                    print(f"[AI DEBUG] Map has no tab data")
                     continue
 
                 terrain = actual_map.tab
-                print(
-                    f"[AI DEBUG] Found map with {len(terrain)}x{len(terrain[0])} terrain"
-                )
 
                 # Convert world positions to grid coordinates
                 CELL_SIZE = 32  # From config.yaml
@@ -404,9 +459,6 @@ class CrossbowmanAISystemEnemy(esper.Processor):
                     case_type = case.getType() if hasattr(case, "getType") else case
 
                     if case_type == CaseType.LAVA:
-                        print(
-                            f"[AI DEBUG] Lava found at grid ({x},{y}) - path NOT safe"
-                        )
                         return False
 
                     if x == end_x and y == end_y:
@@ -420,18 +472,11 @@ class CrossbowmanAISystemEnemy(esper.Processor):
                         error += dx
                         y += y_inc
 
-                print(
-                    f"[AI DEBUG] Path from grid ({start_x},{start_y}) to ({end_x},{end_y}) is safe"
-                )
                 return True
 
-        except Exception as e:
-            print(f"[AI DEBUG] Error in path safety check: {e}")
-            import traceback
+        except Exception:
+            pass
 
-            traceback.print_exc()
-
-        print(f"[AI DEBUG] No valid map data found - path assumed safe")
         return True
 
     def _smart_move_to(self, ent, current_pos, destination):
@@ -449,17 +494,12 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         """
         # Check if direct path is safe (no lava)
         is_safe = self._is_direct_path_safe(current_pos, destination)
-        print(
-            f"[AI DEBUG] Unit {ent}: Path from ({current_pos.x},{current_pos.y}) to ({destination.x},{destination.y}) - Safe: {is_safe}"
-        )
 
         if is_safe:
             # Direct path is safe - use simple movement
-            print(f"[AI DEBUG] Unit {ent}: Using direct movement")
             self._move_towards_point(ent, current_pos, destination.x, destination.y)
         else:
             # Path blocked by obstacles - use A* pathfinding
-            print(f"[AI DEBUG] Unit {ent}: Path blocked by lava, using A* pathfinding")
             self._request_pathfinding(ent, current_pos, destination)
 
     def _move_towards_point(self, ent, pos, target_x, target_y):
@@ -467,12 +507,8 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         # Ensure entity has a Velocity component
         if not esper.has_component(ent, Velocity):
             esper.add_component(ent, Velocity(x=0, y=0, speed=2))
-            print(f"[AI DEBUG] Added Velocity component to unit {ent}")
 
         # Use the event system for proper movement
-        print(
-            f"[AI DEBUG] Unit {ent}: Sending EventMoveTo ({target_x:.1f}, {target_y:.1f})"
-        )
         EventBus.get_event_bus().emit(EventMoveTo(ent, target_x, target_y))
 
     def _request_pathfinding(self, ent, current_pos, destination):
@@ -486,10 +522,6 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         path_request.path = None  # Clear old path to trigger new calculation
         path_request.current_index = 0
 
-        print(
-            f"[AI DEBUG] Unit {ent}: Requested A* pathfinding to ({destination.x}, {destination.y})"
-        )
-
     def _follow_astar_path(self, ent, pos, path_request):
         """Follow an A* calculated path.
 
@@ -501,7 +533,6 @@ class CrossbowmanAISystemEnemy(esper.Processor):
 
         if path_request.current_index >= len(path_request.path):
             # Path completed
-            print(f"[AI DEBUG] Unit {ent}: A* path completed")
             path_request.path = None
             path_request.current_index = 0
             self._stop_movement(ent)
@@ -514,13 +545,9 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         # Check if we've reached this waypoint
         if distance < 16:  # Close enough to waypoint
             path_request.current_index += 1
-            print(
-                f"[AI DEBUG] Unit {ent}: Reached waypoint {path_request.current_index}/{len(path_request.path)}"
-            )
 
             if path_request.current_index >= len(path_request.path):
                 # Path completed
-                print(f"[AI DEBUG] Unit {ent}: A* path completed")
                 path_request.path = None
                 path_request.current_index = 0
                 self._stop_movement(ent)

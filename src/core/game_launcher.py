@@ -107,30 +107,6 @@ def main(screen: pygame.Surface, map_size=24):
     # Add the generated map to the ECS as a component for pathfinding system
     map_entity = esper.create_entity()
     esper.add_component(map_entity, game_map)
-    print(
-        f"[GameLauncher] Map entity {map_entity} created with {len(game_map.tab)}x{len(game_map.tab[0]) if game_map.tab else 0} grid"
-    )
-
-    # 🗺️ AFFICHER LA CARTE GÉNÉRÉE POUR DEBUG
-    print("[DEBUG] 🗺️ CARTE GÉNÉRÉE PAR LE JEU:")
-    for y in range(len(game_map.tab)):
-        line = ""
-        for x in range(len(game_map.tab[y])):
-            case_type = game_map.tab[y][x].getType()
-            if case_type == CaseType.LAVA:
-                line += "L"
-            elif case_type == CaseType.BLUE_NETHERRACK:
-                line += "B"
-            elif case_type == CaseType.RED_NETHERRACK:
-                line += "R"
-            elif case_type == CaseType.NETHERRACK:
-                line += "N"
-            elif case_type == CaseType.SOULSAND:
-                line += "S"
-            else:
-                line += "?"
-        print(f"[DEBUG]   {y:2d}: {line}")
-    print("[DEBUG] 🏁 FIN DE LA CARTE")
 
     map_width, map_height = resize(screen, map_size, game_hud.hud.hud_width)
 
@@ -170,11 +146,6 @@ def main(screen: pygame.Surface, map_size=24):
 
     from config.units import UNITS
 
-    # Pas d'unités créées automatiquement - la carte sera vide au lancement
-    # Les unités seront créées via l'interface utilisateur :
-    # Touches 1, 2, 3 : Créer unités équipe 1 (joueur)
-    # Touches 7, 8, 9 : Créer unités équipe 2 (IA)
-    #
     # Crée le monde Esper
     world = esper
     movement_system = MovementSystem()
