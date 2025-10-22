@@ -6,10 +6,5 @@ from core.game.player_manager import PlayerManager
 
 
 class Services:
-    config: Config = None
-    event_bus: EventBus = EventBus.get_event_bus()
-    map: list[list[Case]] = None
-    camera: Camera = None
-    player_manager: PlayerManager = None
     start_time: int = 0
     finish_time: int = 0

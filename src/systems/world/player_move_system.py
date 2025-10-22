@@ -3,6 +3,7 @@ from ai.behaviors.brute_actions import move_to
 from components.ai_controller import AIController
 from components.base.position import Position
 from components.base.velocity import Velocity
+from core.accessors import get_event_bus
 from events.event_move import EventMoveTo
 from core.ecs.iterator_system import IteratingProcessor
 from systems.combat.troop_system import TROOP_CIRCLE, TROOP_GRID, FormationSystem
@@ -17,7 +18,7 @@ class PlayerMoveSystem(IteratingProcessor):
 
     def __init__(self):
         super().__init__(Position, Velocity)
-        EventBus.get_event_bus().subscribe(EventMoveTo, self.on_move)
+        get_event_bus().subscribe(EventMoveTo, self.on_move)
         self.target = {}
         self.last_group_order = None
 
@@ -31,12 +32,15 @@ class PlayerMoveSystem(IteratingProcessor):
         pos = esper.component_for_entity(event.entity, Position)
         vel = esper.component_for_entity(event.entity, Velocity)
 
+        if esper.has_component(event.entity, AIController):
+            return
+
         if pos and vel:
             dx = event.target_x - pos.x
             dy = event.target_y - pos.y
             dist = (dx**2 + dy**2) ** 0.5
 
-            if dist > 0:
+            if dist > 32:
                 speed = 100
                 vel.x = (dx / dist) * speed
                 vel.y = (dy / dist) * speed
@@ -52,11 +56,14 @@ class PlayerMoveSystem(IteratingProcessor):
             pos: Entity current position
             vel: Entity velocity to update
         """
+        ctrl: AIController = None
+
+        if esper.has_component(ent, AIController):
+            ctrl = esper.component_for_entity(ent, AIController)
+
         if ent in self.target:
-            if esper.has_component(ent, AIController):
-                move_to(
-                    ent, Position(self.target[ent][0], self.target[ent][1]), force=True
-                )
+            if ctrl:
+                move_to(ent, (self.target[ent][0], self.target[ent][1]), force=True)
                 return
             tx, ty = self.target[ent]
             dx = tx - pos.x
@@ -68,12 +75,15 @@ class PlayerMoveSystem(IteratingProcessor):
                 vel.x = 0
                 vel.y = 0
                 del self.target[ent]
-                EventBus.get_event_bus().emit(StopEvent(ent))
+                get_event_bus().emit(StopEvent(ent))
 
                 # Deselect unit when it reaches destination
                 selection = esper.component_for_entity(ent, Selection)
                 if selection:
                     selection.is_selected = False
+                if ctrl:
+                    ctrl.target_pos = None
+                    ctrl.path = []
             else:
                 # Keep moving towards target
                 speed = 100

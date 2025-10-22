@@ -1,11 +1,22 @@
 from typing import Tuple
 import esper
 import pygame
+from core.data_bus import DATA_BUS
+from core.debugger import Debugger
+from core.ecs.event_bus import EventBus
+from core.config import Config
+from enums.data_bus_key import DataBusKey
+
+DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enabled=False))
+DATA_BUS.get_debugger().log("Démarrage du jeu")
+
+Config.load("config.yaml")
+
+DATA_BUS.register(DataBusKey.CONFIG, Config)
+DATA_BUS.register(DataBusKey.EVENT_BUS, EventBus.get_event_bus())
+
 import core.engine as game_manager
 
-from core.config import Config
-
-Config.load()
 
 pygame.init()
 pygame.display.set_caption(Config.get(key="game_name"))

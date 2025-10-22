@@ -3,12 +3,23 @@ import pygame
 import esper
 import os
 
+from core.data_bus import DATA_BUS
 from core.services import Services
+from core.accessors import (
+    get_camera,
+    get_config,
+    get_debugger,
+    get_entity,
+    get_event_bus,
+    get_player_manager,
+)
 from config import units
+from core.debugger import Debugger
 from core.game.camera import CAMERA
 from components.gameplay.effects import OnTerrain
 from components.base.team import Team
-from core.ecs.event_bus import EventBus
+from enums.config_key import ConfigKey
+from enums.data_bus_key import DataBusKey
 from enums.entity.entity_type import EntityType
 from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
@@ -41,10 +52,8 @@ from systems.rendering.hud_system import HudSystem
 from systems.victory_system import VictorySystem
 from systems.combat.arrow_system import ArrowSystem
 
-tile_size = Config.TILE_SIZE()
 
-
-def load_terrain_sprites():
+def load_terrain_sprites(tile_size: int) -> dict[CaseType, pygame.Surface]:
     """Charge tous les sprites de terrain"""
 
     # TODO :
@@ -100,18 +109,22 @@ def main(screen: pygame.Surface, map_size=24):
     Services.config = Config
 
     # Charger la map et les sprites
-    game_map: Map = Map()
-    game_map.generate(map_size)
+    map: Map = Map()
+    map.generate(map_size)
 
-    Services.map = game_map.getTab()
-    sprites = load_terrain_sprites()
+    DATA_BUS.register(DataBusKey.MAP, map)
+    DATA_BUS.register(DataBusKey.CAMERA, CAMERA)
+
+    tile_size: int = DATA_BUS.get(DataBusKey.CONFIG).get(ConfigKey.TILE_SIZE, 32)
+
+    sprites = load_terrain_sprites(tile_size)
     game_hud = HudSystem(screen)
 
     map_width, map_height = resize(screen, map_size, game_hud.hud.hud_width)
 
-    for y in range(len(game_map.tab)):
-        for x in range(len(game_map.tab[y])):
-            tile_type = game_map.tab[y][x]
+    for y in range(len(map.tab)):
+        for x in range(len(map.tab[y])):
+            tile_type = map.tab[y][x]
 
             if tile_type.type == CaseType.LAVA:
                 case = Case(Position(x * tile_size, y * tile_size), CaseType.LAVA)
@@ -121,16 +134,11 @@ def main(screen: pygame.Surface, map_size=24):
         resize(screen, 24, game_hud.hud.hud_width)
 
     # Subscribes
-    Services.event_bus = EventBus.get_event_bus()
 
-    Services.event_bus.subscribe(ResizeEvent, on_resize)
-    Services.event_bus.subscribe(SpawnUnitEvent, UnitFactory.create_unit_event)
+    get_event_bus().subscribe(ResizeEvent, on_resize)
+    get_event_bus().subscribe(SpawnUnitEvent, UnitFactory.create_unit_event)
 
-    Services.event_bus.emit(
-        SpawnUnitEvent(EntityType.GHAST, Team(1), Position(200, 700))
-    )
-
-    case_size = Config.get("tile_size")
+    case_size = get_config().get(ConfigKey.TILE_SIZE, 32)
 
     player_manager = PlayerManager(
         [
@@ -139,7 +147,7 @@ def main(screen: pygame.Surface, map_size=24):
         ]
     )
 
-    Services.player_manager = player_manager
+    DATA_BUS.register(DataBusKey.PLAYER_MANAGER, player_manager)
 
     from config.units import UNITS
 
@@ -164,7 +172,7 @@ def main(screen: pygame.Surface, map_size=24):
 
     entities_2.append(
         EntityFactory.create(
-            *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
+            *get_entity(EntityType.CROSSBOWMAN).get_all_components(),
             Position(100, 200),
             Team(2),
             OnTerrain(),
@@ -172,7 +180,7 @@ def main(screen: pygame.Surface, map_size=24):
     )
     entities_2.append(
         EntityFactory.create(
-            *UNITS[EntityType.GHAST].get_all_components(),
+            *get_entity(EntityType.GHAST).get_all_components(),
             Position(300, 200),
             Team(2),
             OnTerrain(),
@@ -187,22 +195,20 @@ def main(screen: pygame.Surface, map_size=24):
     # Crée le monde Esper
     world = esper
     world.add_processor(MovementSystem())
-    world.add_processor(TerrainEffectSystem(game_map))
-    world.add_processor(CollisionSystem(game_map))
+    world.add_processor(TerrainEffectSystem(map))
+    world.add_processor(CollisionSystem(map))
     world.add_processor(AiSystem())
-    selection_system = SelectionSystem(player_manager)
+    selection_system = SelectionSystem(get_player_manager())
 
-    # Crée l'EventBus et le système de déplacement joueur
-    event_bus_instance = EventBus.get_event_bus()
     world.add_processor(PlayerMoveSystem())
-    world.add_processor(EconomySystem(event_bus_instance))
-    death_handler = DeathEventHandler(event_bus_instance)
+    world.add_processor(EconomySystem(get_event_bus()))
+    death_handler = DeathEventHandler(get_event_bus())
     world.add_processor(TargetingSystem())
     world.add_processor(CombatSystem())
-    world.add_processor(CameraSystem(CAMERA))
+    world.add_processor(CameraSystem(get_camera()))
 
     input_manager = InputManager()
-    render = RenderSystem(screen, game_map, sprites)
+    render = RenderSystem(screen, map, sprites)
     victory_system = VictorySystem()
     arrow_system = ArrowSystem(render)
 
@@ -215,7 +221,9 @@ def main(screen: pygame.Surface, map_size=24):
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
     game_state = {"running": True}
 
-    world.add_processor(QuitSystem(event_bus_instance, game_state))
+    world.add_processor(QuitSystem(get_event_bus(), game_state))
+
+    pygame.transform.set_smoothscale_backend("GENERIC")
 
     while game_state["running"]:
 
@@ -246,14 +254,15 @@ def main(screen: pygame.Surface, map_size=24):
 
 def resize(screen: pygame.Surface, map_size: int, hud_width: int = 100) -> tuple[int]:
 
-    Config.tile_size = (screen.get_width() - hud_width * 2) / map_size
-    map_width = Config.tile_size * map_size
-    map_height = Config.tile_size * map_size
+    global r_tile_size
+    r_tile_size = (screen.get_width() - hud_width * 2) / map_size
+    map_width = r_tile_size * map_size
+    map_height = r_tile_size * map_size
 
     screen_rect = screen.get_rect()
 
-    CAMERA.set_size(screen_rect.width - (hud_width * 2) - 20, screen_rect.height)
-    CAMERA.set_world_size(map_width, map_height)
-    CAMERA.set_offset(hud_width + 10, 0)
+    get_camera().set_size(screen_rect.width - (hud_width * 2) - 20, screen_rect.height)
+    get_camera().set_world_size(map_width, map_height)
+    get_camera().set_offset(hud_width + 10, 0)
 
     return map_width, map_height

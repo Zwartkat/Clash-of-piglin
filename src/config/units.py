@@ -40,8 +40,8 @@ UNITS = {
             Collider(Config.TILE_SIZE() - 2, Config.TILE_SIZE() - 2),
             Sprite(
                 "assets/sprites/spritesheet-piglin.png",
-                24,
-                24,
+                128,
+                128,
                 {
                     Animation.IDLE: {
                         Direction.DOWN: [1, 5],
@@ -79,12 +79,11 @@ UNITS = {
             Cost(amount=350),
             Selection(),
             Collider(Config.TILE_SIZE(), Config.TILE_SIZE()),
-            AIController(BruteAI()),
             Target(allow_targets=[UnitType.WALK, UnitType.STRUCTURE]),
             Sprite(
                 "assets/sprites/spritesheet-brute.png",
-                24,
-                24,
+                128,
+                128,
                 {
                     Animation.IDLE: {
                         Direction.DOWN: [1, 5],
@@ -125,8 +124,8 @@ UNITS = {
             Fly(),
             Sprite(
                 "assets/sprites/spritesheet-ghast.png",
-                24,
-                24,
+                128,
+                128,
                 {
                     Animation.IDLE: {
                         Direction.DOWN: [0, 4],

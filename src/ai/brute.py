@@ -14,7 +14,14 @@ from enums.entity.unit_type import UnitType
 
 
 from ai.behavior_tree import Selector, Sequence, Condition, Action
-from ai.behaviors.brute_actions import enemy_near, attack_target, wander
+from ai.behaviors.brute_actions import (
+    ally_near,
+    enemy_near,
+    attack_target,
+    wander,
+    move_to_ally,
+    protect_ally,
+)
 
 
 class BruteAI(BaseAi):
@@ -22,7 +29,8 @@ class BruteAI(BaseAi):
         super().__init__()
 
         self.tree = Selector(
-            Sequence(Condition(enemy_near), Action(attack_target)),
+            # Sequence(Condition(enemy_near), Action(attack_target)),
+            # Sequence(Condition(ally_near),Action(move_to_ally),Action(protect_ally)),
             Sequence(Action(wander)),
         )
 

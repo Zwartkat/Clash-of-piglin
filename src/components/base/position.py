@@ -1,4 +1,5 @@
 import math
+from core.accessors import get_config
 from core.ecs.component import Component
 
 
@@ -37,8 +38,12 @@ class Position(Component):
 
         from core.services import Services
 
-        tile_size = Services.config.get("tile_size")
+        tile_size = get_config().get("tile_size")
         return Position(int(pos[0] * tile_size), int(pos[1] * tile_size))
+
+    @staticmethod
+    def to_tuple(pos: "Position") -> tuple[int, int]:
+        return (int(pos.x), int(pos.y))
 
     def direction_to(self, target):
         dx, dy = target.x - self.x, target.y - self.y

@@ -1,6 +1,7 @@
 import pygame
 import esper
 
+from core.accessors import get_event_bus
 from core.game.camera import CAMERA
 from core.ecs.event_bus import EventBus
 from enums.input_actions import InputAction
@@ -53,38 +54,32 @@ class InputManager(esper.Processor):
         # Gestion des touches maintenues
         for key, value in self.keys_down.items():
             if value:
-                EventBus.get_event_bus().emit(EventInput(self.key_bindings_hold[key]))
+                get_event_bus().emit(EventInput(self.key_bindings_hold[key]))
 
     def handle_event(self, event):
         if event.type == pygame.QUIT:
-            EventBus.get_event_bus().emit(EventInput(InputAction.QUIT))
+            get_event_bus().emit(EventInput(InputAction.QUIT))
 
         elif event.type == pygame.KEYDOWN:
             if event.key in self.keys_down:
                 if event.key in self.key_bindings_press:
-                    EventBus.get_event_bus().emit(
-                        EventInput(self.key_bindings_press[event.key])
-                    )
+                    get_event_bus().emit(EventInput(self.key_bindings_press[event.key]))
 
                 self.keys_down[event.key] = True
 
             elif event.key in self.key_bindings_press:
-                EventBus.get_event_bus().emit(
-                    EventInput(self.key_bindings_press[event.key])
-                )
+                get_event_bus().emit(EventInput(self.key_bindings_press[event.key]))
 
         elif event.type == pygame.KEYUP:
             if event.key in self.keys_down:
                 if event.key in self.key_bindings_release:
-                    EventBus.get_event_bus().emit(
+                    get_event_bus().emit(
                         EventInput(self.key_bindings_release[event.key])
                     )
                 self.keys_down[event.key] = False
 
             elif event.key in self.key_bindings_release:
-                EventBus.get_event_bus().emit(
-                    EventInput(self.key_bindings_release[event.key])
-                )
+                get_event_bus().emit(EventInput(self.key_bindings_release[event.key]))
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button in self.mouse_down:
@@ -93,7 +88,7 @@ class InputManager(esper.Processor):
             if event.button in self.mouse_bindings_press:
                 action = self.mouse_bindings_press[event.button]
                 pos = CAMERA.unapply(event.pos[0], event.pos[1])
-                EventBus.get_event_bus().emit(EventInput(action, pos))
+                get_event_bus().emit(EventInput(action, pos))
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button in self.mouse_down:
@@ -102,20 +97,16 @@ class InputManager(esper.Processor):
             if event.button in self.mouse_bindings_release:
                 action = self.mouse_bindings_release[event.button]
                 pos = CAMERA.unapply(event.pos[0], event.pos[1])
-                EventBus.get_event_bus().emit(EventInput(action, pos))
+                get_event_bus().emit(EventInput(action, pos))
 
         elif event.type == pygame.MOUSEMOTION:
             for key, value in self.mouse_down.items():
                 if value:
                     pos = CAMERA.unapply(event.pos[0], event.pos[1])
-                    EventBus.get_event_bus().emit(
-                        EventInput(self.mouse_bindings_hold[key], pos)
-                    )
+                    get_event_bus().emit(EventInput(self.mouse_bindings_hold[key], pos))
 
         elif event.type == pygame.MOUSEWHEEL:
-            EventBus.get_event_bus().emit(EventInput(InputAction.ZOOM, event.y))
+            get_event_bus().emit(EventInput(InputAction.ZOOM, event.y))
 
         elif event.type == pygame.VIDEORESIZE:
-            EventBus.get_event_bus().emit(
-                EventInput(InputAction.RESIZE, (event.w, event.h))
-            )
+            get_event_bus().emit(EventInput(InputAction.RESIZE, (event.w, event.h)))

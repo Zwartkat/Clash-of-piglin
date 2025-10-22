@@ -1,6 +1,5 @@
 import esper
-import pygame
-from core.services import Services
+from core.accessors import get_event_bus
 from events.event_input import EventInput
 from events.quit_event import QuitEvent
 from events.switch_event import SwitchEvent
@@ -25,7 +24,7 @@ class InputRouterSystem(esper.Processor):
     def __init__(self):
         super().__init__()
 
-        EventBus.get_event_bus().subscribe(EventInput, self.handle_events)
+        get_event_bus().subscribe(EventInput, self.handle_events)
 
         # /!\ Attention, si l'action demande une data, mettre la classe de l'event, sinon, mettre un instance de l'event
         self.action_bindings = {
@@ -46,11 +45,9 @@ class InputRouterSystem(esper.Processor):
 
     def handle_events(self, event: EventInput):
         if event.data:
-            EventBus.get_event_bus().emit(
-                self.action_bindings[event.action](event.data)
-            )
+            get_event_bus().emit(self.action_bindings[event.action](event.data))
         else:
-            EventBus.get_event_bus().emit(self.action_bindings[event.action])
+            get_event_bus().emit(self.action_bindings[event.action])
 
     def process(self, dt):
         pass

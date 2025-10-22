@@ -1,5 +1,6 @@
 from typing import Tuple
 from components.base.team import Team
+from core.accessors import get_config, get_debugger, get_event_bus, get_player_manager
 from core.game.camera import CAMERA, Camera
 from components.case import Case
 from components.base.health import Health
@@ -13,8 +14,8 @@ from components.base.velocity import Velocity
 
 from core.config import Config
 
-from core.services import Services
 from enums.case_type import *
+from enums.config_key import ConfigKey
 from enums.entity.animation import *
 from enums.entity.orientation import *
 from enums.entity.direction import *
@@ -42,9 +43,9 @@ class RenderSystem(IteratingProcessor):
         self.sprites: dict[CaseType, pygame.Surface] = sprites
         self.entities = []
 
-        EventBus.get_event_bus().subscribe(StopEvent, self.animate_idle)
-        EventBus.get_event_bus().subscribe(EventMoveTo, self.animate_move)
-        EventBus.get_event_bus().subscribe(AttackEvent, self.animate_attack)
+        get_event_bus().subscribe(StopEvent, self.animate_idle)
+        get_event_bus().subscribe(EventMoveTo, self.animate_move)
+        get_event_bus().subscribe(AttackEvent, self.animate_attack)
 
     def process(self, dt):
 
@@ -73,16 +74,15 @@ class RenderSystem(IteratingProcessor):
 
         frame: pygame.Surface = sprite.get_frame()
 
+        sprite.update(dt)
+
         if frame:
             x = position.x
             y = position.y
             if sprite.current_animation != Animation.NONE:
-                x = position.x - (frame.get_width() / 2)
-                y = position.y - (frame.get_height() / 2)
-                frame = pygame.transform.scale(
-                    frame, (Config.get("tile_size"), Config.get("tile_size"))
-                )
-                if Services.player_manager.current_player == (
+                x = int(round(position.x - (frame.get_width() / 2)))
+                y = int(round(position.y - (frame.get_height() / 2)))
+                if get_player_manager().current_player == (
                     esper.component_for_entity(ent, Team)
                 ).team_id and esper.has_component(ent, Selection):
                     selection: Selection = esper.component_for_entity(ent, Selection)
@@ -95,13 +95,14 @@ class RenderSystem(IteratingProcessor):
                 )
 
             self.draw_surface(frame, x, y)
-        sprite.update(dt)
 
     def show_map(self) -> None:
         """
         Draws the game map on the screen using the provided sprites for each terrain type.
         """
         self.screen.fill((67, 37, 36))
+        tile_size: int = get_config().get(ConfigKey.TILE_SIZE, 32)
+
         for y in range(len(self.map)):
             for x in range(len(self.map[y])):
                 tile: Case = self.map[y][x]
@@ -110,8 +111,8 @@ class RenderSystem(IteratingProcessor):
                 )
 
                 if tile.type != CaseType.LAVA:
-                    pos_x = x * Config.get("tile_size")
-                    pos_y = y * Config.get("tile_size")
+                    pos_x = x * tile_size
+                    pos_y = y * tile_size
                     self.draw_surface(sprite, pos_x, pos_y)
 
     def _set_animation(self, ent: int, animation: Animation):
@@ -177,7 +178,10 @@ class RenderSystem(IteratingProcessor):
             zoom: float = CAMERA.zoom_factor
             image = pygame.transform.scale(
                 image,
-                (round(rect.width * zoom + 0.9999), round(rect.height * zoom + 0.9999)),
+                (
+                    int(round(rect.width * zoom + 0.9999)),
+                    int(round(rect.height * zoom + 0.9999)),
+                ),
             )
 
             self.screen.blit(image, (pos[0], pos[1]))
@@ -201,8 +205,8 @@ class RenderSystem(IteratingProcessor):
             rect = pygame.Rect(
                 x,
                 y,
-                round(rect_value[2] * zoom + 0.9999),
-                round(rect_value[3] * zoom + 0.9999),
+                int(round(rect_value[2] * zoom + 0.9999)),
+                int(round(rect_value[3] * zoom + 0.9999)),
             )
             pygame.draw.rect(self.screen, color, rect)
 
@@ -292,6 +296,10 @@ class RenderSystem(IteratingProcessor):
         # Red part for lost health
         if health.remaining < health.full:
             self.draw_rect((bar_x, bar_y, bar_width, bar_height), damage_color)
+
+        # Debug temporaire
+        if health.remaining == 0 and health.full > 0:
+            get_debugger().log(f"Unit {ent} has 0/{health.full} HP!")
 
         # Green part for remaining health
         hp_ratio = max(0, min(1.0, health.remaining / health.full))

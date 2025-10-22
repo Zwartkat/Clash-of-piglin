@@ -8,4 +8,5 @@ class AiSystem(IteratingProcessor):
         super().__init__(AIController)
 
     def process_entity(self, ent, dt, ctrl: AIController):
+        ctrl.state.update(dt)
         ctrl.brain.decide(ent)

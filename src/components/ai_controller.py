@@ -1,5 +1,9 @@
+from ai.ai_state import AiState
 from components.ai import BaseAi
+
+from core.accessors import get_config, get_debugger
 from components.base.position import Position
+from enums.config_key import ConfigKey
 from enums.entity.animation import Animation
 
 
@@ -9,9 +13,6 @@ class AIController:
     Il stocke les infos nécessaires pour la prise de décision.
     """
 
-    def __init__(self, brain=None):
-        self.path: list[Position] = []
+    def __init__(self, ent: int, brain=None):
         self.brain: BaseAi = brain
-        self.state: Animation = Animation.IDLE
-        self.target: int = None
-        self.target_pos: Position = None
+        self.state: AiState = AiState(ent)
