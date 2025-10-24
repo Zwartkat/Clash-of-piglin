@@ -52,6 +52,9 @@ class Node:
         return hash((self.x, self.y))
 
 
+PATHFINDING_SYSTEM_INSTANCE = None
+
+
 class PathfindingSystem(esper.Processor):
     """
     A* pathfinding system for navigating units around terrain obstacles.
@@ -80,6 +83,14 @@ class PathfindingSystem(esper.Processor):
         self.terrain_map = {}  # Terrain data storage
         self._terrain_loaded = False  # Flag to prevent reloading
         self._load_terrain_map()
+
+        # Debug info
+        self.debug_mode = False
+        self.debug_lines = []  # list of ((x1, y1), (x2, y2), color)
+        self.debug_texts = []  # list of (x, y, text, color)
+
+        global PATHFINDING_SYSTEM_INSTANCE
+        PATHFINDING_SYSTEM_INSTANCE = self
 
     def _load_terrain_map(self):
         """
@@ -133,9 +144,15 @@ class PathfindingSystem(esper.Processor):
                         continue
 
             if not map_found:
+                print(
+                    "[Pathfinding] AUCUNE CARTE TROUVÉE - Utilisation de la carte par défaut"
+                )
                 self._create_default_terrain()
+            else:
+                print("[Pathfinding] CARTE RÉELLE CHARGÉE avec succès")
 
-        except Exception:
+        except Exception as e:
+            print(f"[Pathfinding] ERREUR lors du chargement de carte: {e}")
             self._create_default_terrain()
 
         self._terrain_loaded = True
@@ -163,7 +180,6 @@ class PathfindingSystem(esper.Processor):
 
     def _create_default_terrain(self):
         """Create a default terrain map for fallback purposes."""
-        print("[Pathfinding] Creating default terrain map")
         for x in range(self.map_width):
             for y in range(self.map_height):
                 # Create some lava zones for testing
@@ -173,8 +189,6 @@ class PathfindingSystem(esper.Processor):
                     self.terrain_map[(x, y)] = "LAVA"
                 else:
                     self.terrain_map[(x, y)] = "WALKABLE"
-
-        print(f"[Pathfinding] Default map created with {len(self.terrain_map)} tiles")
 
     def _is_walkable(self, x: int, y: int) -> bool:
         """
@@ -360,30 +374,58 @@ class PathfindingSystem(esper.Processor):
         end_x = max(0, min(end_x, self.map_width - 1))
         end_y = max(0, min(end_y, self.map_height - 1))
 
-        print(f"[Pathfinding] A* pour entité {entity_id}:")
-        print(
-            f"  Position pixel: ({start_pos.x}, {start_pos.y}) -> ({end_pos.x}, {end_pos.y})"
-        )
-        print(f"  Position grille: ({start_x}, {start_y}) -> ({end_x}, {end_y})")
-        print(f"  Taille carte: {len(self.terrain_map)} cases")
+        # Debug temporaire pour voir si la fonction est appelée
+        if self.debug_mode:
+            print(
+                f"PATHFINDING DEMANDE pour entité {entity_id} de ({start_x},{start_y}) vers ({end_x},{end_y})"
+            )
+
+        # Ajouter des infos de debug si le mode debug est activé
+        if self.debug_mode:
+            self._add_debug_text(
+                f"Entity {entity_id}: Start({start_x},{start_y}) -> Goal({end_x},{end_y})",
+                (start_pos.x, start_pos.y - 40),
+                (255, 255, 0),
+                180,
+            )
 
         # Vérifier si la destination est valide
         if not self._is_walkable(end_x, end_y):
-            print(
-                f"  Destination ({end_x}, {end_y}) non marchable: {self.terrain_map.get((end_x, end_y), 'UNKNOWN')}"
-            )
+            if self.debug_mode:
+                self._add_debug_text(
+                    f"Goal blocked! Terrain: {self.terrain_map.get((end_x, end_y), 'UNKNOWN')}",
+                    (end_pos.x, end_pos.y - 20),
+                    (255, 100, 100),
+                    120,
+                )
             # Chercher la case valide la plus proche
             end_x, end_y = self._find_nearest_walkable(end_x, end_y)
             if end_x is None:
-                print("  Aucune destination marchable trouvée")
+                if self.debug_mode:
+                    self._add_debug_text(
+                        "No walkable destination found!",
+                        (end_pos.x, end_pos.y),
+                        (255, 0, 0),
+                        180,
+                    )
                 return None
-            print(f"  Nouvelle destination: ({end_x}, {end_y})")
+            if self.debug_mode:
+                self._add_debug_text(
+                    f"New goal: ({end_x},{end_y})",
+                    (end_x * self.tile_size, end_y * self.tile_size),
+                    (100, 255, 100),
+                    120,
+                )
 
         # Vérifier si le début est valide
         if not self._is_walkable(start_x, start_y):
-            print(
-                f"  Position de départ ({start_x}, {start_y}) non marchable: {self.terrain_map.get((start_x, start_y), 'UNKNOWN')}"
-            )
+            if self.debug_mode:
+                self._add_debug_text(
+                    f"Start blocked! Terrain: {self.terrain_map.get((start_x, start_y), 'UNKNOWN')}",
+                    (start_pos.x, start_pos.y),
+                    (255, 0, 0),
+                    120,
+                )
             return None
 
         # Algorithme A*
@@ -394,8 +436,6 @@ class PathfindingSystem(esper.Processor):
         closed_set: Set[Tuple[int, int]] = set()
         iterations = 0
         max_iterations = 1000  # Limite pour éviter les boucles infinies
-
-        print(f"  Démarrage A* avec heuristique: {start_node.h}")
 
         while open_set and iterations < max_iterations:
             iterations += 1
@@ -415,19 +455,23 @@ class PathfindingSystem(esper.Processor):
                     path.append(pos)
                     current = current.parent
                 path.reverse()
-                print(
-                    f"  Chemin trouvé en {iterations} itérations, longueur: {len(path)} étapes"
-                )
+
+                # Ajouter les lignes de debug si le mode debug est activé
+                if self.debug_mode:
+                    self._add_debug_path(path, entity_id)
+                    self._add_debug_text(
+                        f"Path found! {iterations} iterations, {len(path)} steps",
+                        (path[0].x + 20, path[0].y - 60),
+                        (100, 255, 100),
+                        180,
+                    )
+
                 return path[1:]  # Exclure la position de départ
 
             closed_set.add((current.x, current.y))
 
             # Explorer les voisins
             neighbors = self._get_neighbors(current, entity_id)
-            if iterations < 5:  # Debug pour les premières itérations
-                print(
-                    f"  Itération {iterations}: nœud ({current.x}, {current.y}), {len(neighbors)} voisins"
-                )
 
             for neighbor in neighbors:
                 if (neighbor.x, neighbor.y) in closed_set:
@@ -459,9 +503,14 @@ class PathfindingSystem(esper.Processor):
                         open_set.remove(existing)
                     heapq.heappush(open_set, neighbor)
 
-        print(
-            f"  A* failed after {iterations} iterations, open_set: {len(open_set)}, closed_set: {len(closed_set)}"
-        )
+        # Échec du pathfinding
+        if self.debug_mode:
+            self._add_debug_text(
+                f"Pathfinding FAILED! {iterations} iterations",
+                (start_pos.x, start_pos.y - 20),
+                (255, 0, 0),
+                240,
+            )
         return None  # No path found
 
     def _find_nearest_walkable(
@@ -496,6 +545,10 @@ class PathfindingSystem(esper.Processor):
         Args:
             dt: Delta time (not used in current implementation)
         """
+        # Mettre à jour les textes de debug (enlever les expirés)
+        if self.debug_mode:
+            self._update_debug_texts()
+
         # Try to reload terrain map if it's still using default
         if (
             not self._terrain_loaded or len(self.terrain_map) <= 100
@@ -513,9 +566,66 @@ class PathfindingSystem(esper.Processor):
                 if new_path:
                     path_req.path = new_path
                     path_req.current_index = 0
-                    print(
-                        f"[Pathfinding] Chemin trouvé pour entité {ent}: {len(new_path)} étapes"
-                    )
                 else:
-                    print(f"[Pathfinding] Aucun chemin trouvé pour entité {ent}")
                     path_req.destination = None  # Reset the request
+
+    def toggle_debug(self):
+        """Active/désactive le mode debug."""
+        self.debug_mode = not self.debug_mode
+        if not self.debug_mode:
+            self.clear_debug()
+
+    def clear_debug(self):
+        """Efface toutes les données de debug."""
+        self.debug_lines.clear()
+        self.debug_texts.clear()
+
+    def _add_debug_text(self, text, position, color, timeout=120):
+        """Ajoute un texte de debug à la position donnée avec un timeout en frames."""
+        text_info = (text, position, color, timeout)
+        self.debug_texts.append(text_info)
+
+    def _update_debug_texts(self):
+        """Met à jour les textes de debug (enlève ceux expirés)."""
+        updated_texts = []
+        for text_info in self.debug_texts:
+            if len(text_info) >= 4:  # Avec timeout
+                text, position, color, timeout = text_info
+                if timeout > 0:
+                    updated_texts.append((text, position, color, timeout - 1))
+            else:  # Sans timeout (permanent)
+                updated_texts.append(text_info)
+        self.debug_texts = updated_texts
+
+    def _add_debug_path(self, path, entity_id):
+        """Ajoute un chemin aux données de debug."""
+        if len(path) < 2:
+            return
+
+        # Supprimer l'ancien chemin de cette entité s'il existe
+        self.debug_lines = [
+            (lines, eid) for lines, eid in self.debug_lines if eid != entity_id
+        ]
+
+        # Convertir les Position objects en coordonnées pixel
+        pixel_path = []
+        for pos in path:
+            pixel_path.append((pos.x, pos.y))
+
+        # Ajouter les lignes du chemin
+        lines = []
+        for i in range(len(pixel_path) - 1):
+            lines.append((pixel_path[i], pixel_path[i + 1]))
+
+        if lines:
+            self.debug_lines.append((lines, entity_id))
+
+        # Ajouter le texte de debug pour le début du chemin
+        if pixel_path:
+            start_pos = pixel_path[0]
+            text_info = (
+                f"Path {entity_id}",
+                start_pos,
+                (0, 255, 0),
+            )  # Vert, sans timeout (permanent)
+            self.debug_texts.append(text_info)

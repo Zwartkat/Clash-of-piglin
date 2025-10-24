@@ -15,6 +15,7 @@ from events.camera_up_event import CameraUpEvent
 from events.camera_down_event import CameraDownEvent
 from events.camera_left_event import CameraLeftEvent
 from events.camera_right_event import CameraRightEvent
+from events.debug_toggle_event import DebugToggleEvent
 from core.event_bus import EventBus
 from events.event_move import EventMoveTo
 from enums.input_actions import InputAction
@@ -42,6 +43,7 @@ class InputRouterSystem(esper.Processor):
             InputAction.CAMERA_LEFT: CameraLeftEvent(),
             InputAction.QUIT: QuitEvent(),
             InputAction.RESIZE: ResizeEvent,
+            InputAction.DEBUG_TOGGLE: DebugToggleEvent(),
         }
 
     def handle_events(self, event: EventInput):

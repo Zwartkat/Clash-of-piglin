@@ -117,14 +117,25 @@ class CrossbowmanAISystemEnemy(esper.Processor):
             if self._follow_astar_path(ent, pos, path_request):
                 return  # Still following path, skip other behaviors
 
-        # Priority 1: Attack enemies in range
+        # Priority 1: Check for enemies in range
         enemies = self._find_enemies_in_range(ent, pos, attack, team_id)
-        if enemies:
-            closest_enemy = min(enemies, key=lambda e: self._distance(pos, e[1]))
-            self._attack_enemy(ent, pos, closest_enemy, attack)
-            return
 
-        # Priority 2: Tactical decision making
+        # Priority 2: If enemies found, decide how to handle them
+        if enemies:
+            # Check if we have BRUTE allies for coordination
+            ally_brutes = self._count_ally_brutes(team_id)
+
+            if ally_brutes > 0:
+                # We have BRUTE allies - coordinate with them instead of attacking alone
+                self._make_tactical_decision(ent, pos, attack, team_id)
+                return
+            else:
+                # No BRUTE allies - attack directly
+                closest_enemy = min(enemies, key=lambda e: self._distance(pos, e[1]))
+                self._attack_enemy(ent, pos, closest_enemy, attack)
+                return
+
+        # Priority 3: No enemies in range - make tactical decision
         self._make_tactical_decision(ent, pos, attack, team_id)
 
     def _make_tactical_decision(self, ent, pos, attack, team_id):

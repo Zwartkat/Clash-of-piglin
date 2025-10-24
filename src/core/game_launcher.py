@@ -42,6 +42,10 @@ from systems.hud_system import HudSystem
 from systems.victory_system import VictorySystem
 from systems.arrow_system import ArrowSystem
 
+# Import debug systems
+from systems.debug_system import DebugRenderSystem
+from systems.debug_event_handler import DebugEventHandler
+
 tile_size = Config.TILE_SIZE()
 
 
@@ -169,14 +173,20 @@ def main(screen: pygame.Surface, map_size=24):
     victory_system = VictorySystem()
     arrow_system = ArrowSystem(render)
 
+    # Pathfinding system (doit être créé avant les systèmes de debug)
+    pathfinding_system = PathfindingSystem()
+
+    # Debug systems (après pathfinding)
+    debug_render_system = DebugRenderSystem(screen, pathfinding_system)
+    debug_event_handler = DebugEventHandler(pathfinding_system)
+
     world.add_processor(input_manager)
     world.add_processor(render)
     world.add_processor(arrow_system)  # Après le rendu de base
+    world.add_processor(pathfinding_system)  # Avant les systèmes de debug
+    world.add_processor(debug_event_handler)  # Écoute les événements F3
     world.add_processor(InputRouterSystem())
     world.add_processor(victory_system)
-    # Pathfinding system (doit être traité avant les systèmes d'IA)
-    pathfinding_system = PathfindingSystem()
-    world.add_processor(pathfinding_system)
 
     world.add_processor(CrossbowmanAISystemEnemy(pathfinding_system))
 
@@ -204,6 +214,7 @@ def main(screen: pygame.Surface, map_size=24):
             render.show_map()
             render.process(dt)
             arrow_system.process(dt)
+            debug_render_system.process(dt)  # Debug après le rendu principal
             selection_system.draw_selections(screen)
             game_hud.draw(dt)
 

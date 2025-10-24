@@ -15,3 +15,4 @@ class InputAction(Enum):
     ZOOM = auto()
     RESIZE = auto()
     QUIT = auto()
+    DEBUG_TOGGLE = auto()
