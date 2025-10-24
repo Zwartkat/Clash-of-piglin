@@ -153,7 +153,7 @@ UNITS = {
             EntityType.BASTION,
             UnitType.STRUCTURE,
             Description("Bastion", "Base d'un joueur à défendre"),
-            Health(1000),
+            Health(50),
             Sprite(
                 "assets/sprites/spritesheet-bastion.png",
                 500,

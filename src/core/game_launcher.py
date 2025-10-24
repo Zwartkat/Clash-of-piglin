@@ -156,7 +156,7 @@ def main(screen: pygame.Surface, map_size=24):
     entities_2 = []
 
     entities_2.append(
-        UnitFactory.create_unit(EntityType.BRUTE, Team(2), Position(400, 200))
+        UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(2), Position(400, 200))
     )
 
     # Crée le monde Esper
