@@ -37,7 +37,7 @@ credits_text = [
     "- Zwartkat",
     "- xMegumi",
     "- darkell",
-    "- WorKrai",
+    "- WorKai",
     "- Sparkness",
     "- MatthieuPinceel",
     "Graphismes: Zwartkat,Mojang Studio",

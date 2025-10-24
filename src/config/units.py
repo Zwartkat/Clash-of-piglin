@@ -1,4 +1,7 @@
+from ai.jerome_ghast import JeromeGhast
+from components.ai.ai_controlled import AiControlled
 from components.gameplay.fly import Fly
+from components.gameplay.structure import Structure
 from config.layer import ENTITY_LAYER
 from enums.entity.entity_type import *
 
@@ -118,6 +121,7 @@ UNITS = {
             Selection(),
             Collider(Config.TILE_SIZE(), Config.TILE_SIZE()),
             Fly(),
+            AiControlled(JeromeGhast()),
             Sprite(
                 "assets/sprites/spritesheet-ghast.png",
                 24,
@@ -152,6 +156,7 @@ UNITS = {
         components=[
             EntityType.BASTION,
             UnitType.STRUCTURE,
+            Structure(),
             Description("Bastion", "Base d'un joueur à défendre"),
             Health(1000),
             Sprite(

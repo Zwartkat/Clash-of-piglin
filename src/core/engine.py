@@ -12,6 +12,7 @@ from core.services import Services
 from enums.entity.entity_type import EntityType
 from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
+from systems.ai_system import AiSystem
 from systems.world.collision_system import CollisionSystem
 from systems.combat.combat_system import CombatSystem
 from systems.death_event_handler import DeathEventHandler
@@ -121,10 +122,6 @@ def main(screen: pygame.Surface, map_size=24):
     Services.event_bus.subscribe(ResizeEvent, on_resize)
     Services.event_bus.subscribe(SpawnUnitEvent, UnitFactory.create_unit_event)
 
-    Services.event_bus.emit(
-        SpawnUnitEvent(EntityType.GHAST, Team(1), Position(200, 700))
-    )
-
     case_size = Config.get("tile_size")
 
     player_manager = PlayerManager(
@@ -139,12 +136,10 @@ def main(screen: pygame.Surface, map_size=24):
     from config.units import UNITS
 
     entities_1 = []
+    entities_1.append(
+        UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
+    )
 
-    for i in range(6):
-
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
-        )
     for i in range(6):
 
         entities_1.append(
@@ -181,6 +176,7 @@ def main(screen: pygame.Surface, map_size=24):
     #
     # Crée le monde Esper
     world = esper
+    world.add_processor(AiSystem())
     world.add_processor(MovementSystem())
     world.add_processor(TerrainEffectSystem(game_map))
     world.add_processor(CollisionSystem(game_map))
