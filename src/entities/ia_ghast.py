@@ -8,10 +8,6 @@ from enums.entity_type import EntityType
 from config.units import UNITS
 
 ##TODO : Esquiver la range des enemis
-#
-# Si base alliés a peu de PV, attaquer a tout prix
-# Si base ennemie a peu de PV, attaquer a tout prix
-# Mettre un système de notation pour chaque action possible et choisir la meilleure ?
 
 
 class IAGhast:
@@ -74,16 +70,19 @@ class IAGhast:
         print("IA Ghast update called")
         print("Position:", pos)
         print("Health:", health.remaining)
-        print("Enemies nearby:", self._get_number_enemies_near(pos, team.team_id))
+        print("Crossbow man nearby:", self._get_number_crossbow_near(pos, team.team_id))
         print("Position ally nearby:", self._get_closest_ally(pos, team.team_id))
         print("Decisions en cours:")
 
-        if ally_base and ally_base[1].remaining < 100:
+        if ally_base and ally_base[1].remaining < 300:
             print(" Near deffeat, attack at all cost")
             self._move_towards(pos, building_pos)
-        elif enemy_base and enemy_base[1].remaining < 100:
+            return
+
+        elif enemy_base and enemy_base[1].remaining < 300:
             print(" Near victory, attack at all cost")
             self._move_towards(pos, building_pos)
+            return
 
         # Fuir si PV bas
         if health.remaining < self.LOW_HEALTH:
@@ -91,14 +90,14 @@ class IAGhast:
             self._flee(pos, enemies)
             return
 
-        # Fuir si trop d'ennemis proches
-        if self._get_number_enemies_near(pos, team.team_id)[0] > 2:
+        # Fuir si trop de crossbow proches
+        if self._get_number_crossbow_near(pos, team.team_id)[0] > 0:
             print("- Fleeing due to too many nearby enemies")
             self._flee(pos, enemies)
             return
 
         # Voir si c'est bénéfique de rester derrière un allié en fonction de la distance ennemie
-        if ally and self._get_number_enemies_near(pos, team.team_id)[1] < 90:
+        if ally and self._get_number_crossbow_near(pos, team.team_id)[1] < 90:
             print("- Staying behind ally")
             self._stay_behind_ally(pos, ally)
             return
@@ -145,14 +144,15 @@ class IAGhast:
                 allies.append(ent)
         return allies
 
-    def _get_number_enemies_near(self, pos, my_team) -> list:
+    def _get_number_crossbow_near(self, pos, my_team) -> list:
         """
-        Retourne le nombre d'ennemis à proximité.
+        Retourne le nombre de crossbow à proximité.
         """
         nb_enemies = 0
         dist = float("inf")
         for ent, t in self.world.get_component(Team):
-            if t.team_id != my_team:
+            entity_type = self.world.component_for_entity(ent, EntityType)
+            if t.team_id != my_team and entity_type == EntityType.CROSSBOWMAN:
                 ent_pos = self.world.component_for_entity(ent, Position)
                 dist = ((ent_pos.x - pos.x) ** 2 + (ent_pos.y - pos.y) ** 2) ** 0.5
                 if dist < 150:

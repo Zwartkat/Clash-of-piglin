@@ -128,13 +128,21 @@ def main(screen: pygame.Surface, map_size=24):
 
             ghast_ias.append(IAGhast(ghast_entity, world))
             print(f"Nouveau Ghast ajouté à la liste des IA ({len(ghast_ias)} au total)")
+        if event.entity_type == EntityType.CROSSBOWMAN:
+            crossbowman_entity = UnitFactory.create_unit(
+                EntityType.CROSSBOWMAN, event.team, event.position
+            )
+        if event.entity_type == EntityType.BRUTE:
+            brute_entity = UnitFactory.create_unit(
+                EntityType.BRUTE, event.team, event.position
+            )
+
+    EventBus.get_event_bus().subscribe(SpawnUnitEvent, on_spawn_unit)
 
     # Subscribes
     Services.event_bus = EventBus.get_event_bus()
 
     Services.event_bus.subscribe(ResizeEvent, on_resize)
-
-    EventBus.get_event_bus().subscribe(SpawnUnitEvent, on_spawn_unit)
 
     case_size = Config.get("tile_size")
 

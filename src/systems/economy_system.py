@@ -18,7 +18,7 @@ class EconomySystem(esper.Processor):
         event_bus.subscribe(DeathEvent, self.reward_money)
 
         self.creation_time = pygame.time.get_ticks()
-        self.generation_speed = 0.133  # Valeur de base pour 0-1 minute
+        self.generation_speed = 2  # Valeur de base pour 0-1 minute
 
     def buy(self, event):
         player: Player = event.player
