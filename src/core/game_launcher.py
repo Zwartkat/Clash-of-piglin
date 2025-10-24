@@ -3,7 +3,9 @@ import pygame
 import esper
 import os
 
+from components.velocity import Velocity
 from config import units
+from core import config
 from core.camera import CAMERA
 from components.effects import OnTerrain
 from components.team import Team
@@ -41,6 +43,7 @@ from systems.victory_system import VictorySystem
 from systems.arrow_system import ArrowSystem
 from entities.ia_ghast import IAGhast
 from components.health import Health
+from events.switch_control_event import SwitchControlEvent
 
 tile_size = Config.TILE_SIZE()
 
@@ -117,11 +120,21 @@ def main(screen: pygame.Surface, map_size=24):
     def on_resize(resize_event: ResizeEvent):
         resize(screen, map_size, game_hud.hud.hud_width)
 
+    def on_spawn_unit(event: SpawnUnitEvent):
+        if event.entity_type == EntityType.GHAST:
+            ghast_entity = UnitFactory.create_unit(
+                EntityType.GHAST, event.team, event.position
+            )
+
+            ghast_ias.append(IAGhast(ghast_entity, world))
+            print(f"Nouveau Ghast ajouté à la liste des IA ({len(ghast_ias)} au total)")
+
     # Subscribes
     Services.event_bus = EventBus.get_event_bus()
 
     Services.event_bus.subscribe(ResizeEvent, on_resize)
-    Services.event_bus.subscribe(SpawnUnitEvent, UnitFactory.create_unit_event)
+
+    EventBus.get_event_bus().subscribe(SpawnUnitEvent, on_spawn_unit)
 
     case_size = Config.get("tile_size")
 
@@ -178,12 +191,20 @@ def main(screen: pygame.Surface, map_size=24):
 
     world.add_processor(QuitSystem(event_bus_instance, game_state))
 
+    control_mode = {"ai": False}
+
+    def on_switch_control(_):
+        control_mode["ai"] = not control_mode["ai"]
+        game_hud.hud.ghast_ai_controlled_by_player = not control_mode["ai"]
+
+    EventBus.get_event_bus().subscribe(SwitchControlEvent, on_switch_control)
+
     ghast_ias = []
 
-    ghast_entity_id = UnitFactory.create_unit(
+    ghast_entity = UnitFactory.create_unit(
         EntityType.GHAST, Team(1), Position(200, 400)
     )
-    ghast_ias.append(IAGhast(ghast_entity_id, world))
+    ghast_ias.append(IAGhast(ghast_entity, world))
 
     while game_state["running"]:
 
@@ -198,8 +219,9 @@ def main(screen: pygame.Surface, map_size=24):
                 if not hud_handled:
                     input_manager.handle_event(event)
 
-        for ia in ghast_ias:
-            ia.update()
+        if control_mode["ai"]:
+            for ia in ghast_ias:
+                ia.update()
 
         world.process(1 / 60)
 

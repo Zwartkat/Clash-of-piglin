@@ -17,9 +17,7 @@ class IAGhast:
     - S'arrête à portée d'attaque (range défini dans units.py).
     """
 
-    ENEMY_RADIUS = 120
-    ALLY_RADIUS = 80
-    LOW_HEALTH = 40
+    LOW_HEALTH = 30
 
     def __init__(self, ghast_entity, world):
         self.ghast = ghast_entity
@@ -27,13 +25,10 @@ class IAGhast:
         self.target_building = None
 
         ghast_base = UNITS[EntityType.GHAST]
-        print(ghast_base._components)
         self.stats = {}
         for comp in ghast_base._components:
             if isinstance(comp, Attack):
                 self.stats["attack_range"] = comp.range
-                print(comp.attack_speed, comp.range, comp.damage)
-
                 self.stats["attack_speed"] = comp.attack_speed
                 self.stats["damage"] = comp.damage
             elif isinstance(comp, Velocity):
@@ -42,40 +37,60 @@ class IAGhast:
                 self.stats["max_health"] = comp.full
 
     def update(self):
+
         pos = self.world.component_for_entity(self.ghast, Position)
         health = self.world.component_for_entity(self.ghast, Health)
         team = self.world.component_for_entity(self.ghast, Team)
 
-        if not (pos and health and team):
-            return
+        enemies = []
+        for ent, t in self.world.get_component(Team):
+            if t.team_id != team.team_id:
+                enemies.append(ent)
 
-        enemies = self._get_nearby_enemies(pos, team.team_id)
-        if health.remaining < self.LOW_HEALTH or len(enemies) > 3:
+        ## Si ally à une distance > 80 ally = None
+        ally = self._get_closest_ally(pos, team.team_id)
+        if ally and ally[1] > 80:
+            ally = None
+
+        ##décision en cours
+        print("IA Ghast update called")
+        print("Position:", pos)
+        print("Health:", health.remaining)
+        print("Enemies nearby:", self._get_number_enemies_near(pos, team.team_id))
+        print("Position ally nearby:", self._get_closest_ally(pos, team.team_id))
+        print("Decisions en cours:")
+
+        if health.remaining < self.LOW_HEALTH:
+            print("- Fleeing due to low health")
             self._flee(pos, enemies)
             return
 
-        allies = self._get_nearby_allies(pos, team.team_id)
-        if allies:
-            self._stay_behind_allies(pos, allies)
+        if self._get_number_enemies_near(pos, team.team_id) > 2:
+            print("- Fleeing due to too many nearby enemies")
+            self._flee(pos, enemies)
             return
 
-        # Sélectionne le bâtiment ennemi le plus proche
+        if ally:
+            print("- Staying behind ally")
+            self._stay_behind_ally(pos, ally)
+            return
+
         if not self.target_building or not self._entity_exists(self.target_building):
+            print("- Finding new target building")
             self.target_building = self._find_enemy_building(team.team_id)
 
         if not self.target_building:
+            print("- No target building found, doing nothing")
             return
 
         building_pos = self.world.component_for_entity(self.target_building, Position)
-        if not building_pos:
-            return
-
-        # Vérifie la distance
         dist = ((building_pos.x - pos.x) ** 2 + (building_pos.y - pos.y) ** 2) ** 0.5
 
         if dist > self.stats["attack_range"]:
+            print("- Moving towards target building")
             self._move_towards(pos, building_pos)
         else:
+            print("- In attack range, stopping movement")
             pass
 
     # ------------------------
@@ -89,25 +104,33 @@ class IAGhast:
         except KeyError:
             return False
 
-    def _get_nearby_enemies(self, pos, my_team):
-        enemies = []
+    def _get_number_enemies_near(self, pos, my_team) -> int:
+        """
+        Retourne le nombre d'ennemis à proximité.
+        """
+        nb_enemies = 0
         for ent, t in self.world.get_component(Team):
             if t.team_id != my_team:
                 ent_pos = self.world.component_for_entity(ent, Position)
                 dist = ((ent_pos.x - pos.x) ** 2 + (ent_pos.y - pos.y) ** 2) ** 0.5
-                if dist < self.ENEMY_RADIUS:
-                    enemies.append(ent)
-        return enemies
+                if dist < 100:
+                    nb_enemies += 1
+        return nb_enemies
 
-    def _get_nearby_allies(self, pos, my_team):
-        allies = []
+    def _get_closest_ally(self, pos, my_team):
+        """
+        Retourne l'allié le plus proche, et sa distance.
+        """
+        ally = None
+        min_dist = float("inf")
         for ent, t in self.world.get_component(Team):
             if t.team_id == my_team and ent != self.ghast:
                 ent_pos = self.world.component_for_entity(ent, Position)
                 dist = ((ent_pos.x - pos.x) ** 2 + (ent_pos.y - pos.y) ** 2) ** 0.5
-                if dist < self.ALLY_RADIUS:
-                    allies.append(ent)
-        return allies
+                if dist < min_dist:
+                    min_dist = dist
+                    ally = [ent, dist, ent_pos]
+        return ally
 
     def _flee(self, pos, enemies):
         if not enemies:
@@ -124,16 +147,20 @@ class IAGhast:
         flee_y = pos.y + dy
         self._move_towards(pos, Position(flee_x, flee_y))
 
-    def _stay_behind_allies(self, pos, allies):
-        avg_x = sum(
-            self.world.component_for_entity(a, Position).x for a in allies
-        ) / len(allies)
-        avg_y = sum(
-            self.world.component_for_entity(a, Position).y for a in allies
-        ) / len(allies)
-        behind_x = avg_x - 20 + random.randint(-10, 10)
-        behind_y = avg_y - 20 + random.randint(-10, 10)
-        self._move_towards(pos, Position(behind_x, behind_y))
+    def _stay_behind_ally(self, pos, ally):
+        """
+        Reste derrière l'allié donné à une distance de 40 pixels.
+        """
+        if not ally:
+            return
+        ally_pos = ally[2]
+        dx = pos.x - ally_pos.x
+        dy = pos.y - ally_pos.y
+        dist = (dx**2 + dy**2) ** 0.5
+        if dist > 40:
+            target_x = ally_pos.x + (dx / dist) * 40
+            target_y = ally_pos.y + (dy / dist) * 40
+            self._move_towards(pos, Position(target_x, target_y))
 
     def _find_enemy_building(self, my_team_id):
         min_dist = float("inf")
