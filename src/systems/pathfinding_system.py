@@ -10,7 +10,39 @@ from enums.case_type import CaseType
 
 class Node:
     """
-    Represents a node in the A* pathfinding algorithm.
+    Represents a node in the        # Check within a 2-tile radius around current position
+        for dx in range(-2, 3):
+            for dy in range(-2, 3        # Convert positions to grid coordinates
+        start_x = int(start_pos.x // self.tile_size)
+        start_y = int(start_pos.y // self.tile_size)
+        end_x = int(end_pos.x // self.tile_size)
+        end_y = int(end_pos.y // self.tile_size)
+
+        # Clamp to grid boundaries
+        start_x = max(0, min(start_x, self.map_width - 1))
+        start_y = max(0, min(start_y, self.map_height - 1))
+        end_x = max(0, min(end_x, self.map_width - 1))
+        end_y = max(0, min(end_y, self.map_height - 1))
+
+        # Temporary debug to see if function is called
+        if self.debug_mode:
+            print(
+                f"PATHFINDING REQUEST for entity {entity_id} from ({start_x},{start_y}) to ({end_x},{end_y})"
+            )
+
+        # Add debug info if debug mode is activeif dx == 0 and dy == 0:
+                    continue
+
+                check_x, check_y = x + dx, y + dy
+                if 0 <= check_x < self.map_width and 0 <= check_y < self.map_height:
+
+                    terrain = self.terrain_map.get((check_x, check_y), "WALKABLE")
+                    if terrain == "LAVA":
+                        distance = max(abs(dx), abs(dy))  # Chebyshev distance
+                        if distance == 1:
+                            proximity_cost += 2.0  # High penalty near lava
+                        elif distance == 2:
+                            proximity_cost += 0.5  # Moderate penaltyalgorithm.
 
     Attributes:
         x (int): Grid X coordinate
@@ -144,15 +176,13 @@ class PathfindingSystem(esper.Processor):
                         continue
 
             if not map_found:
-                print(
-                    "[Pathfinding] AUCUNE CARTE TROUVÉE - Utilisation de la carte par défaut"
-                )
+                print("[Pathfinding] NO MAP FOUND - Using default terrain map")
                 self._create_default_terrain()
             else:
-                print("[Pathfinding] CARTE RÉELLE CHARGÉE avec succès")
+                print("[Pathfinding] REAL MAP LOADED successfully")
 
         except Exception as e:
-            print(f"[Pathfinding] ERREUR lors du chargement de carte: {e}")
+            print(f"[Pathfinding] ERROR loading map: {e}")
             self._create_default_terrain()
 
         self._terrain_loaded = True
@@ -232,7 +262,7 @@ class PathfindingSystem(esper.Processor):
         elif terrain_type == "SOULSAND":
             return 2.0  # Slow terrain - double movement cost
         else:
-            # Ajouter un coût supplémentaire près de la lave pour éviter de s'en approcher
+            # Add additional cost near lava to avoid getting too close
             lava_penalty = self._get_lava_proximity_cost(x, y)
             return 1.0 + lava_penalty  # Normal terrain + penalty if near lava
 
@@ -249,7 +279,7 @@ class PathfindingSystem(esper.Processor):
         """
         proximity_cost = 0.0
 
-        # Vérifier dans un rayon de 2 cases autour
+        # Check within a 2-tile radius around current position
         for dx in range(-2, 3):
             for dy in range(-2, 3):
                 if dx == 0 and dy == 0:
@@ -260,11 +290,11 @@ class PathfindingSystem(esper.Processor):
 
                     terrain = self.terrain_map.get((check_x, check_y), "WALKABLE")
                     if terrain == "LAVA":
-                        distance = max(abs(dx), abs(dy))  # Distance de Chebyshev
+                        distance = max(abs(dx), abs(dy))  # Chebyshev distance
                         if distance == 1:
-                            proximity_cost += 2.0  # Pénalité forte près de la lave
+                            proximity_cost += 2.0  # High penalty near lava
                         elif distance == 2:
-                            proximity_cost += 0.5  # Pénalité modérée
+                            proximity_cost += 0.5  # Moderate penalty
 
         return proximity_cost
 
@@ -344,16 +374,16 @@ class PathfindingSystem(esper.Processor):
             new_x = node.x + dx
             new_y = node.y + dy
 
-            # Vérifier si la case est marchable
+            # Check if the tile is walkable
             if self._is_walkable(new_x, new_y):
-                # Pour les diagonales, vérifier que les cases adjacentes sont aussi marchables
-                # (évite de couper les coins à travers la lave)
-                if abs(dx) + abs(dy) == 2:  # Mouvement diagonal
+                # For diagonal movements, verify adjacent tiles are also walkable
+                # (prevents cutting corners through lava)
+                if abs(dx) + abs(dy) == 2:  # Diagonal movement
                     if self._is_walkable(node.x + dx, node.y) and self._is_walkable(
                         node.x, node.y + dy
                     ):
                         neighbors.append(Node(new_x, new_y))
-                else:  # Mouvement cardinal
+                else:  # Cardinal movement
                     neighbors.append(Node(new_x, new_y))
 
         return neighbors
@@ -362,7 +392,7 @@ class PathfindingSystem(esper.Processor):
         self, start_pos: Position, end_pos: Position, entity_id: int
     ) -> Optional[List[Position]]:
         """Trouve un chemin de start_pos à end_pos en utilisant A*"""
-        # Convertir les positions en coordonnées de grille
+        # Convert positions to grid coordinates
         start_x = int(start_pos.x // self.tile_size)
         start_y = int(start_pos.y // self.tile_size)
         end_x = int(end_pos.x // self.tile_size)
@@ -374,13 +404,13 @@ class PathfindingSystem(esper.Processor):
         end_x = max(0, min(end_x, self.map_width - 1))
         end_y = max(0, min(end_y, self.map_height - 1))
 
-        # Debug temporaire pour voir si la fonction est appelée
+        # Temporary debug to see if function is called
         if self.debug_mode:
             print(
                 f"PATHFINDING DEMANDE pour entité {entity_id} de ({start_x},{start_y}) vers ({end_x},{end_y})"
             )
 
-        # Ajouter des infos de debug si le mode debug est activé
+        # Add debug info if debug mode is active
         if self.debug_mode:
             self._add_debug_text(
                 f"Entity {entity_id}: Start({start_x},{start_y}) -> Goal({end_x},{end_y})",
@@ -389,7 +419,7 @@ class PathfindingSystem(esper.Processor):
                 180,
             )
 
-        # Vérifier si la destination est valide
+        # Check if destination is valid
         if not self._is_walkable(end_x, end_y):
             if self.debug_mode:
                 self._add_debug_text(
@@ -417,7 +447,7 @@ class PathfindingSystem(esper.Processor):
                     120,
                 )
 
-        # Vérifier si le début est valide
+        # Check if start is valid
         if not self._is_walkable(start_x, start_y):
             if self.debug_mode:
                 self._add_debug_text(
@@ -435,19 +465,19 @@ class PathfindingSystem(esper.Processor):
         open_set = [start_node]
         closed_set: Set[Tuple[int, int]] = set()
         iterations = 0
-        max_iterations = 1000  # Limite pour éviter les boucles infinies
+        max_iterations = 1000  # Limit to prevent infinite loops
 
         while open_set and iterations < max_iterations:
             iterations += 1
-            # Prendre le nœud avec le coût le plus faible
+            # Get node with lowest cost
             current = heapq.heappop(open_set)
 
-            # Vérifier si on a atteint la destination
+            # Check if we reached the destination
             if current.x == end_x and current.y == end_y:
                 # Reconstruire le chemin
                 path = []
                 while current:
-                    # Convertir les coordonnées de grille en positions pixel
+                    # Convert grid coordinates to pixel positions
                     pos = Position(
                         current.x * self.tile_size + self.tile_size // 2,
                         current.y * self.tile_size + self.tile_size // 2,
@@ -456,7 +486,7 @@ class PathfindingSystem(esper.Processor):
                     current = current.parent
                 path.reverse()
 
-                # Ajouter les lignes de debug si le mode debug est activé
+                # Add debug lines if debug mode is active
                 if self.debug_mode:
                     self._add_debug_path(path, entity_id)
                     self._add_debug_text(
@@ -466,7 +496,7 @@ class PathfindingSystem(esper.Processor):
                         180,
                     )
 
-                return path[1:]  # Exclure la position de départ
+                return path[1:]  # Exclude starting position
 
             closed_set.add((current.x, current.y))
 
@@ -503,7 +533,7 @@ class PathfindingSystem(esper.Processor):
                         open_set.remove(existing)
                     heapq.heappush(open_set, neighbor)
 
-        # Échec du pathfinding
+        # Pathfinding failed
         if self.debug_mode:
             self._add_debug_text(
                 f"Pathfinding FAILED! {iterations} iterations",
@@ -545,7 +575,7 @@ class PathfindingSystem(esper.Processor):
         Args:
             dt: Delta time (not used in current implementation)
         """
-        # Mettre à jour les textes de debug (enlever les expirés)
+        # Update debug texts (remove expired ones)
         if self.debug_mode:
             self._update_debug_texts()
 
@@ -602,12 +632,12 @@ class PathfindingSystem(esper.Processor):
         if len(path) < 2:
             return
 
-        # Supprimer l'ancien chemin de cette entité s'il existe
+        # Remove old path for this entity if it exists
         self.debug_lines = [
             (lines, eid) for lines, eid in self.debug_lines if eid != entity_id
         ]
 
-        # Convertir les Position objects en coordonnées pixel
+        # Convert Position objects to pixel coordinates
         pixel_path = []
         for pos in path:
             pixel_path.append((pos.x, pos.y))
@@ -620,7 +650,7 @@ class PathfindingSystem(esper.Processor):
         if lines:
             self.debug_lines.append((lines, entity_id))
 
-        # Ajouter le texte de debug pour le début du chemin
+        # Add debug text for path start
         if pixel_path:
             start_pos = pixel_path[0]
             text_info = (

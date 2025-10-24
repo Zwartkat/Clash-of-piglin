@@ -1,25 +1,27 @@
 """
 AI System for Enemy CROSSBOWMAN Units (Team 2)
 
-This system controls CROSSBOWMAN units with intelligent pathfinding and tactical behavior:
+This system provides intelligent tactical behavior for CROSSBOWMAN units using
+a modular architecture with specialized helper classes for complex behaviors.
 
-Key Features:
-- Terrain-aware pathfinding using A* algorithm to avoid lava and obstacles
-- Optimal combat positioning at 80% of maximum attack range
-- Formation support by following ally BRUTE units
-- Smart target prioritization within attack range
-- Fallback behavior when no targets or allies are available
+Core Features:
+- Terrain-aware pathfinding integration with A* algorithm
+- Advanced BRUTE coordination with never-abandon policy
+- Proportional base defense with threat assessment
+- Intelligent target prioritization and force evaluation
+- Streamlined decision making with clear behavioral hierarchies
 
-Decision Hierarchy:
-1. Attack enemies within range with optimal positioning
-2. Follow ally BRUTE units for formation support
-3. Move to map center and wait for opportunities
+Architecture:
+- Main AI system handles core decision flow and coordination
+- Helper classes manage specialized behaviors (BruteCoordination, BaseDefense, etc.)
+- Modular design allows easy maintenance and behavior modification
+- Consistent English documentation and clear code structure
 
-Technical Implementation:
-- Uses ECS (Entity Component System) architecture with esper library
-- Integrates with PathfindingSystem for A* navigation
-- Maintains proper coordinate conversion between pixels and grid tiles
-- Handles real-time pathfinding requests and waypoint following
+Tactical Priorities:
+1. BRUTE coordination (never abandon allied BRUTE in combat)
+2. Force evaluation and tactical decision making
+3. Base defense with proportional reinforcements
+4. Target prioritization and optimal positioning
 """
 
 import math
@@ -37,30 +39,45 @@ from enums.entity_type import EntityType
 from core.event_bus import EventBus
 from enums.unit_type import UnitType
 from events.event_move import EventMoveTo
+from systems.ai_helpers import (
+    BruteCoordination,
+    BaseDefenseManager,
+    TargetPrioritizer,
+    MovementController,
+)
 
 
 class CrossbowmanAISystemEnemy(esper.Processor):
     """
-    AI system for CROSSBOWMAN units of team 2 with pathfinding integration.
+    AI system for CROSSBOWMAN units of team 2 with modular tactical behavior.
 
-    This simplified AI provides intelligent behaviors:
-    - Move to center when idle
-    - Follow allied BRUTE units for tactical coordination
-    - Attack enemies within range with smart positioning
-    - Use A* pathfinding to navigate around obstacles
+    This system provides comprehensive tactical intelligence using specialized
+    helper classes to manage complex behaviors while maintaining clean,
+    maintainable code structure.
+
+    Key Behavioral Features:
+    - Never abandon BRUTE allies during combat (absolute priority)
+    - Proportional base defense with threat assessment
+    - Intelligent force evaluation and tactical adaptation
+    - Advanced target prioritization and positioning
     """
 
     def __init__(self, pathfinding_system):
         """
-        Initialize the AI system.
+        Initialize the AI system with helper class instances.
 
         Args:
-            pathfinding_system: Reference to the pathfinding system for terrain data
+            pathfinding_system: Reference to pathfinding system for terrain data
         """
         super().__init__()
         self.pathfinding_system = pathfinding_system
-        # Load terrain data for obstacle detection
         self.terrain_map = getattr(pathfinding_system, "terrain_map", {})
+
+        # Initialize specialized helper classes for modular behavior
+        self.brute_coordinator = BruteCoordination(self)
+        self.base_defense = BaseDefenseManager(self)
+        self.target_prioritizer = TargetPrioritizer(self)
+        self.movement_controller = MovementController(self)
 
     def process(self, dt):
         """Main AI processing with pathfinding integration."""
@@ -95,393 +112,285 @@ class CrossbowmanAISystemEnemy(esper.Processor):
             self._smart_ai_behavior(ent, pos, attack, team.team_id)
 
     def _smart_ai_behavior(self, ent, pos, attack, team_id):
-        """Main AI decision making with advanced tactical behavior.
+        """
+        Main AI decision-making with streamlined tactical logic.
 
-        New Tactical Logic:
-        0. If following an A* path -> Continue following path
-        1. If enemies in range -> Attack them
-        2. Evaluate tactical situation:
-           - If have BRUTE allies -> Attack with them (offensive)
-           - If solo and outnumbered -> Retreat to base (defensive)
-           - Otherwise -> Attack enemy base (aggressive)
+        Decision Flow:
+        1. Continue pathfinding if active
+        2. Handle immediate enemies in range
+        3. Make strategic tactical decision based on battlefield state
 
         Args:
             ent: Entity ID
             pos (Position): Current unit position
             attack (Attack): Unit's attack component
-            team_id (int): Team ID for friendly/enemy identification
+            team_id (int): Team ID for ally/enemy identification
         """
-        # Priority 0: Follow A* pathfinding if active
-        if esper.has_component(ent, PathRequest):
-            path_request = esper.component_for_entity(ent, PathRequest)
-            if self._follow_astar_path(ent, pos, path_request):
-                return  # Still following path, skip other behaviors
+        # Priority 1: Continue active pathfinding
+        if self._is_following_path(ent):
+            return
 
-        # Priority 1: Check for enemies in range
-        enemies = self._find_enemies_in_range(ent, pos, attack, team_id)
+        # Priority 2: Handle immediate combat targets
+        enemies_in_range = self._find_enemies_in_range(ent, pos, attack, team_id)
+        if enemies_in_range and not self._has_brute_allies(team_id):
+            # No BRUTE coordination needed - engage directly
+            best_target = self.target_prioritizer.prioritize_targets(enemies_in_range)
+            self._attack_enemy(ent, pos, best_target, attack)
+            return
 
-        # Priority 2: If enemies found, decide how to handle them
-        if enemies:
-            # Check if we have BRUTE allies for coordination
-            ally_brutes = self._count_ally_brutes(team_id)
-
-            if ally_brutes > 0:
-                # We have BRUTE allies - coordinate with them instead of attacking alone
-                self._make_tactical_decision(ent, pos, attack, team_id)
-                return
-            else:
-                # No BRUTE allies - attack directly
-                closest_enemy = min(enemies, key=lambda e: self._distance(pos, e[1]))
-                self._attack_enemy(ent, pos, closest_enemy, attack)
-                return
-
-        # Priority 3: No enemies in range - make tactical decision
+        # Priority 3: Strategic tactical decision making
         self._make_tactical_decision(ent, pos, attack, team_id)
 
     def _make_tactical_decision(self, ent, pos, attack, team_id):
-        """Make tactical decisions based on battlefield situation and force evaluation."""
-        # ABSOLUTE PRIORITY: If there's a BRUTE ally nearby in combat, NEVER ABANDON THEM
-        nearby_brute_in_combat = self._find_brute_in_combat_nearby(ent, pos, team_id)
+        """
+        Streamlined tactical decision making using modular helper classes.
+
+        Priority System:
+        1. BRUTE coordination (never abandon BRUTE allies in combat)
+        2. GHAST threat handling (high-value target elimination)
+        3. Base defense (proportional reinforcement system)
+        4. Force evaluation and strategy selection
+        """
+        # ABSOLUTE PRIORITY: Never abandon BRUTE allies in combat
+        nearby_brute_in_combat = self.brute_coordinator.find_brute_in_combat_nearby(
+            ent, pos, team_id
+        )
         if nearby_brute_in_combat:
-            # BRUTE is fighting nearby - STAY AND FIGHT, NO MATTER WHAT
             self._stay_and_fight_with_brute(
                 ent, pos, attack, team_id, nearby_brute_in_combat
             )
             return
 
-        # Analyze battlefield forces with point system
-        ally_force = self._calculate_ally_force(ent, team_id, pos)
-        enemy_force = self._calculate_enemy_force(team_id, pos, range_distance=300)
-
-        # Priority 1: GHAST FOCUS - If there's a GHAST nearby, coordinate to kill it
-        ghast_target = self._find_nearest_ghast(pos, team_id, range_distance=400)
+        # HIGH PRIORITY: GHAST threat elimination
+        ghast_target = self.target_prioritizer.find_nearest_ghast(
+            pos, team_id, range_distance=400
+        )
         if ghast_target:
-            self._handle_ghast_threat(
-                ent, pos, attack, team_id, ghast_target, ally_force
-            )
+            self._handle_ghast_threat(ent, pos, attack, team_id, ghast_target)
             return
 
-        # Priority 2: BRUTE COORDINATION - If we have BRUTEs, coordinate with them intelligently
-        ally_brutes = self._get_all_ally_brutes(team_id)
+        # BRUTE COORDINATION: Intelligent support distribution
+        ally_brutes = self.brute_coordinator.get_all_ally_brutes(team_id)
         if ally_brutes:
-            # We have BRUTEs - use intelligent distribution system
             self._coordinate_brute_support(ent, pos, attack, team_id, ally_brutes)
             return
 
-        # Priority 3: NO BRUTEs left - Evaluate force and decide strategy
-        force_ratio = ally_force / max(enemy_force, 1)  # Avoid division by zero
-
-        # Check if we're near our base for defensive considerations
-        base_pos = self._find_friendly_base(team_id)
-        near_base = False
-        if base_pos:
-            distance_to_base = self._distance(pos, base_pos)
-            near_base = distance_to_base <= 150
-
-        # Check if our base is under attack
-        base_under_attack = self._is_base_under_attack(team_id)
-        if base_under_attack:
-            # Base is under attack - send proportional reinforcements
-            attackers_count = self._count_enemies_attacking_base(team_id)
-            defenders_needed = self._calculate_defenders_needed(
-                team_id, attackers_count
+        # BASE DEFENSE: Proportional reinforcement system
+        if self.base_defense.is_base_under_attack(team_id):
+            attackers_count = self.base_defense.count_enemies_attacking_base(team_id)
+            defenders_needed = self.base_defense.calculate_defenders_needed(
+                attackers_count
             )
-            current_defenders = self._count_current_base_defenders(team_id)
+            current_defenders = self.base_defense.count_current_defenders(team_id)
 
             if current_defenders < defenders_needed:
-                # Need more defenders - go defend base
                 self._defend_base_actively(ent, pos, team_id)
                 return
 
-        # IMPROVED: Better force evaluation and decision making
-        if force_ratio < 0.5:  # Only retreat when clearly outnumbered (was 0.3)
-            if near_base:
-                self._defend_base_actively(ent, pos, team_id)
-            else:
-                self._tactical_retreat(ent, pos, team_id)
-            return
-        elif force_ratio >= 0.8 and force_ratio <= 1.2:  # Equal forces
-            # Equal power - attack enemies first, then base
-            self._attack_enemies_then_base(ent, pos, attack, team_id)
-            return
-        else:
-            # Superior force - fight aggressively
-            self._coordinated_group_attack(ent, pos, attack, team_id)
-            return
+        # FORCE EVALUATION: Strategic behavior selection
+        self._execute_force_based_strategy(ent, pos, attack, team_id)
 
-    def _find_brute_in_combat_nearby(self, ent, pos, team_id):
-        """Find if there's a BRUTE ally in combat within reasonable distance."""
-        for brute_ent, (brute_pos, brute_team, brute_type) in esper.get_components(
-            Position, Team, EntityType
-        ):
-            if brute_team.team_id == team_id and brute_type == EntityType.BRUTE:
-                distance_to_brute = self._distance(pos, brute_pos)
-                if distance_to_brute <= 200:  # Within reasonable support distance
-                    # Check if BRUTE is in combat
-                    enemies_near_brute = self._count_nearby_enemies(
-                        brute_pos, team_id, range_distance=120
-                    )
-                    if enemies_near_brute > 0:
-                        return {
-                            "entity": brute_ent,
-                            "position": brute_pos,
-                            "enemy_count": enemies_near_brute,
-                        }
-        return None
+    def _is_following_path(self, ent):
+        """Check if unit is currently following an A* pathfinding route."""
+        if esper.has_component(ent, PathRequest):
+            path_request = esper.component_for_entity(ent, PathRequest)
+            return self._follow_astar_path(
+                ent, esper.component_for_entity(ent, Position), path_request
+            )
+        return False
+
+    def _has_brute_allies(self, team_id):
+        """Quick check if team has any BRUTE allies available."""
+        return self._count_ally_brutes(team_id) > 0
+
+    def _execute_force_based_strategy(self, ent, pos, attack, team_id):
+        """Execute strategy based on force evaluation and tactical situation."""
+        # Calculate force balance
+        ally_force = self._calculate_ally_force(ent, team_id, pos)
+        enemy_force = self._calculate_enemy_force(team_id, pos, range_distance=300)
+        force_ratio = ally_force / max(enemy_force, 1)  # Avoid division by zero
+
+        # Strategy selection based on force ratio
+        if force_ratio < 0.5:  # Outnumbered
+            self._tactical_retreat(ent, pos, team_id)
+        elif force_ratio >= 0.8 and force_ratio <= 1.2:  # Equal forces
+            self._attack_enemies_then_base(ent, pos, attack, team_id)
+        else:  # Superior force
+            self._coordinated_group_attack(ent, pos, attack, team_id)
 
     def _stay_and_fight_with_brute(self, ent, pos, attack, team_id, brute_info):
-        """NEVER ABANDON BRUTE IN COMBAT - Stay and fight no matter what."""
+        """
+        NEVER ABANDON BRUTE IN COMBAT - Stay and fight with unwavering loyalty.
+
+        This method implements the core principle that CROSSBOWMAN units must
+        never flee when supporting a BRUTE ally engaged in combat.
+        """
         brute_pos = brute_info["position"]
         brute_ent = brute_info["entity"]
 
-        # Find enemies threatening the BRUTE and attack them
+        # Find and prioritize threats to the BRUTE
+        priority_targets = self._find_brute_threats(
+            ent, pos, attack, team_id, brute_pos
+        )
+
+        if priority_targets:
+            # Attack the highest priority threat to our BRUTE
+            best_target = max(priority_targets, key=lambda x: x[3])
+            target_info = (best_target[0], best_target[1], best_target[2])
+
+            # Set combat target
+            self._set_combat_target(ent, best_target[0])
+
+            # Position optimally for BRUTE support
+            self.movement_controller.position_for_brute_support(
+                ent, pos, brute_pos, target_info[1], attack
+            )
+        else:
+            # No immediate threats - maintain support formation
+            self._maintain_brute_support_position(ent, pos, brute_pos)
+
+    def _find_brute_threats(self, ent, pos, attack, team_id, brute_pos):
+        """Find and prioritize enemies threatening our BRUTE ally."""
         priority_targets = []
 
         for target_ent, (target_pos, target_team, target_type) in esper.get_components(
             Position, Team, EntityType
         ):
-            if target_team.team_id != team_id and target_type != EntityType.BASTION:
-                # Check if alive
-                if esper.has_component(target_ent, Health):
-                    target_health = esper.component_for_entity(target_ent, Health)
-                    if target_health.remaining <= 0:
-                        continue
+            if (
+                target_team.team_id != team_id
+                and target_type != EntityType.BASTION
+                and self._is_alive(target_ent)
+            ):
 
                 distance_to_brute = self._distance(brute_pos, target_pos)
                 distance_to_self = self._distance(pos, target_pos)
 
-                # Target enemies that are threatening our BRUTE
+                # Check if enemy is threatening BRUTE and within our support range
                 if (
                     distance_to_brute <= 150
                     and distance_to_self <= attack.range * 24 * 1.5
-                ):  # Extended range for BRUTE support
-                    priority = self._calculate_brute_support_priority(
+                ):
+
+                    priority = self.target_prioritizer.calculate_brute_support_priority(
                         target_type, distance_to_brute, distance_to_self
                     )
                     priority_targets.append(
                         (target_ent, target_pos, target_type, priority)
                     )
 
-        if priority_targets:
-            # Attack highest priority target threatening our BRUTE
-            priority_targets.sort(key=lambda x: x[3], reverse=True)
-            best_target = priority_targets[0]
-            target_info = (best_target[0], best_target[1], best_target[2])
+        return priority_targets
 
-            # Set target for attacking
-            if not esper.has_component(ent, Target):
-                esper.add_component(ent, Target(best_target[0]))
-            else:
-                target_comp = esper.component_for_entity(ent, Target)
-                target_comp.target_entity_id = best_target[0]
-
-            # Position for optimal BRUTE support
-            self._position_for_brute_support(
-                ent, pos, brute_pos, target_info[1], attack
-            )
+    def _set_combat_target(self, ent, target_ent):
+        """Set or update the combat target for this unit."""
+        if not esper.has_component(ent, Target):
+            esper.add_component(ent, Target(target_ent))
         else:
-            # No immediate threats, but stay close to BRUTE for support
-            distance_to_brute = self._distance(pos, brute_pos)
-            ideal_support_distance = 90  # Stay close for immediate support
+            target_comp = esper.component_for_entity(ent, Target)
+            target_comp.target_entity_id = target_ent
 
-            if distance_to_brute > ideal_support_distance + 30:
-                # Get closer to BRUTE
-                self._smart_move_to(ent, pos, brute_pos)
-            elif distance_to_brute < ideal_support_distance - 20:
-                # Maintain optimal distance
-                direction_x = pos.x - brute_pos.x
-                direction_y = pos.y - brute_pos.y
-                length = (direction_x**2 + direction_y**2) ** 0.5
-
-                if length > 0:
-                    direction_x = direction_x / length * ideal_support_distance
-                    direction_y = direction_y / length * ideal_support_distance
-
-                    new_x = brute_pos.x + direction_x
-                    new_y = brute_pos.y + direction_y
-
-                    # Clamp to map bounds
-                    new_x = max(32, min(new_x, 24 * 32 - 32))
-                    new_y = max(32, min(new_y, 24 * 32 - 32))
-
-                    destination = Position(new_x, new_y)
-                    self._smart_move_to(ent, pos, destination)
-            else:
-                # Perfect support position - stop moving
-                self._stop_movement(ent)
-
-    def _calculate_brute_support_priority(
-        self, target_type, distance_to_brute, distance_to_self
-    ):
-        """Calculate target priority specifically for BRUTE support."""
-        base_priority = 0
-
-        # Higher priority for dangerous enemies
-        if target_type == EntityType.GHAST:
-            base_priority = 150  # Extremely high priority - GHAST is deadly
-        elif target_type == EntityType.CROSSBOWMAN:
-            base_priority = 100  # High priority - ranged threats to BRUTE
-        elif target_type == EntityType.BRUTE:
-            base_priority = 80  # Medium-high priority - melee threat
-
-        # Huge bonus for enemies very close to our BRUTE
-        if distance_to_brute <= 80:
-            base_priority += 50  # Immediate threat bonus
-        elif distance_to_brute <= 120:
-            base_priority += 30  # Close threat bonus
-
-        # Small penalty for enemies far from us (but still prioritize BRUTE support)
-        distance_penalty = min(distance_to_self / 20, 20)  # Cap penalty
-
-        return base_priority - distance_penalty
-
-    def _position_for_brute_support(self, ent, pos, brute_pos, enemy_pos, attack):
-        """Position optimally to support BRUTE in combat."""
-        # Calculate ideal position: Close enough to BRUTE for support, optimal range for enemy
-        optimal_range_to_enemy = attack.range * 24 * 0.85  # 85% of max range
-        distance_to_enemy = self._distance(pos, enemy_pos)
+    def _maintain_brute_support_position(self, ent, pos, brute_pos):
+        """Maintain optimal support position near BRUTE when no threats present."""
         distance_to_brute = self._distance(pos, brute_pos)
+        ideal_support_distance = 90
 
-        # Priority 1: Stay close to BRUTE (within 120 pixels)
-        if distance_to_brute > 120:
-            # Too far from BRUTE - get closer while maintaining shooting position
-            # Calculate position between BRUTE and enemy that keeps us close to BRUTE
-            direction_to_brute_x = brute_pos.x - pos.x
-            direction_to_brute_y = brute_pos.y - pos.y
-            brute_length = (direction_to_brute_x**2 + direction_to_brute_y**2) ** 0.5
-
-            if brute_length > 0:
-                # Move 60% towards BRUTE
-                move_distance = min(50, distance_to_brute - 100)
-                direction_to_brute_x = (
-                    direction_to_brute_x / brute_length * move_distance
-                )
-                direction_to_brute_y = (
-                    direction_to_brute_y / brute_length * move_distance
-                )
-
-                new_x = pos.x + direction_to_brute_x
-                new_y = pos.y + direction_to_brute_y
-
-                # Clamp to map bounds
-                new_x = max(32, min(new_x, 24 * 32 - 32))
-                new_y = max(32, min(new_y, 24 * 32 - 32))
-
-                destination = Position(new_x, new_y)
-                self._smart_move_to(ent, pos, destination)
-
-        # Priority 2: Adjust range to enemy if we're close enough to BRUTE
-        elif distance_to_enemy > optimal_range_to_enemy and distance_to_brute <= 120:
-            # Get closer to enemy while staying near BRUTE
-            direction_to_enemy_x = enemy_pos.x - pos.x
-            direction_to_enemy_y = enemy_pos.y - pos.y
-            enemy_length = (direction_to_enemy_x**2 + direction_to_enemy_y**2) ** 0.5
-
-            if enemy_length > 0:
-                move_distance = min(30, distance_to_enemy - optimal_range_to_enemy)
-                direction_to_enemy_x = (
-                    direction_to_enemy_x / enemy_length * move_distance
-                )
-                direction_to_enemy_y = (
-                    direction_to_enemy_y / enemy_length * move_distance
-                )
-
-                new_x = pos.x + direction_to_enemy_x
-                new_y = pos.y + direction_to_enemy_y
-
-                # Make sure we don't move too far from BRUTE
-                test_distance_to_brute = self._distance(
-                    Position(new_x, new_y), brute_pos
-                )
-                if test_distance_to_brute <= 130:  # Allow slight margin
-                    destination = Position(new_x, new_y)
-                    self._smart_move_to(ent, pos, destination)
-                else:
-                    # Stay put if moving would take us too far from BRUTE
-                    self._stop_movement(ent)
-
-        elif (
-            distance_to_enemy < optimal_range_to_enemy * 0.6
-            and distance_to_brute <= 120
-        ):
-            # Too close to enemy - back away slightly but stay near BRUTE
-            retreat_x = pos.x + (pos.x - enemy_pos.x) * 0.3
-            retreat_y = pos.y + (pos.y - enemy_pos.y) * 0.3
-
-            # Make sure retreat doesn't take us too far from BRUTE
-            test_distance_to_brute = self._distance(
-                Position(retreat_x, retreat_y), brute_pos
-            )
-            if test_distance_to_brute <= 130:
-                # Clamp to map bounds
-                retreat_x = max(32, min(retreat_x, 24 * 32 - 32))
-                retreat_y = max(32, min(retreat_y, 24 * 32 - 32))
-
-                destination = Position(retreat_x, retreat_y)
-                self._smart_move_to(ent, pos, destination)
-            else:
-                # Can't retreat without leaving BRUTE - stay and fight
-                self._stop_movement(ent)
+        if distance_to_brute > ideal_support_distance + 30:
+            # Too far - get closer to BRUTE
+            self._smart_move_to(ent, pos, brute_pos)
+        elif distance_to_brute < ideal_support_distance - 20:
+            # Too close - maintain optimal distance
+            self._move_to_support_distance(ent, pos, brute_pos, ideal_support_distance)
         else:
-            # Good position for BRUTE support - hold position and fight
+            # Perfect support position
             self._stop_movement(ent)
 
-    def _is_base_under_attack(self, team_id):
-        """Check if our base is currently under attack."""
+    def _move_to_support_distance(self, ent, pos, brute_pos, target_distance):
+        """Move to maintain specific distance from BRUTE ally."""
+        direction_x = pos.x - brute_pos.x
+        direction_y = pos.y - brute_pos.y
+        length = (direction_x**2 + direction_y**2) ** 0.5
+
+        if length > 0:
+            direction_x = direction_x / length * target_distance
+            direction_y = direction_y / length * target_distance
+
+            new_x = brute_pos.x + direction_x
+            new_y = brute_pos.y + direction_y
+
+            # Clamp to map bounds
+            new_x = max(32, min(new_x, 24 * 32 - 32))
+            new_y = max(32, min(new_y, 24 * 32 - 32))
+
+            destination = Position(new_x, new_y)
+            self._smart_move_to(ent, pos, destination)
+
+    def _handle_ghast_threat(self, ent, pos, attack, team_id, ghast_target):
+        """
+        Handle GHAST threat with intelligent coordination and positioning.
+
+        GHASTs are high-value targets that require immediate attention due to
+        their devastating ranged attacks and threat to both units and base.
+        """
+        ghast_ent, ghast_pos = ghast_target
+
+        # Check if GHAST is threatening our base
         base_pos = self._find_friendly_base(team_id)
-        if not base_pos:
-            return False
+        ghast_threatening_base = False
+        if base_pos:
+            distance_ghast_to_base = self._distance(ghast_pos, base_pos)
+            ghast_threatening_base = distance_ghast_to_base <= 300
 
-        # Check for enemies near base
-        enemies_near_base = self._count_enemies_attacking_base(team_id)
-        return enemies_near_base > 0
-
-    def _count_enemies_attacking_base(self, team_id):
-        """Count enemies currently attacking our base."""
-        base_pos = self._find_friendly_base(team_id)
-        if not base_pos:
-            return 0
-
-        attackers = 0
-        for ent, (enemy_pos, enemy_team, enemy_type) in esper.get_components(
-            Position, Team, EntityType
-        ):
-            if enemy_team.team_id != team_id and enemy_type != EntityType.BASTION:
-                distance_to_base = self._distance(enemy_pos, base_pos)
-                if distance_to_base <= 200:  # Within attack range of base
-                    attackers += 1
-
-        return attackers
-
-    def _calculate_defenders_needed(self, team_id, attackers_count):
-        """Calculate how many defenders we need based on attackers."""
-        # Rule: need proportional defenders
-        # 1-2 attackers = 1 defender
-        # 3-4 attackers = 2 defenders
-        # 5+ attackers = 3 defenders (max)
-        if attackers_count <= 2:
-            return 1
-        elif attackers_count <= 4:
-            return 2
+        if ghast_threatening_base:
+            # GHAST threatens base - intercept and defend
+            self._defend_base_against_ghast(ent, pos, attack, team_id, ghast_target)
         else:
-            return 3
+            # Standard GHAST engagement with optimal positioning
+            self._focus_ghast(ent, pos, ghast_target, attack)
 
-    def _count_current_base_defenders(self, team_id):
-        """Count allies currently defending the base."""
-        base_pos = self._find_friendly_base(team_id)
-        if not base_pos:
-            return 0
+    def _defend_base_actively(self, ent, pos, team_id):
+        """
+        Execute active base defense with aggressive threat engagement.
 
-        defenders = 0
-        for ent, (ally_pos, ally_team, ally_type) in esper.get_components(
-            Position, Team, EntityType
-        ):
-            if ally_team.team_id == team_id and ally_type != EntityType.BASTION:
-                distance_to_base = self._distance(ally_pos, base_pos)
-                if distance_to_base <= 150:  # Within defensive range
-                    defenders += 1
+        Uses the BaseDefenseManager to identify threats and position optimally
+        for defensive combat while maintaining base proximity.
+        """
+        base_pos = self._find_friendly_base(
+            team_id
+        ) or self._get_fallback_base_position(team_id)
 
-        return defenders
+        # Find and engage the most threatening enemy
+        closest_threat = self.base_defense.find_base_threat(pos, team_id)
+
+        if closest_threat:
+            # Engage threat while maintaining defensive positioning
+            enemy_ent, enemy_pos, enemy_type = closest_threat
+            self._set_combat_target(ent, enemy_ent)
+            self._position_for_base_defense(ent, pos, enemy_pos, base_pos)
+        else:
+            # No immediate threats - maintain defensive perimeter
+            self.movement_controller.position_defensively_near_base(ent, pos, team_id)
+
+    def _position_for_base_defense(self, ent, pos, enemy_pos, base_pos):
+        """Position optimally for base defense engagement."""
+        distance_to_enemy = self._distance(pos, enemy_pos)
+        distance_to_base = self._distance(pos, base_pos)
+        optimal_range = 100  # Aggressive defensive range
+
+        if distance_to_enemy > optimal_range and distance_to_base <= 200:
+            # Close with enemy if not too far from base
+            self._move_closer_to_target(ent, pos, enemy_pos, optimal_range)
+        elif distance_to_enemy < optimal_range * 0.6:
+            # Too close - retreat toward base
+            self._retreat_toward_base(ent, pos, enemy_pos, base_pos)
+        else:
+            # Good defensive position
+            self._stop_movement(ent)
+
+    def _get_fallback_base_position(self, team_id):
+        """Get fallback position when no base found."""
+        if team_id == 2:
+            return Position(20 * 32, 20 * 32)
+        else:
+            return Position(4 * 32, 4 * 32)
 
     def _defend_base_actively(self, ent, pos, team_id):
         """Actively defend the base with aggressive engagement."""
@@ -601,282 +510,173 @@ class CrossbowmanAISystemEnemy(esper.Processor):
                 self._stop_movement(ent)
 
     def _attack_enemies_then_base(self, ent, pos, attack, team_id):
-        """Attack enemies first, then attack enemy base - for equal power situations."""
-        # First priority: attack any enemies in range
+        """Balanced strategy: attack nearby enemies first, then enemy base."""
+        # Priority 1: Engage enemies in range
         enemies_in_range = self._find_enemies_in_range(ent, pos, attack, team_id)
-
         if enemies_in_range:
-            # Enemies found - attack them first
-            best_target = self._prioritize_targets(enemies_in_range)
+            best_target = self.target_prioritizer.prioritize_targets(enemies_in_range)
             self._attack_enemy(ent, pos, best_target, attack)
+            return
+
+        # Priority 2: Seek enemies on map
+        closest_enemy = self.target_prioritizer.find_closest_enemy_on_map(
+            ent, pos, team_id
+        )
+        if closest_enemy:
+            self._engage_or_approach_enemy(ent, pos, attack, closest_enemy)
         else:
-            # No enemies in range - look for enemies on the map
-            closest_enemy = self._find_closest_enemy_on_map(ent, pos, team_id)
+            # Priority 3: Attack enemy base
+            self._attack_enemy_base(ent, pos, team_id)
 
-            if closest_enemy:
-                # Move toward closest enemy
-                enemy_ent, enemy_pos, enemy_type = closest_enemy
-                distance_to_enemy = self._distance(pos, enemy_pos)
+    def _engage_or_approach_enemy(self, ent, pos, attack, enemy_info):
+        """Engage enemy if in range, otherwise approach for engagement."""
+        enemy_ent, enemy_pos, enemy_type = enemy_info
+        distance_to_enemy = self._distance(pos, enemy_pos)
 
-                if (
-                    distance_to_enemy <= attack.range * 24 * 1.2
-                ):  # Within extended range
-                    # Close enough to engage
-                    self._attack_enemy(ent, pos, closest_enemy, attack)
-                else:
-                    # Move closer to enemy
-                    self._smart_move_to(ent, pos, enemy_pos)
-            else:
-                # No enemies left - attack enemy base
-                self._attack_enemy_base(ent, pos, team_id)
+        if distance_to_enemy <= attack.range * 24 * 1.2:  # Extended engagement range
+            self._attack_enemy(ent, pos, enemy_info, attack)
+        else:
+            self._smart_move_to(ent, pos, enemy_pos)
 
-    def _find_closest_enemy_on_map(self, ent, pos, team_id):
-        """Find the closest enemy unit anywhere on the map."""
-        closest_enemy = None
-        min_distance = float("inf")
+    def _find_enemies_in_range(self, ent, pos, attack, team_id):
+        """
+        Find all living enemies within attack range for targeting.
+
+        Returns list of (entity_id, position, entity_type) tuples for
+        hostile units that can be engaged immediately.
+        """
+        enemies = []
+        attack_range = attack.range * 24  # Convert tiles to pixels
 
         for target_ent, (target_pos, target_team, target_type) in esper.get_components(
             Position, Team, EntityType
         ):
+            # Filter: exclude self, allies, bastions, and dead units
             if (
                 target_ent == ent
                 or target_team.team_id == team_id
+                or target_team.team_id != 1  # Only target enemy team 1
                 or target_type == EntityType.BASTION
+                or not self._is_alive(target_ent)
             ):
                 continue
 
-            # Must be alive
-            if esper.has_component(target_ent, Health):
-                target_health = esper.component_for_entity(target_ent, Health)
-                if target_health.remaining <= 0:
-                    continue
-
-            distance = self._distance(pos, target_pos)
-            if distance < min_distance:
-                min_distance = distance
-                closest_enemy = (target_ent, target_pos, target_type)
-
-        return closest_enemy
-
-    def _find_enemies_in_range(self, ent, pos, attack, team_id):
-        """Find all enemies within attack range for targeting.
-
-        Scans all entities to identify hostile units within the crossbow's
-        effective range. Used for target prioritization.
-
-        Args:
-            ent: Entity ID (self)
-            pos (Position): Current unit position
-            attack (Attack): Unit's attack component with range info
-            team_id (int): Current unit's team ID
-
-        Returns:
-            list: List of (entity_id, position, entity_type) tuples for valid targets
-        """
-        enemies = []
-
-        for target_ent, (target_pos, target_team, target_type) in esper.get_components(
-            Position, Team, EntityType
-        ):
-            # Skip self and allies (same team)
-            if target_ent == ent or target_team.team_id == team_id:
-                continue
-
-            # ONLY target enemy team 1 (not neutral entities)
-            if target_team.team_id != 1:
-                continue
-
-            # IGNORE BASTIONS - they are structures, not combat units!
-            if target_type == EntityType.BASTION:
-                continue
-
-            # Must be alive
-            if esper.has_component(target_ent, Health):
-                target_health = esper.component_for_entity(target_ent, Health)
-                if target_health.remaining <= 0:
-                    continue
-
-            # Check if in range
-            distance = self._distance(pos, target_pos)
-            if distance <= attack.range * 24:  # Convert tiles to pixels
+            # Check if target is within attack range
+            if self._distance(pos, target_pos) <= attack_range:
                 enemies.append((target_ent, target_pos, target_type))
 
         return enemies
 
-    def _find_nearest_ally_brute(self, ent, pos, team_id):
-        """Find the nearest ally BRUTE for formation support.
+    def _is_alive(self, ent):
+        """Check if entity is alive (has health > 0)."""
+        if esper.has_component(ent, Health):
+            health = esper.component_for_entity(ent, Health)
+            return health.remaining > 0
+        return True  # Assume alive if no health component
 
-        Locates the closest BRUTE ally to provide ranged support and
-        follow in formation. CROSSBOWMAN units work best when supporting
-        melee units like BRUTEs.
+    def _move_closer_to_target(self, ent, pos, target_pos, optimal_range):
+        """Move unit closer to target while maintaining optimal combat range."""
+        distance_to_target = self._distance(pos, target_pos)
+        if distance_to_target > optimal_range:
+            move_distance = min(40, distance_to_target - optimal_range)
+            direction_x = target_pos.x - pos.x
+            direction_y = target_pos.y - pos.y
+            length = (direction_x**2 + direction_y**2) ** 0.5
 
-        Args:
-            ent: Entity ID (self)
-            pos (Position): Current unit position
-            team_id (int): Current unit's team ID
+            if length > 0:
+                direction_x = direction_x / length * move_distance
+                direction_y = direction_y / length * move_distance
 
-        Returns:
-            tuple or None: (brute_id, brute_position) of nearest ally BRUTE, or None if not found
-        """
-        closest_brute = None
-        min_distance = float("inf")
+                new_x = pos.x + direction_x
+                new_y = pos.y + direction_y
 
-        for brute_ent, (brute_team, brute_type, brute_pos) in esper.get_components(
-            Team, EntityType, Position
-        ):
-            if (
-                brute_ent == ent
-                or brute_team.team_id != team_id
-                or brute_type != EntityType.BRUTE
-            ):
-                continue
+                # Clamp to map bounds
+                new_x = max(32, min(new_x, 24 * 32 - 32))
+                new_y = max(32, min(new_y, 24 * 32 - 32))
 
-            distance = self._distance(pos, brute_pos)
-            if distance < min_distance:
-                min_distance = distance
-                closest_brute = (brute_ent, brute_pos)
+                destination = Position(new_x, new_y)
+                self._smart_move_to(ent, pos, destination)
 
-        return closest_brute
+    def _retreat_toward_base(self, ent, pos, enemy_pos, base_pos):
+        """Retreat toward base while maintaining engagement distance."""
+        retreat_x = pos.x + (base_pos.x - enemy_pos.x) * 0.3
+        retreat_y = pos.y + (base_pos.y - enemy_pos.y) * 0.3
+
+        # Clamp to map bounds
+        retreat_x = max(32, min(retreat_x, 24 * 32 - 32))
+        retreat_y = max(32, min(retreat_y, 24 * 32 - 32))
+
+        destination = Position(retreat_x, retreat_y)
+        self._smart_move_to(ent, pos, destination)
 
     def _attack_enemy(self, ent, pos, enemy_info, attack):
-        """Attack an enemy with optimal positioning for crossbow combat.
+        """
+        Attack enemy with optimal crossbow combat positioning.
 
-        Maintains optimal combat distance (80% of max range) for effectiveness:
-        - If too close: Retreats to avoid melee combat
-        - If too far: Approaches to enter optimal range
-        - If at good distance: Stops and focuses on targeting
-
-        Args:
-            ent: Entity ID
-            pos (Position): Current unit position
-            enemy_info (tuple): (enemy_id, enemy_pos, enemy_type)
-            attack (Attack): Unit's attack component
+        Maintains 80% of maximum range for optimal effectiveness while
+        avoiding melee combat and terrain obstacles.
         """
         enemy_id, enemy_pos, enemy_type = enemy_info
         distance = self._distance(pos, enemy_pos)
 
-        # Set target for attacking
-        if not esper.has_component(ent, Target):
-            esper.add_component(ent, Target(enemy_id))
-        else:
-            target_comp = esper.component_for_entity(ent, Target)
-            target_comp.target_entity_id = enemy_id
+        # Set combat target
+        self._set_combat_target(ent, enemy_id)
 
-        # Position management with smart movement
-        optimal_range = attack.range * 24 * 0.8  # 80% of max range in pixels
+        # Execute optimal combat positioning
+        optimal_range = attack.range * 24 * 0.8  # 80% of max range
 
         if distance < optimal_range * 0.7:
-            # Too close - back away smartly (ensure coordinates stay in bounds)
-            retreat_x = pos.x + (pos.x - enemy_pos.x) * 0.5
-            retreat_y = pos.y + (pos.y - enemy_pos.y) * 0.5
-
-            # Clamp coordinates to map bounds (24x24 tiles = 768x768 pixels)
-            retreat_x = max(32, min(retreat_x, 24 * 32 - 32))
-            retreat_y = max(32, min(retreat_y, 24 * 32 - 32))
-
-            destination = Position(retreat_x, retreat_y)
-            self._smart_move_to(ent, pos, destination)
+            # Too close - retreat to optimal range
+            self._retreat_from_enemy_combat(ent, pos, enemy_pos)
         elif distance > optimal_range:
-            # Too far - get closer smartly
-            destination = Position(enemy_pos.x, enemy_pos.y)
-            self._smart_move_to(ent, pos, destination)
+            # Too far - advance to optimal range
+            self._smart_move_to(ent, pos, enemy_pos)
         else:
-            # Good distance - stop moving
+            # Perfect range - hold position and fire
             self._stop_movement(ent)
 
-    def _follow_brute_smart(self, ent, pos, brute_info):
-        """Follow an ally BRUTE using smart movement and positioning.
+    def _retreat_from_enemy_combat(self, ent, pos, enemy_pos):
+        """Retreat from enemy to maintain optimal combat distance."""
+        retreat_x = pos.x + (pos.x - enemy_pos.x) * 0.5
+        retreat_y = pos.y + (pos.y - enemy_pos.y) * 0.5
 
-        Maintains a support formation behind the BRUTE to provide ranged support
-        while staying out of melee combat range.
+        # Clamp to map bounds
+        retreat_x = max(32, min(retreat_x, 24 * 32 - 32))
+        retreat_y = max(32, min(retreat_y, 24 * 32 - 32))
 
-        Args:
-            ent: Entity ID
-            pos (Position): Current unit position
-            brute_info (tuple): (brute_id, brute_pos) from ally BRUTE detection
-        """
-        brute_id, brute_pos = brute_info
-        follow_distance = 48  # 2 tiles behind
-
-        # Position behind the BRUTE (ensure coordinates stay within map bounds)
-        behind_x = max(32, brute_pos.x - 24)  # Stay at least 1 tile from left edge
-        behind_y = max(
-            32, min(brute_pos.y, 24 * 32 - 32)
-        )  # Stay within vertical bounds
-
-        distance = self._distance(pos, Position(behind_x, behind_y))
-
-        if distance > follow_distance + 24:
-            # Too far - get closer using smart movement
-            destination = Position(behind_x, behind_y)
-            self._smart_move_to(ent, pos, destination)
-        else:
-            # Close enough - stop
-            self._stop_movement(ent)
+        destination = Position(retreat_x, retreat_y)
+        self._smart_move_to(ent, pos, destination)
 
     def _count_ally_brutes(self, team_id):
-        """Count allied BRUTE units."""
+        """Count allied BRUTE units for tactical decision making."""
         count = 0
         for ent, (team, entity_type) in esper.get_components(Team, EntityType):
             if team.team_id == team_id and entity_type == EntityType.BRUTE:
                 count += 1
         return count
 
-    def _get_all_ally_brutes(self, team_id):
-        """Get all ally BRUTEs with their positions and combat status."""
-        brutes = []
-        for ent, (team, entity_type, pos) in esper.get_components(
-            Team, EntityType, Position
-        ):
-            if team.team_id == team_id and entity_type == EntityType.BRUTE:
-                # Check if BRUTE is in combat
-                enemies_nearby = self._count_nearby_enemies(
-                    pos, team_id, range_distance=120
-                )
-                brutes.append(
-                    {
-                        "entity": ent,
-                        "position": pos,
-                        "in_combat": enemies_nearby > 0,
-                        "enemy_count": enemies_nearby,
-                        "supporting_crossbowmen": 0,  # Will be calculated
-                    }
-                )
-        return brutes
-
     def _coordinate_brute_support(self, ent, pos, attack, team_id, ally_brutes):
-        """Intelligent coordination system for BRUTE support.
-
-        Strategy:
-        1. Analyze all BRUTEs and their needs
-        2. Count current crossbowmen supporting each BRUTE
-        3. Assign this crossbowman to the BRUTE that needs support most
-        4. Stay with assigned BRUTE and fight alongside them
         """
-        # Get all crossbowmen positions for distribution analysis
-        all_crossbowmen = []
-        for crossbow_ent, (team, entity_type, crossbow_pos) in esper.get_components(
-            Team, EntityType, Position
-        ):
-            if team.team_id == team_id and entity_type == EntityType.CROSSBOWMAN:
-                all_crossbowmen.append(
-                    {"entity": crossbow_ent, "position": crossbow_pos}
-                )
+        Intelligent BRUTE support coordination using helper class analysis.
 
-        # Calculate current support for each BRUTE
+        Assigns this crossbowman to the BRUTE that needs support most urgently
+        based on combat status, current support levels, and tactical priorities.
+        """
+        # Get all crossbowmen for distribution analysis
+        all_crossbowmen = self._get_all_allied_crossbowmen(team_id)
+
+        # Calculate current support levels
         for brute in ally_brutes:
-            support_count = 0
-            for crossbow in all_crossbowmen:
-                distance = self._distance(crossbow["position"], brute["position"])
-                if distance <= 150:  # Consider as "supporting" if within 150 pixels
-                    support_count += 1
-            brute["supporting_crossbowmen"] = support_count
+            brute["supporting_crossbowmen"] = self._count_crossbowmen_supporting_brute(
+                brute["position"], all_crossbowmen
+            )
 
-        # Find the BRUTE that needs support most
-        best_brute = self._find_brute_needing_support(ally_brutes, all_crossbowmen)
+        # Find BRUTE needing support most
+        best_brute = self.brute_coordinator.find_brute_needing_support(
+            ally_brutes, all_crossbowmen
+        )
 
         if best_brute:
-            # Assign this crossbowman to support the selected BRUTE
             self._provide_dedicated_brute_support(ent, pos, attack, team_id, best_brute)
         else:
             # Fallback: support nearest BRUTE
@@ -887,100 +687,56 @@ class CrossbowmanAISystemEnemy(esper.Processor):
                 ent, pos, attack, team_id, nearest_brute
             )
 
-    def _find_brute_needing_support(self, ally_brutes, all_crossbowmen):
-        """Find which BRUTE needs crossbowman support most urgently.
+    def _get_all_allied_crossbowmen(self, team_id):
+        """Get list of all allied CROSSBOWMAN units with positions."""
+        crossbowmen = []
+        for crossbow_ent, (team, entity_type, crossbow_pos) in esper.get_components(
+            Team, EntityType, Position
+        ):
+            if team.team_id == team_id and entity_type == EntityType.CROSSBOWMAN:
+                crossbowmen.append({"entity": crossbow_ent, "position": crossbow_pos})
+        return crossbowmen
 
-        Priority:
-        1. BRUTEs in combat with too few supporters
-        2. BRUTEs facing multiple enemies
-        3. BRUTEs with no support at all
-        """
-        # Calculate ideal support ratio
-        total_crossbowmen = len(all_crossbowmen)
-        total_brutes = len(ally_brutes)
-
-        if total_brutes == 0:
-            return None
-
-        ideal_support_per_brute = max(1, total_crossbowmen // total_brutes)
-
-        # Priority 1: BRUTEs in combat with insufficient support
-        combat_brutes_needing_help = []
-        for brute in ally_brutes:
-            if brute["in_combat"]:
-                needed_support = min(
-                    brute["enemy_count"] + 1, 3
-                )  # Max 3 crossbowmen per BRUTE
-                if brute["supporting_crossbowmen"] < needed_support:
-                    urgency = (
-                        needed_support - brute["supporting_crossbowmen"]
-                    ) * 10 + brute["enemy_count"]
-                    combat_brutes_needing_help.append((brute, urgency))
-
-        if combat_brutes_needing_help:
-            # Return BRUTE with highest urgency
-            combat_brutes_needing_help.sort(key=lambda x: x[1], reverse=True)
-            return combat_brutes_needing_help[0][0]
-
-        # Priority 2: BRUTEs with no support at all
-        unsupported_brutes = [
-            b for b in ally_brutes if b["supporting_crossbowmen"] == 0
-        ]
-        if unsupported_brutes:
-            # Return first unsupported BRUTE
-            return unsupported_brutes[0]
-
-        # Priority 3: Balance support across all BRUTEs
-        underSupported_brutes = [
-            b
-            for b in ally_brutes
-            if b["supporting_crossbowmen"] < ideal_support_per_brute
-        ]
-        if underSupported_brutes:
-            return min(underSupported_brutes, key=lambda b: b["supporting_crossbowmen"])
-
-        return None  # All BRUTEs have adequate support
+    def _count_crossbowmen_supporting_brute(self, brute_pos, all_crossbowmen):
+        """Count crossbowmen currently supporting a specific BRUTE."""
+        support_count = 0
+        for crossbow in all_crossbowmen:
+            distance = self._distance(crossbow["position"], brute_pos)
+            if distance <= 150:  # Support range
+                support_count += 1
+        return support_count
 
     def _provide_dedicated_brute_support(self, ent, pos, attack, team_id, brute_info):
-        """Provide dedicated support to a specific BRUTE - NEVER ABANDON THEM IN COMBAT."""
+        """
+        Provide unwavering support to assigned BRUTE ally.
+
+        Never abandons BRUTE in combat - maintains formation when moving
+        and fights alongside BRUTE during engagements.
+        """
         brute_pos = brute_info["position"]
-        brute_ent = brute_info["entity"]
         in_combat = brute_info["in_combat"]
 
         if in_combat:
-            # BRUTE is fighting - ABSOLUTE PRIORITY: STAY AND FIGHT WITH BRUTE
-            # Never retreat, never abandon, always support
+            # BRUTE fighting - NEVER ABANDON: Stay and fight together
             self._stay_and_fight_with_brute(ent, pos, attack, team_id, brute_info)
         else:
-            # BRUTE is moving - follow in formation but stay close for immediate combat support
-            distance_to_brute = self._distance(pos, brute_pos)
-            optimal_follow_distance = 80  # Stay closer for immediate combat response
+            # BRUTE moving - maintain formation for immediate support
+            self._maintain_formation_with_brute(ent, pos, brute_pos)
 
-            if distance_to_brute > optimal_follow_distance + 30:
-                # Too far - get closer quickly
-                self._smart_move_to(ent, pos, brute_pos)
-            elif distance_to_brute < optimal_follow_distance - 20:
-                # Too close - maintain proper distance for ranged support
-                direction_x = pos.x - brute_pos.x
-                direction_y = pos.y - brute_pos.y
-                length = (direction_x**2 + direction_y**2) ** 0.5
+    def _maintain_formation_with_brute(self, ent, pos, brute_pos):
+        """Maintain tactical formation with BRUTE ally during movement."""
+        distance_to_brute = self._distance(pos, brute_pos)
+        optimal_follow_distance = 80
 
-                if length > 0:
-                    direction_x = direction_x / length * optimal_follow_distance
-                    direction_y = direction_y / length * optimal_follow_distance
-
-                    new_x = brute_pos.x + direction_x
-                    new_y = brute_pos.y + direction_y
-
-                    # Clamp to map bounds
-                    new_x = max(32, min(new_x, 24 * 32 - 32))
-                    new_y = max(32, min(new_y, 24 * 32 - 32))
-
-                    destination = Position(new_x, new_y)
-                    self._smart_move_to(ent, pos, destination)
-            else:
-                # Perfect formation distance - ready for immediate combat support
-                self._stop_movement(ent)
+        if distance_to_brute > optimal_follow_distance + 30:
+            # Too far - close formation
+            self._smart_move_to(ent, pos, brute_pos)
+        elif distance_to_brute < optimal_follow_distance - 20:
+            # Too close - maintain optimal support distance
+            self._move_to_support_distance(ent, pos, brute_pos, optimal_follow_distance)
+        else:
+            # Perfect formation - ready for combat
+            self._stop_movement(ent)
 
     def _active_combat_support(self, ent, pos, attack, team_id, brute_pos):
         """Provide active combat support to fighting BRUTE."""
