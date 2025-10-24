@@ -442,7 +442,7 @@ class Hud:
             ghast_status = "IA" if not self.ghast_ai_controlled_by_player else "JOUEUR"
             ghast_text = f"Ghast: {ghast_status}"
             ghast_surface = self.font_medium.render(ghast_text, True, self.text_color)
-            self.screen.blit(ghast_surface, (hud_x + 60, info_y + 80))
+            self.screen.blit(ghast_surface, (hud_x + 15, info_y + 550))
 
             instructions = [
                 "CONTROLES:",
