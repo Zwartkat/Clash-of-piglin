@@ -7,15 +7,14 @@ from components.velocity import Velocity
 from enums.entity_type import EntityType
 from config.units import UNITS
 
-##TODO : Esquiver la range des enemis
-
 
 class IAGhast:
     """
     IA avancée pour Ghast :
+    - Attaque a tout prix si proche de gagner ou perdre
     - Se dirige vers la structure ennemie la plus proche.
     - Fuit si trop d'ennemis proches ou PV faibles.
-    - Reste derrière ses alliés si possible.
+    - Reste derrière ses alliés si bénéfique.
     - S'arrête à portée d'attaque (range défini dans units.py).
     """
 
