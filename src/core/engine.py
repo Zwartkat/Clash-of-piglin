@@ -199,8 +199,9 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(CollisionSystem(map))
     world.add_processor(AiSystem())
     selection_system = SelectionSystem(get_player_manager())
-
-    world.add_processor(PlayerMoveSystem())
+    player_movement_system = PlayerMoveSystem()
+    DATA_BUS.register(DataBusKey.PLAYER_MOVEMENT_SYSTEM, player_movement_system)
+    world.add_processor(player_movement_system)
     world.add_processor(EconomySystem(get_event_bus()))
     death_handler = DeathEventHandler(get_event_bus())
     world.add_processor(TargetingSystem())

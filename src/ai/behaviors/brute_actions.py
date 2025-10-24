@@ -6,19 +6,29 @@ from ai.ai_state import AiState
 from ai.behavior_tree import Status
 from ai.pathfinding import astar
 from components.ai_controller import AIController
+from components.base.cost import Cost
 from components.base.health import Health
 from components.base.position import Position
 from components.base.team import Team
 from components.base.velocity import Velocity
 from components.gameplay.attack import Attack
 from components.gameplay.target import Target
-from core.accessors import get_config, get_debugger, get_event_bus, get_map
+from core.accessors import (
+    get_config,
+    get_debugger,
+    get_event_bus,
+    get_map,
+    get_player_manager,
+    get_player_move_system,
+)
 from core.ecs.component import Component
 from core.game.player import Player
 from enums.config_key import ConfigKey
 from enums.entity.animation import Animation
 from enums.entity.entity_type import EntityType
 from enums.entity.unit_type import UnitType
+from events.attack_event import AttackEvent
+from events.death_event import DeathEvent
 from events.event_move import EventMoveTo
 
 
@@ -43,7 +53,7 @@ def enemy_near(ent) -> bool:
         state.target.target_entity_id = state.nearest_enemy[0]
         return True
 
-    state.target = None
+    state.target.target_entity_id = None
     return False
 
 
@@ -64,21 +74,57 @@ def attack_target(ent):
     ctrl: AIController = esper.component_for_entity(ent, AIController)
 
     state: AiState = ctrl.state
-    pos: Position = state.pos
     atk: Attack = state.atk
 
-    target_id = state.target.target_entity_id
-    if not target_id or not esper.entity_exists(target_id):
-        state.target.target_entity_id = None
+    if not state.nearest_enemy or state.nearest_enemy[0] not in state.ennemies:
         return Status.FAILURE
 
-    if state.in_attack_range:
-        get_debugger().log(f"{state.entity} > Attacking target {target_id}")
-        return Status.RUNNING
-    else:
-        get_debugger().log(f"{state.entity} > Moving to attack target {target_id}")
-        target_pos: Position = esper.component_for_entity(target_id, Position)
-        return move_to(ent, (target_pos.x, target_pos.y), force=True)
+    target_id = state.nearest_enemy[0]
+    target_pos, dist = state.ennemies[target_id]
+
+    # Check distance to target
+    if dist <= atk.range:
+
+        # Stop moving
+        stop(ent)
+
+        # Check attack cooldown
+        if not state.can_attack:
+            return Status.RUNNING
+
+        perform_attack(ent, target_id)
+        state.can_attack = False
+        state.atk.last_attack = 0
+        return Status.SUCCESS
+
+    # Go to target if too far
+    return move_to(ent, (target_pos.x, target_pos.y))
+
+
+def stop(ent: int):
+    """
+    Stop entity movement, reset velocity , destination and path
+
+    Args:
+        ent (int) : The entity ID to stop
+    """
+    vel: Velocity = esper.component_for_entity(ent, Velocity)
+    vel.x = 0
+    vel.y = 0
+
+    ctrl: AIController = esper.component_for_entity(ent, AIController)
+    state: AiState = ctrl.state
+    state.destination = None
+    state.path = []
+
+
+def perform_attack(attacker_id: int, target_id: int):
+    atk = esper.component_for_entity(attacker_id, Attack)
+
+    damage = atk.damage
+    get_event_bus().emit(AttackEvent(attacker_id, target_id))
+
+    get_debugger().log(f"{attacker_id} attacks {target_id} for {damage} dmg.")
 
 
 def wander(ent):
@@ -149,16 +195,20 @@ def move_to(ent: int, target: tuple[int, int], force: bool = False) -> Status:
         state.path = [(int(x), int(y)) for x, y in path[1:]]
         state.destination = state.path[0]
 
-    # Avance le long du path
     dx = state.destination[0] - pos.x
     dy = state.destination[1] - pos.y
     dist = math.hypot(dx, dy)
-    if dist < 32:
+
+    if dist < 16:
         get_debugger().log(f"{ent} > Reached waypoint {state.destination}.")
         state.path.pop(0)
+
         if state.path:
             state.destination = state.path[0]
         else:
+            del get_player_move_system().target[state.entity]
+            vel.x = 0
+            vel.y = 0
             state.destination = None
             return Status.SUCCESS
     else:
@@ -220,66 +270,19 @@ def ally_near(ent: int) -> bool:
 
 
 def protect_ally(ent: int) -> Status:
-    get_debugger().log("Protecting ally...")
     ctrl = esper.component_for_entity(ent, AIController)
-    atk = esper.component_for_entity(ent, Attack)
-    pos = esper.component_for_entity(ent, Position)
-    team = esper.component_for_entity(ent, Team)
+    state = ctrl.state
 
-    # Trouve les ennemis proches de l’allié protégé
-    ally_id = ctrl.ally_target
-    if ally_id is None or not esper.has_component(ally_id, Position):
+    if state.weakness_ally is None or state.weakness_ally not in state.allies:
         return Status.FAILURE
 
-    ally_pos = esper.component_for_entity(ally_id, Position)
-    enemies_in_range = []
+    get_debugger().log(f"{ent} > Moving to protect ally {state.weakness_ally}.")
 
-    for other, (enemy_pos, enemy_team) in esper.get_components(Position, Team):
-        if enemy_team.team_id == team.team_id:
-            continue
-        dx = enemy_pos.x - ally_pos.x
-        dy = enemy_pos.y - ally_pos.y
-        if dx * dx + dy * dy <= (atk.range * 2) ** 2:
-            enemies_in_range.append((other, dx * dx + dy * dy))
+    ally_pos = state.allies[state.weakness_ally][0]
+    dist_to_ally = state.allies[state.weakness_ally][1]
+    tile_size = get_config().get(ConfigKey.TILE_SIZE.value)
 
-    if not enemies_in_range:
-        return Status.SUCCESS  # plus rien à protéger
+    if dist_to_ally > tile_size * 1.5:
+        return move_to(ent, (ally_pos.x, ally_pos.y))
 
-    # Attaque l’ennemi le plus proche
-    enemies_in_range.sort(key=lambda e: e[1])
-    target_enemy = enemies_in_range[0][0]
-    ctrl.target = target_enemy
-
-    return attack_target(ent)
-
-
-def move_to_ally(ent: int) -> Status:
-    ctrl = esper.component_for_entity(ent, AIController)
-    pos = esper.component_for_entity(ent, Position)
-
-    if not ctrl.target_pos:
-        return Status.FAILURE
-
-    dx = ctrl.target_pos[0] - pos.x
-    dy = ctrl.target_pos[1] - pos.y
-    if dx * dx + dy * dy < (get_config().get(ConfigKey.TILE_SIZE.value) * 2) ** 2:
-        return Status.SUCCESS
-
-    move_to(ent, ctrl.target_pos)
-    return Status.RUNNING
-
-
-# def has_enemy_bastion(ent):
-#    team : Team = esper.component_for_entity(ent,Team)
-#
-#    from core.services import Services
-#    enemy : Player = Services.player_manager.get_enemy_player(team.team_id)
-#
-#    bastion : int = enemy.bastion
-#
-#    health : Health = esper.component_for_entity(bastion,Health)
-#
-#    if health > 0:
-#        return True
-#    else:
-#        return False
+    return Status.SUCCESS

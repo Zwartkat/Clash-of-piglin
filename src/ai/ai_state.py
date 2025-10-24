@@ -1,3 +1,4 @@
+import math
 import esper
 
 from components.base.health import Health
@@ -21,6 +22,10 @@ class AiState:
         self.health: Health = esper.component_for_entity(self.entity, Health)
         self.target: Target = esper.component_for_entity(self.entity, Target)
 
+        if not esper.has_component(self.entity, Target) or self.target is None:
+            self.target = Target()
+            esper.add_component(self.entity, self.target)
+
         self.destination: tuple[int, int] | None = None
         self.path: list[tuple[int, int]] = []
 
@@ -28,17 +33,20 @@ class AiState:
 
         self.health_ratio: float = 1.0
 
-        self.ennemies: dict[int, tuple[Position, float]] = {}
-        self.allies: dict[int, tuple[Position, float]] = {}
+        # entity_id -> [Position, distance]
+        self.ennemies: dict[int, list[Position, float]] = {}
+        # entity_id -> [Position, distance, health_ratio, danger_score]
+        self.allies: dict[int, list[Position, float, float, float]] = {}
 
         self.in_attack_range: bool = False
 
         self.nearest_enemy: tuple[int, int] | None = None
         self.nearest_ally: tuple[int, int] | None = None
 
-        self.vision_range_sq: int = (
-            get_config().get(ConfigKey.TILE_SIZE.value) * 5
-        ) ** 2
+        self.weakness_ally: int | None = None
+
+        self._tile_size = get_config().get(ConfigKey.TILE_SIZE.value)
+        self.vision_range: int = self._tile_size * 4
 
         self.in_combat: bool = False
         self.combat_time: float = 0
@@ -47,7 +55,7 @@ class AiState:
         self.time_since_last_hit: float = 0
 
         self.can_attack: bool = True
-        self.time_since_last_atk: float = 0
+        self.atk.last_attack = 0
 
         self.alert_level: float = 0
 
@@ -63,18 +71,17 @@ class AiState:
         self.time_since_last_hit += dt
         self.under_attack = self.time_since_last_hit < 2
 
-        self.time_since_last_atk += dt
-        self.can_attack = self.time_since_last_atk > self.atk.attack_speed
+        self.atk.last_attack += dt
+        self.can_attack = self.atk.last_attack > self.atk.attack_speed
 
-        for e, (pos, team, unit_type, entity_type) in esper.get_components(
-            Position, Team, UnitType, EntityType
+        for e, (pos, team, unit_type, entity_type, health) in esper.get_components(
+            Position, Team, UnitType, EntityType, Health
         ):
             if e == self.entity:
                 continue
 
             if (
-                self.target
-                and team.team_id != self.team.team_id
+                team.team_id != self.team.team_id
                 and unit_type not in self.target.allow_targets
                 and entity_type not in self.target.allow_targets
             ):
@@ -82,22 +89,42 @@ class AiState:
 
             dx = pos.x - self.pos.x
             dy = pos.y - self.pos.y
-            dist_sq = (dx * dx) + (dy * dy)
+            dist = math.hypot(dx, dy)
 
-            if dist_sq <= self.vision_range_sq:
+            # Register all entities within vision range
+            if dist <= self.vision_range:
                 if team.team_id != self.team.team_id:
-                    self.ennemies[e] = (pos, dist_sq)
-                    if self.nearest_enemy is None or dist_sq < self.nearest_enemy[1]:
-                        self.nearest_enemy = (e, dist_sq)
+                    self.ennemies[e] = [pos, dist]
+                    if self.nearest_enemy is None or dist < self.nearest_enemy[1]:
+                        self.nearest_enemy = (e, dist)
                 else:
-                    self.allies[e] = (pos, dist_sq)
-                    if self.nearest_ally is None or dist_sq < self.nearest_ally[1]:
-                        self.nearest_ally = (e, dist_sq)
+                    health_ratio: float = health.remaining / health.full
+                    danger_score: float = (1 - health_ratio) * 0.5 + (
+                        1 - dist / self.vision_range
+                    ) * 0.3
+                    self.allies[e] = [pos, dist, health_ratio, danger_score]
+                    if self.nearest_ally is None or dist < self.nearest_ally[1]:
+                        self.nearest_ally = (e, dist)
+                    if (
+                        self.weakness_ally is None
+                        or self.weakness_ally not in self.allies
+                        or danger_score > self.allies[self.weakness_ally][3]
+                    ):
+                        self.weakness_ally = e
         if self.nearest_enemy is not None:
             self.target.target_entity_id = self.nearest_enemy[0]
-            self.in_attack_range = self.nearest_enemy[1] < self.atk.range**2
+            self.in_attack_range = self.nearest_enemy[1] < self.atk.range
         else:
             self.in_attack_range = False
+
+        for ally_id, (ally_pos, _, _, _) in self.allies.items():
+            threats = []
+            for enemy_pos, _ in self.ennemies.values():
+                dist = math.hypot(ally_pos.x - enemy_pos.x, ally_pos.y - enemy_pos.y)
+                threat = max(0.0, 1 - dist / (self.vision_range))
+                threats.append(threat)
+            nearby_enemy_threat = sum(threats) / max(1, len(self.ennemies))
+            # print(nearby_enemy_threat)
 
     def evaluate_context(self, dt):
 
@@ -117,6 +144,13 @@ class AiState:
             self.alert_level = max(0.0, self.alert_level - dt)
             self.in_combat = False
             self.combat_time = 0
+
+        if self.weakness_ally and self.weakness_ally in self.allies:
+            _, _, _, danger_score = self.allies[self.weakness_ally]
+            if danger_score < 0.6:
+                self.weakness_ally = None
+        else:
+            self.weakness_ally = None
 
     def update(self, dt):
         self.perceive(dt)

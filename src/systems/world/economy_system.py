@@ -42,7 +42,10 @@ class EconomySystem(esper.Processor):
     def reward_money(self, event: DeathEvent):
         player_team: Team = event.player
         entity: int = event.entity
-        entity_cost = esper.component_for_entity(entity, Cost)
+        if esper.has_component(entity, Cost):
+            entity_cost = esper.component_for_entity(entity, Cost)
+        else:
+            entity_cost = 0
         player: Player = get_player_manager().players[player_team.team_id]
 
         reward = int(entity_cost.amount / 10)  # 10% du prix de l'entité

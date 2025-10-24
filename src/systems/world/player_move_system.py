@@ -22,7 +22,7 @@ class PlayerMoveSystem(IteratingProcessor):
         self.target = {}
         self.last_group_order = None
 
-    def on_move(self, event):
+    def on_move(self, event: EventMoveTo):
         """
         Start moving entity to target position when move order is given.
 
@@ -32,16 +32,13 @@ class PlayerMoveSystem(IteratingProcessor):
         pos = esper.component_for_entity(event.entity, Position)
         vel = esper.component_for_entity(event.entity, Velocity)
 
-        if esper.has_component(event.entity, AIController):
-            return
-
         if pos and vel:
             dx = event.target_x - pos.x
             dy = event.target_y - pos.y
             dist = (dx**2 + dy**2) ** 0.5
 
-            if dist > 32:
-                speed = 100
+            if dist > 16:
+                speed = vel.speed
                 vel.x = (dx / dist) * speed
                 vel.y = (dy / dist) * speed
                 self.target[event.entity] = (event.target_x, event.target_y)
@@ -63,13 +60,16 @@ class PlayerMoveSystem(IteratingProcessor):
 
         if ent in self.target:
             if ctrl:
-                move_to(ent, (self.target[ent][0], self.target[ent][1]), force=True)
+                x, y = self.target[ent][0], self.target[ent][1]
+                if ctrl.state.destination:
+                    x, y = ctrl.state.destination[0], ctrl.state.destination[1]
+
+                move_to(ent, (x, y))
                 return
             tx, ty = self.target[ent]
             dx = tx - pos.x
             dy = ty - pos.y
             dist = (dx**2 + dy**2) ** 0.5
-
             # Stop when close to target
             if dist < 5:
                 vel.x = 0

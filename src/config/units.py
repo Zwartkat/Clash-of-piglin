@@ -100,7 +100,7 @@ UNITS = {
                     Animation.ATTACK: {
                         Direction.DOWN: [18, 19],
                         Direction.UP: [22, 23],
-                        Direction.LEFT: [0, 20, 21],
+                        Direction.LEFT: [2, 20, 21],
                         Direction.RIGHT: [0, 16, 17],
                     },
                 },
