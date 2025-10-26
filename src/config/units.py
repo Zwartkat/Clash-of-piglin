@@ -12,6 +12,8 @@ from enums.entity.direction import *
 from enums.entity.unit_type import UnitType
 
 from components.base.description import Description
+from components.base.ai_flag import Ai_flag
+from components.gameplay.structure import Structure
 from components.gameplay.attack import Attack
 from components.base.health import Health
 from components.base.position import Position
@@ -34,6 +36,7 @@ UNITS = {
             Position(x=10, y=10),
             Cost(amount=425),
             Selection(),
+            Ai_flag(),
             Collider(Config.TILE_SIZE() - 2, Config.TILE_SIZE() - 2),
             Sprite(
                 "assets/sprites/spritesheet-piglin.png",
@@ -152,6 +155,7 @@ UNITS = {
         components=[
             EntityType.BASTION,
             UnitType.STRUCTURE,
+            Structure(),
             Description("Bastion", "Base d'un joueur à défendre"),
             Health(1000),
             Sprite(

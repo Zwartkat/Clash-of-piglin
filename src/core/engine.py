@@ -39,6 +39,7 @@ from systems.input.camera_system import CameraSystem
 from systems.rendering.hud_system import HudSystem
 from systems.victory_system import VictorySystem
 from systems.combat.arrow_system import ArrowSystem
+from systems.world.ai_system import AISystem
 
 tile_size = Config.TILE_SIZE()
 
@@ -182,6 +183,7 @@ def main(screen: pygame.Surface, map_size=24):
     # Crée le monde Esper
     world = esper
     world.add_processor(MovementSystem())
+    world.add_processor(AISystem())
     world.add_processor(TerrainEffectSystem(game_map))
     world.add_processor(CollisionSystem(game_map))
     selection_system = SelectionSystem(player_manager)
