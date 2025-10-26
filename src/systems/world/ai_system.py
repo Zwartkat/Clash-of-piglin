@@ -239,6 +239,10 @@ class AISystem(IteratingProcessor):
     def get_ennemy_bastion(self, self_team):
 
         return esper.get_component(Structure)[-self_team][0]
+    
+    def get_own_bastion(self, self_team):
+
+        return esper.get_component(Structure)[self_team-1][0]
 
     def get_units(self, searched_unit:EntityType=EntityType.BRUTE):
         unit_sorted = [[],[]]
@@ -366,6 +370,23 @@ class AISystem(IteratingProcessor):
         stop_position = self.get_in_range(self_pos, safe_target, self_range)
         self.move_towards(self_pos, stop_position, self_speed)
 
+    def defence_behavior(self, self_ent, self_team, self_pos, self_vel):
+        """
+        Comportement défensif : retourner à la base si il y a un ghast adverse
+        """
+        self_attack = esper.component_for_entity(self_ent, Attack)
+        self_range = self_attack.range
+        self_speed = self_vel.speed
+
+        bastion = self.get_own_bastion(self_team)
+        bastion_pos = esper.component_for_entity(bastion, Position)
+
+        safe_target = self.find_path_around_obstacles(self_pos, bastion_pos, self_range)
+
+        # Se déplacer vers la position safe
+        stop_position = self.get_in_range(self_pos, safe_target, self_range)
+        self.move_towards(self_pos, stop_position, self_speed)
+
 
     def support_behavior(self, self_ent, self_team, self_pos, self_vel):
         """
@@ -437,7 +458,12 @@ class AISystem(IteratingProcessor):
                 if self.is_unit_threatened(ent):
                     # Si en danger, adopter un comportement de fuite
                     self.coward_behavior(ent, team, pos, vel)
+                elif len(self.get_units(EntityType.GHAST)[-team]) != 0:
+                    # Si base potentiellement en danger, la défendre
+                    self.defence_behavior(ent, team, pos, vel)
                 elif len(self.get_units(EntityType.GHAST)[team-1]) != 0:
+                    # Si possibilité d'attaque, se regrouper avec les alliés
                     self.support_behavior(ent, team, pos, vel)
                 else:
+                    # Sinon essayer d'aller attaquer la base adverse
                     self.attack_behavior(ent, team, pos, vel)
