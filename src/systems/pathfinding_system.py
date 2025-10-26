@@ -10,47 +10,7 @@ from enums.case_type import CaseType
 
 class Node:
     """
-    Represents a node in the        # Check within a 2-tile radius around current position
-        for dx in range(-2, 3):
-            for dy in range(-2, 3        # Convert positions to grid coordinates
-        start_x = int(start_pos.x // self.tile_size)
-        start_y = int(start_pos.y // self.tile_size)
-        end_x = int(end_pos.x // self.tile_size)
-        end_y = int(end_pos.y // self.tile_size)
-
-        # Clamp to grid boundaries
-        start_x = max(0, min(start_x, self.map_width - 1))
-        start_y = max(0, min(start_y, self.map_height - 1))
-        end_x = max(0, min(end_x, self.map_width - 1))
-        end_y = max(0, min(end_y, self.map_height - 1))
-
-        # Temporary debug to see if function is called
-        if self.debug_mode:
-            print(
-                f"PATHFINDING REQUEST for entity {entity_id} from ({start_x},{start_y}) to ({end_x},{end_y})"
-            )
-
-        # Add debug info if debug mode is activeif dx == 0 and dy == 0:
-                    continue
-
-                check_x, check_y = x + dx, y + dy
-                if 0 <= check_x < self.map_width and 0 <= check_y < self.map_height:
-
-                    terrain = self.terrain_map.get((check_x, check_y), "WALKABLE")
-                    if terrain == "LAVA":
-                        distance = max(abs(dx), abs(dy))  # Chebyshev distance
-                        if distance == 1:
-                            proximity_cost += 2.0  # High penalty near lava
-                        elif distance == 2:
-                            proximity_cost += 0.5  # Moderate penaltyalgorithm.
-
-    Attributes:
-        x (int): Grid X coordinate
-        y (int): Grid Y coordinate
-        g (float): Distance from start node
-        h (float): Heuristic distance to goal
-        f (float): Total cost (g + h)
-        parent (Node): Parent node in the path
+    Represents a node in the pathfinding grid.
     """
 
     def __init__(self, x: int, y: int, g: float = 0, h: float = 0, parent=None):
@@ -290,7 +250,7 @@ class PathfindingSystem(esper.Processor):
 
                     terrain = self.terrain_map.get((check_x, check_y), "WALKABLE")
                     if terrain == "LAVA":
-                        distance = max(abs(dx), abs(dy))  # Chebyshev distance
+                        distance = abs(dx) + abs(dy)  # Manhattan distance
                         if distance == 1:
                             proximity_cost += 2.0  # High penalty near lava
                         elif distance == 2:

@@ -19,6 +19,8 @@ class AIState:
 class AIMemory:
     current_target_id: int = None
     last_known_target_pos: tuple = None
+    assigned_brute_id: int = None
+    assignment_active: bool = False
 
 
 @dataclass

@@ -32,6 +32,55 @@ class BruteCoordination:
         """Initialize with reference to main AI system for utility methods."""
         self.main = main_system
 
+    def _move_closer_to_brute(self, unit_ent, unit_pos, brute_pos, distance_to_brute):
+        """Move unit closer to BRUTE while maintaining tactical position."""
+        direction_to_brute_x = brute_pos.x - unit_pos.x
+        direction_to_brute_y = brute_pos.y - unit_pos.y
+        brute_length = (direction_to_brute_x**2 + direction_to_brute_y**2) ** 0.5
+
+        if brute_length > 0:
+            move_distance = min(50, distance_to_brute - 100)
+            direction_to_brute_x = direction_to_brute_x / brute_length * move_distance
+            direction_to_brute_y = direction_to_brute_y / brute_length * move_distance
+
+            new_x = unit_pos.x + direction_to_brute_x
+            new_y = unit_pos.y + direction_to_brute_y
+
+            # Clamp to map bounds
+            new_x = max(32, min(new_x, 24 * 32 - 32))
+            new_y = max(32, min(new_y, 24 * 32 - 32))
+
+            destination = Position(new_x, new_y)
+            self.main._smart_move_to(unit_ent, unit_pos, destination)
+
+    def _adjust_range_to_enemy(
+        self, unit_ent, unit_pos, enemy_pos, brute_pos, optimal_range
+    ):
+        """Adjust position to maintain optimal range to enemy while staying near BRUTE."""
+        direction_to_enemy_x = enemy_pos.x - unit_pos.x
+        direction_to_enemy_y = enemy_pos.y - unit_pos.y
+        enemy_length = (direction_to_enemy_x**2 + direction_to_enemy_y**2) ** 0.5
+
+        if enemy_length > 0:
+            move_distance = min(
+                30, self.main._distance(unit_pos, enemy_pos) - optimal_range
+            )
+            direction_to_enemy_x = direction_to_enemy_x / enemy_length * move_distance
+            direction_to_enemy_y = direction_to_enemy_y / enemy_length * move_distance
+
+            new_x = unit_pos.x + direction_to_enemy_x
+            new_y = unit_pos.y + direction_to_enemy_y
+
+            # Ensure we don't move too far from BRUTE
+            test_distance_to_brute = self.main._distance(
+                Position(new_x, new_y), brute_pos
+            )
+            if test_distance_to_brute <= 130:
+                destination = Position(new_x, new_y)
+                self.main._smart_move_to(unit_ent, unit_pos, destination)
+            else:
+                self.main._stop_movement(unit_ent)
+
     def find_brute_in_combat_nearby(self, unit_ent, unit_pos, team_id):
         """Find nearby BRUTE ally currently engaged in combat."""
         for brute_ent, (brute_pos, brute_team, brute_type) in esper.get_components(
@@ -39,7 +88,9 @@ class BruteCoordination:
         ):
             if brute_team.team_id == team_id and brute_type == EntityType.BRUTE:
                 distance_to_brute = self.main._distance(unit_pos, brute_pos)
-                if distance_to_brute <= 200:  # Support range
+                if (
+                    distance_to_brute <= 120
+                ):  # REDUCED from 200 to 120 - must be closer to detect combat
                     enemies_near_brute = self.main._count_nearby_enemies(
                         brute_pos, team_id, range_distance=120
                     )
@@ -333,7 +384,6 @@ class MovementController:
         optimal_range_to_enemy = attack.range * 24 * 0.85  # 85% of max range
         distance_to_enemy = self.main._distance(unit_pos, enemy_pos)
         distance_to_brute = self.main._distance(unit_pos, brute_pos)
-
         # Priority 1: Stay close to BRUTE (within 120 pixels)
         if distance_to_brute > 120:
             self._move_closer_to_brute(unit_ent, unit_pos, brute_pos, distance_to_brute)
@@ -436,39 +486,30 @@ class MovementController:
             else:
                 corner_x, corner_y = 4 * 32, 4 * 32
             base_pos = Position(corner_x, corner_y)
-
-        distance_to_base = self.main._distance(unit_pos, base_pos)
-
-        if distance_to_base > ideal_distance + 40:
-            # Too far - move closer
-            self.main._smart_move_to(unit_ent, unit_pos, base_pos)
-        elif distance_to_base < ideal_distance - 20:
-            # Too close - move to better defensive position
-            self._move_to_defensive_perimeter(
-                unit_ent, unit_pos, base_pos, ideal_distance
-            )
-        else:
-            # Good defensive position
-            self.main._stop_movement(unit_ent)
+        # Place the defender directly on the bastion position. The game logic
+        # expects defenders to be near/at the bastion so they can immediately
+        # intercept attackers; this avoids stacking in a corner.
+        destination = Position(
+            max(32, min(base_pos.x, 24 * 32 - 32)),
+            max(32, min(base_pos.y, 24 * 32 - 32)),
+        )
+        self.main._smart_move_to(unit_ent, unit_pos, destination)
 
     def _move_to_defensive_perimeter(
         self, unit_ent, unit_pos, base_pos, ideal_distance
     ):
-        """Move to defensive perimeter around base at ideal distance."""
-        direction_x = unit_pos.x - base_pos.x
-        direction_y = unit_pos.y - base_pos.y
-        length = (direction_x**2 + direction_y**2) ** 0.5
+        """Move to a point on the defensive perimeter around the base.
 
-        if length > 0:
-            direction_x = direction_x / length * ideal_distance
-            direction_y = direction_y / length * ideal_distance
+        (Kept for backward compatibility; main code now uses circling behavior.)
+        """
+        # Fallback behavior: pick a perimeter point based on entity id
+        angle = ((unit_ent * 53) % 360) * (math.pi / 180.0)
+        defense_x = base_pos.x + math.cos(angle) * ideal_distance
+        defense_y = base_pos.y + math.sin(angle) * ideal_distance
 
-            defense_x = base_pos.x + direction_x
-            defense_y = base_pos.y + direction_y
+        # Clamp to map bounds
+        defense_x = max(32, min(defense_x, 24 * 32 - 32))
+        defense_y = max(32, min(defense_y, 24 * 32 - 32))
 
-            # Clamp to map bounds
-            defense_x = max(32, min(defense_x, 24 * 32 - 32))
-            defense_y = max(32, min(defense_y, 24 * 32 - 32))
-
-            destination = Position(defense_x, defense_y)
-            self.main._smart_move_to(unit_ent, unit_pos, destination)
+        destination = Position(defense_x, defense_y)
+        self.main._smart_move_to(unit_ent, unit_pos, destination)

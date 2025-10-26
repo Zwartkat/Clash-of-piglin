@@ -127,6 +127,8 @@ def main(screen: pygame.Surface, map_size=24):
 
     # Subscribes
     Services.event_bus = EventBus.get_event_bus()
+    # Make Config available via Services so systems can read runtime config
+    Services.config = Config
 
     Services.event_bus.subscribe(ResizeEvent, on_resize)
     Services.event_bus.subscribe(SpawnUnitEvent, UnitFactory.create_unit_event)

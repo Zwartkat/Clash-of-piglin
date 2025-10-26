@@ -16,3 +16,4 @@ class InputAction(Enum):
     RESIZE = auto()
     QUIT = auto()
     DEBUG_TOGGLE = auto()
+    GIVE_GOLD = auto()
