@@ -106,8 +106,6 @@ def main(screen: pygame.Surface, map_size=24):
 
     clock = pygame.time.Clock()
 
-    Services.config = Config
-
     # Charger la map et les sprites
     map: Map = Map()
     map.generate(map_size)

@@ -19,6 +19,21 @@ def get_neighbors(
 
     neighbors: list[Position] = []
 
+    # Replace by a stuck system
+    # def near_obstacle(px: int, py: int) -> bool:
+    #    """
+    #    Check if provided position is an obstacle
+    #
+    #    Return:
+    #        bool : True if position is an obstacle else False
+    #    """
+    #    if not obstacles:
+    #        return False
+    #    for obs in obstacles:
+    #        if math.hypot(obs.x - px, obs.y - py) < tile_size:
+    #            return True
+    #    return False
+
     orthogonal_directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
     diagonal_directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
 
@@ -129,7 +144,7 @@ def astar(
         if (
             (current[0] // tile_size == goal_tuple[0] // tile_size)
             and (goal_tuple[1] // tile_size == current[1] // tile_size)
-        ) or f_score[current] >= 24:
+        ) or f_score[current] >= 32:
             path: list[tuple[int, int]] = []
             while current in came_from:
                 path.append(current)

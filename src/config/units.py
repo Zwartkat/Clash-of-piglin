@@ -1,5 +1,3 @@
-from ai.brute import BruteAI
-from components.ai_controller import AIController
 from components.gameplay.fly import Fly
 from components.gameplay.target import Target
 from config.layer import ENTITY_LAYER

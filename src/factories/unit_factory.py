@@ -36,19 +36,8 @@ class UnitFactory:
         if not entity:
             raise ValueError(f"Unknown unit type: {entity_type}")
 
-        components = []
-
-        # Copy all base components from unit template
-        for comp in entity.get_all_components():
-            try:
-                components.append(copy.deepcopy(comp))
-            except:
-                get_debugger().error(
-                    f"Failed to copy component {comp} for unit {entity_type}"
-                )
-                components.append(comp)
-
         # Replace template position/team with actual values
+        components = entity.get_all_components()
         components = [c for c in components if not isinstance(c, (Position, Team))]
         components.append(position)
         components.append(team)
@@ -58,9 +47,8 @@ class UnitFactory:
 
         if entity_type == EntityType.BRUTE:
             from components.ai_controller import AIController
-            from ai.brute import BruteAI
 
-            esper.add_component(ent, AIController(ent, BruteAI()))
+            esper.add_component(ent, AIController(ent, entity_type))
 
         return ent
 

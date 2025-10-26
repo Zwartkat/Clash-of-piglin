@@ -1,37 +1,39 @@
-import math
-import random
-
 import esper
+from ai.ai_state import Action, AiState
 from components.ai import BaseAi
-from components.ai_controller import AIController
-from components.base.position import Position
-from components.base.team import Team
-from components.base.velocity import Velocity
-from components.gameplay.attack import Attack
-from components.gameplay.target import Target
-from enums.entity.animation import Animation
-from enums.entity.unit_type import UnitType
 
-
-from ai.behavior_tree import Selector, Sequence, Condition, Action
+from ai.behavior_tree import Selector, Sequence, ConditionNode, ActionNode
 from ai.behaviors.brute_actions import (
-    ally_near,
-    enemy_near,
-    attack_target,
-    wander,
-    protect_ally,
+    AttackAction,
+    DefendBaseAction,
+    ProtectAction,
+    RetreatAction,
+    TargetObjective,
+    WanderAction,
 )
+from components.gameplay.selection import Selection
 
 
 class BruteAI(BaseAi):
-    def __init__(self):
+    def __init__(self, ai_state: AiState):
         super().__init__()
-
+        self.ai_state = ai_state
         self.tree = Selector(
-            Sequence(Condition(enemy_near), Action(attack_target)),
-            # Sequence(Condition(ally_near),Action(move_to_ally),Action(protect_ally)),
-            Sequence(Action(wander)),
+            Sequence(
+                ConditionNode(Action.DEFEND_BASE, 1), ActionNode(DefendBaseAction)
+            ),
+            Sequence(ConditionNode(Action.PROTECT, 1), ActionNode(ProtectAction)),
+            Sequence(ConditionNode(Action.RETREAT, 0.6), ActionNode(RetreatAction)),
+            Sequence(ConditionNode(Action.ATTACK, 0.5), ActionNode(AttackAction)),
+            Sequence(ConditionNode(Action.GOAL, 0), ActionNode(TargetObjective)),
+            # Must be unused
+            Sequence(ActionNode(WanderAction)),
         )
 
-    def decide(self, ent):
-        self.tree.tick(ent)
+    def decide(self):
+        """
+        Call behavior tree to select an action to do if entity isn't select else it does nothing
+        """
+        ent: int = self.ai_state.entity
+        if not esper.component_for_entity(ent, Selection).is_selected:
+            self.tree.tick(self.ai_state)

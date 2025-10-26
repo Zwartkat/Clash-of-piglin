@@ -1,5 +1,5 @@
 import esper
-from ai.behaviors.brute_actions import move_to
+from ai.behaviors.brute_actions import MovementManager
 from components.ai_controller import AIController
 from components.base.position import Position
 from components.base.velocity import Velocity
@@ -64,7 +64,7 @@ class PlayerMoveSystem(IteratingProcessor):
                 if ctrl.state.destination:
                     x, y = ctrl.state.destination[0], ctrl.state.destination[1]
 
-                move_to(ent, (x, y))
+                MovementManager.move_to(ctrl.state, (x, y))
                 return
             tx, ty = self.target[ent]
             dx = tx - pos.x
