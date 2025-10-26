@@ -137,17 +137,24 @@ def main(screen: pygame.Surface, map_size=24):
 
     entities_1 = []
     entities_1.append(
-        UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(100, 100))
+        UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(150, 200))
     )
 
-    for i in range(6):
+    for i in range(2):
 
         entities_1.append(
-            UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
+            UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(100, 100))
         )
+        entities_1.append(
+            UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 100))
+        )
+        entities_1.append(
+            UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(100, 200))
+        )
+
     for i in range(6):
         entities_1.append(
-            UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
+            UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 300))
         )
 
     entities_2 = []
@@ -155,7 +162,7 @@ def main(screen: pygame.Surface, map_size=24):
     entities_2.append(
         EntityFactory.create(
             *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
-            Position(100, 200),
+            Position(700, 700),
             Team(2),
             OnTerrain(),
         )
@@ -163,7 +170,7 @@ def main(screen: pygame.Surface, map_size=24):
     entities_2.append(
         EntityFactory.create(
             *UNITS[EntityType.GHAST].get_all_components(),
-            Position(700, 700),
+            Position(750, 750),
             Team(2),
             OnTerrain(),
         )
