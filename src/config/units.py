@@ -118,7 +118,6 @@ UNITS = {
             Health(700),
             Velocity(x=0, y=0, speed=2),
             Cost(amount=820),
-            Selection(),
             Collider(Config.TILE_SIZE(), Config.TILE_SIZE()),
             Fly(),
             AiControlled(JeromeGhast()),

@@ -137,7 +137,7 @@ def main(screen: pygame.Surface, map_size=24):
 
     entities_1 = []
     entities_1.append(
-        UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
+        UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(100, 100))
     )
 
     for i in range(6):
@@ -163,7 +163,7 @@ def main(screen: pygame.Surface, map_size=24):
     entities_2.append(
         EntityFactory.create(
             *UNITS[EntityType.GHAST].get_all_components(),
-            Position(300, 200),
+            Position(700, 700),
             Team(2),
             OnTerrain(),
         )
