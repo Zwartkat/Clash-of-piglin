@@ -1,10 +1,11 @@
 import esper
 import pygame
 from components.base.team import Team
-from core.accessors import get_debugger, get_player_manager
+from core.accessors import get_config, get_debugger, get_player_manager
 from core.game.player import Player
 from events.buy_event import BuyEvent
 from events.death_event import DeathEvent
+from events.give_gold_event import GiveGoldEvent
 from components.base.cost import Cost
 from components.gameplay.squad import Squad
 from core.ecs.iterator_system import IteratingProcessor
@@ -16,6 +17,7 @@ class EconomySystem(esper.Processor):
         self.event_bus = event_bus
         event_bus.subscribe(BuyEvent, self.buy)
         event_bus.subscribe(DeathEvent, self.reward_money)
+        event_bus.subscribe(GiveGoldEvent, self.give_gold)
 
         self.creation_time = pygame.time.get_ticks()
         self.generation_speed = 0.133  # Valeur de base pour 0-1 minute
@@ -78,3 +80,27 @@ class EconomySystem(esper.Processor):
                 players[team].money = 1500
             else:
                 players[team].money += self.generation_speed
+
+    def give_gold(self, event: GiveGoldEvent):
+        # Read config to determine if give-gold debug is enabled and amount
+        debug_cfg = get_config().get("debug", {}) if get_config() else {}
+        give_cfg = debug_cfg.get("give_gold", {})
+        enabled = give_cfg.get("enabled", False)
+        amount = give_cfg.get("amount", 300)
+
+        if not enabled:
+            # Debug give gold is disabled in config
+            return
+
+        current_player_id = get_player_manager().get_current_player()
+        player: Player = get_player_manager().players[current_player_id]
+
+        # Apply cap similar to other money gains
+        if player.money + amount >= 1500:
+            player.money = 1500
+        else:
+            player.money += amount
+
+        print(
+            f"[DEBUG] Ajout de {amount} pépites d'or au joueur {current_player_id}. Nouveau solde: {player.money}"
+        )

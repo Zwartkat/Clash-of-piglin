@@ -162,7 +162,7 @@ class TargetingSystem(IteratingProcessor):
                 #     )
                 continue
 
-            # Calculate distance
+                # Calculate distance
             dx = target_pos.x - attacker_pos.x
             dy = target_pos.y - attacker_pos.y
             distance = (dx**2 + dy**2) ** 0.5

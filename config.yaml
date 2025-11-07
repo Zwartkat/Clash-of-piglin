@@ -15,3 +15,8 @@ textures:
   red_netherrack : "assets/images/Red_netherrack.png"
   blue_netherrack : "assets/images/Blue_netherrack.png"
   soulsand : "assets/images/Soulsand.png"
+
+debug:
+  give_gold:
+    enabled: true
+    amount: 300

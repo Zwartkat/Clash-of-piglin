@@ -1,3 +1,4 @@
+from copy import deepcopy
 import esper
 import pygame
 from typing import Tuple
@@ -46,15 +47,24 @@ class Hud:
             self.font_small = pygame.font.Font(None, 16)
 
         # colors used in the huds
-        self.background_color = (67, 37, 36)
+        self.background_color = (67, 37, 36)  # Crimson (rouge Nether)
+
+        # Couleurs Warped (bleu/cyan Nether) pour l'équipe 2
+        self.warped_nylium_color = (22, 126, 134)  # Warped Nylium - couleur principale
+        self.warped_nylium_dark = (16, 95, 101)  # Warped Nylium sombre
+        self.warped_stem_color = (58, 150, 161)  # Warped Stem - plus clair
+        self.warped_wart_color = (20, 180, 133)  # Warped Wart Block - accent vert-cyan
+
+        # Couleurs Crimson (rouge Nether) pour l'équipe 1
         self.nether_brick_color = (44, 23, 26)
         self.netherrack_color = (97, 37, 36)
+
         self.gold_color = (255, 215, 0)
         self.text_color = (255, 255, 255)  # Blanc
         self.shadow_color = (0, 0, 0)
         self.team_colors = {
-            1: (85, 255, 85),
-            2: (255, 85, 85),
+            1: (255, 85, 85),  # Rouge-orange Crimson
+            2: (20, 180, 133),  # Cyan-vert Warped
         }
 
         self.start_time = (
@@ -83,60 +93,39 @@ class Hud:
         get_event_bus().subscribe(VictoryEvent, self.on_victory)
 
     def _load_textures(self):
-        """Charge les textures nécessaires pour le HUD"""
+        """Load textures needed for the HUD with animated sprites"""
+        from components.rendering.sprite import Sprite
+        from enums.entity.animation import Animation
+        from enums.entity.direction import Direction
+
         self.textures = {}
+        self.unit_sprites = {}
+        self.unit_icons = {}
 
         try:
-            # Charger les sprites des unités pour les boutons
-            self.textures["crossbowman"] = pygame.image.load(
-                "assets/sprites/spritesheet-piglin.png"
-            )
-            self.textures["brute"] = pygame.image.load(
-                "assets/sprites/spritesheet-brute.png"
-            )
-            self.textures["ghast"] = pygame.image.load(
-                "assets/sprites/spritesheet-ghast.png"
-            )
-
-            # Redimensionner pour les boutons
-            self.unit_icons = {}
+            # Create sprite objects for each unit type to extract animated frames
             icon_size = 32
 
-            # Extraire les icônes des spritesheets
-            self.unit_icons[EntityType.CROSSBOWMAN] = pygame.Surface(
-                (icon_size, icon_size), pygame.SRCALPHA
+            # CROSSBOWMAN sprite configuration
+            crossbow_sprite = deepcopy(
+                UNITS[EntityType.CROSSBOWMAN].get_component(Sprite)
             )
-            crossbow_sprite = pygame.transform.scale(
-                self.textures["crossbowman"], (24 * 8, 24 * 8)
-            )
-            self.unit_icons[EntityType.CROSSBOWMAN].blit(
-                crossbow_sprite, (0, 0), (0, 0, 24, 24)
-            )
-            self.unit_icons[EntityType.CROSSBOWMAN] = pygame.transform.scale(
-                self.unit_icons[EntityType.CROSSBOWMAN], (icon_size, icon_size)
-            )
+            crossbow_sprite.set_animation(Animation.IDLE, Direction.DOWN)
+            self.unit_sprites[EntityType.CROSSBOWMAN] = crossbow_sprite
 
-            self.unit_icons[EntityType.BRUTE] = pygame.Surface(
-                (icon_size, icon_size), pygame.SRCALPHA
-            )
-            brute_sprite = pygame.transform.scale(
-                self.textures["brute"], (24 * 8, 24 * 8)
-            )
-            self.unit_icons[EntityType.BRUTE].blit(brute_sprite, (0, 0), (0, 0, 24, 24))
-            self.unit_icons[EntityType.BRUTE] = pygame.transform.scale(
-                self.unit_icons[EntityType.BRUTE], (icon_size, icon_size)
-            )
+            # BRUTE sprite configuration
+            brute_sprite = deepcopy(UNITS[EntityType.BRUTE].get_component(Sprite))
+            brute_sprite.set_animation(Animation.IDLE, Direction.DOWN)
+            self.unit_sprites[EntityType.BRUTE] = brute_sprite
 
-            self.unit_icons[EntityType.GHAST] = pygame.Surface(
-                (icon_size, icon_size), pygame.SRCALPHA
-            )
-            ghast_sprite = pygame.transform.scale(
-                self.textures["ghast"], (24 * 8, 24 * 8)
-            )
-            self.unit_icons[EntityType.GHAST].blit(ghast_sprite, (0, 0), (0, 0, 24, 24))
-            self.unit_icons[EntityType.GHAST] = pygame.transform.scale(
-                self.unit_icons[EntityType.GHAST], (icon_size, icon_size)
-            )
+            # GHAST sprite configuration (using correct animation frames)
+            ghast_sprite = deepcopy(UNITS[EntityType.GHAST].get_component(Sprite))
+            ghast_sprite.set_animation(Animation.IDLE, Direction.DOWN)
+            self.unit_sprites[EntityType.GHAST] = ghast_sprite
+
+            # Initialize current frames
+            for unit_type, sprite in self.unit_sprites.items():
+                self.unit_icons[unit_type] = sprite.get_frame()
 
         except Exception as e:
             print(f"Erreur lors du chargement des textures: {e}")
@@ -206,11 +195,15 @@ class Hud:
         rect: pygame.Rect,
         dark=False,
         dark_background=False,
+        team_id=None,
     ):
         """Dessine un panneau avec le style Minecraft"""
 
-        # base color for the panel
-        base_color = self.nether_brick_color if dark else self.netherrack_color
+        # base color for the panel - choisir selon l'équipe si spécifiée
+        if team_id == 2:
+            base_color = self.warped_nylium_dark if dark else self.warped_nylium_color
+        else:
+            base_color = self.nether_brick_color if dark else self.netherrack_color
         surface.fill(base_color, rect)
 
         # adding a 3D-simulating border to the panel
@@ -327,32 +320,36 @@ class Hud:
 
         hud_pos = 0 if team_id == 1 else self.screen_width - self.hud_width
 
+        # Choose background color based on team theme (Crimson vs Warped)
+        bg_color = self.background_color if team_id == 1 else self.warped_nylium_color
         pygame.draw.rect(
             self.screen,
-            self.background_color,
+            bg_color,
             (hud_pos, 0, self.hud_width, self.screen_height),
         )
 
-        # adjust the position of the hud depending on the current team
+        # Adjust the position of the HUD depending on the current team
         hud_x = self.team1_hud_x if team_id == 1 else self.team2_hud_x
 
-        # create the panel for the team, with a background
-        black_background = pygame.Rect(hud_x, 0, self.hud_width, self.screen_height)
-        self.screen.fill(self.background_color, black_background)
+        # Create the panel for the team, with themed background
+        background_rect = pygame.Rect(hud_x, 0, self.hud_width, self.screen_height)
+        # Choose background color based on team theme (Crimson vs Warped)
+        bg_color = self.background_color if team_id == 1 else self.warped_nylium_color
+        self.screen.fill(bg_color, background_rect)
         main_panel = pygame.Rect(hud_x, self.hud_y, self.hud_width, self.hud_height)
         self.drawMinecraftPanel(
-            self.screen, main_panel, dark=(team_id != current_player)
+            self.screen, main_panel, dark=(team_id != current_player), team_id=team_id
         )
 
-        # text for the title
+        # Text for the title
         title_text = f"EQUIPE {team_id}"
-        # adding the shadow
+        # Adding the shadow
         shadow_surface = self.font_large.render(title_text, True, self.shadow_color)
         shadow_rect = shadow_surface.get_rect(
             centerx=hud_x + self.hud_width // 2 + 2, y=self.hud_y + 12
         )
         self.screen.blit(shadow_surface, shadow_rect)
-        # adding the title
+        # Adding the title
         title_surface = self.font_large.render(
             title_text, True, self.team_colors[team_id]
         )
@@ -361,7 +358,7 @@ class Hud:
         )
         self.screen.blit(title_surface, title_rect)
 
-        # adding the current team indicator
+        # Adding the current team indicator
         if team_id == current_player:
             active_text = ">>> TOUR ACTUEL <<<"
             active_surface = self.font_small.render(active_text, True, self.gold_color)
@@ -370,15 +367,15 @@ class Hud:
             )
             self.screen.blit(active_surface, active_rect)
 
-        # parameter used to place the player's info
+        # Parameter used to place the player's info
         info_y = self.hud_y + 70
 
-        # creating the text to show the amount of gold the player has
+        # Creating the text to show the amount of gold the player has
         money_text = f"Or: {int(player.money)}/1500"
         money_surface = self.font_medium.render(money_text, True, self.gold_color)
         self.screen.blit(money_surface, (hud_x + 15, info_y))
 
-        # displaying a progress bar to show the amount of gold the player has
+        # Displaying a progress bar to show the amount of gold the player has
         money_progress = min(player.money / 1500.0, 1.0)
         bar_width = self.hud_width - 30
         bar_height = 12
@@ -386,9 +383,9 @@ class Hud:
         bar_y = info_y + 20
 
         bar_rect = pygame.Rect(bar_x, bar_y, bar_width, bar_height)
-        self.drawMinecraftPanel(self.screen, bar_rect, dark=True)
+        self.drawMinecraftPanel(self.screen, bar_rect, dark=True, team_id=team_id)
 
-        # filling the bar
+        # Filling the bar
         if money_progress > 0:
             progress_width = int((bar_width - 4) * money_progress)
             progress_rect = pygame.Rect(
@@ -396,21 +393,23 @@ class Hud:
             )
             self.screen.fill(self.gold_color, progress_rect)
 
-        # displaying in text the health of the player's bastion
+        # Displaying in text the health of the player's bastion
         bastion_health = self.get_bastion_health(player)
         health_text = f"Bastion: {bastion_health}/1000"
         health_color = (255, 100, 100) if bastion_health < 300 else (100, 255, 100)
         health_surface = self.font_medium.render(health_text, True, health_color)
         self.screen.blit(health_surface, (hud_x + 15, info_y + 40))
 
-        # displaying a progress bar to show the health of the player's bastion
+        # Displaying a progress bar to show the health of the player's bastion
         health_progress = bastion_health / 1000.0
         health_bar_y = info_y + 60
 
         health_bar_rect = pygame.Rect(bar_x, health_bar_y, bar_width, bar_height)
-        self.drawMinecraftPanel(self.screen, health_bar_rect, dark=True)
+        self.drawMinecraftPanel(
+            self.screen, health_bar_rect, dark=True, team_id=team_id
+        )
 
-        # filling the bar
+        # Filling the bar
         if health_progress > 0:
             health_width = int((bar_width - 4) * health_progress)
             health_fill_rect = pygame.Rect(
@@ -423,7 +422,7 @@ class Hud:
             )
             self.screen.fill(health_bar_color, health_fill_rect)
 
-        # Titre section unités
+        # Units section title
         units_y = info_y + 85
         units_title = self.font_medium.render("UNITES", True, self.text_color)
         # Ombre pour le titre
@@ -680,8 +679,16 @@ class Hud:
 
         return team1_area.collidepoint(mouse_pos) or team2_area.collidepoint(mouse_pos)
 
-    def draw(self):
-        """Dessine l'interface complète"""
+    def _update_unit_animations(self, dt):
+        """Update unit sprite animations for HUD icons"""
+        if hasattr(self, "unit_sprites"):
+            for unit_type, sprite in self.unit_sprites.items():
+                sprite.update(dt)
+                self.unit_icons[unit_type] = sprite.get_frame()
+
+    def draw(self, dt=0.016):  # Default to ~60 FPS
+        """Draw the complete interface with animated unit icons"""
+        self._update_unit_animations(dt)
         self.drawTimeDisplay()
         self.drawTeamHud(1)
         self.drawTeamHud(2)

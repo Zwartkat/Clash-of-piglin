@@ -22,7 +22,7 @@ class PlayerManager:
                 Team(team),
                 bastion_pos,
             )
-            self.players[team] = Player(team, bastion)
+            self.players[team] = Player(team, bastion, 1300)
             team += 1
 
         self.current_player = 1

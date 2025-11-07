@@ -24,6 +24,8 @@ from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
 from systems.world.collision_system import CollisionSystem
 from systems.combat.combat_system import CombatSystem
+from systems.crossbowman_ai_system_enemy import CrossbowmanAISystemEnemy
+from systems.pathfinding_system import PathfindingSystem
 from systems.death_event_handler import DeathEventHandler
 from systems.combat.combat_system import CombatSystem
 from systems.death_event_handler import DeathEventHandler
@@ -49,6 +51,10 @@ from systems.input.camera_system import CameraSystem
 from systems.rendering.hud_system import HudSystem
 from systems.victory_system import VictorySystem
 from systems.combat.arrow_system import ArrowSystem
+
+# Import debug systems
+from systems.debug_system import DebugRenderSystem
+from systems.debug_event_handler import DebugEventHandler
 
 
 def load_terrain_sprites(tile_size: int) -> dict[CaseType, pygame.Surface]:
@@ -115,6 +121,10 @@ def main(screen: pygame.Surface, map_size=24):
     sprites = load_terrain_sprites(tile_size)
     game_hud = HudSystem(screen)
 
+    # Add the generated map to the ECS as a component for pathfinding system
+    map_entity = esper.create_entity()
+    esper.add_component(map_entity, map)
+
     map_width, map_height = resize(screen, map_size, game_hud.hud.hud_width)
 
     for y in range(len(map.tab)):
@@ -146,50 +156,10 @@ def main(screen: pygame.Surface, map_size=24):
 
     from config.units import UNITS
 
-    entities_1 = []
-
-    for i in range(6):
-
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.GHAST, Team(1), Position(200, 400))
-        )
-    for i in range(6):
-
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.CROSSBOWMAN, Team(1), Position(200, 300))
-        )
-    for i in range(6):
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.BRUTE, Team(1), Position(200, 500))
-        )
-
-    entities_2 = []
-
-    entities_2.append(
-        EntityFactory.create(
-            *get_entity(EntityType.CROSSBOWMAN).get_all_components(),
-            Position(100, 200),
-            Team(2),
-            OnTerrain(),
-        )
-    )
-    entities_2.append(
-        EntityFactory.create(
-            *get_entity(EntityType.GHAST).get_all_components(),
-            Position(300, 200),
-            Team(2),
-            OnTerrain(),
-        )
-    )
-
-    for i in range(6):
-        entities_1.append(
-            UnitFactory.create_unit(EntityType.BRUTE, Team(2), Position(400, 200))
-        )
-    #
     # Crée le monde Esper
     world = esper
-    world.add_processor(MovementSystem())
+    movement_system = MovementSystem()
+    world.add_processor(movement_system)
     world.add_processor(TerrainEffectSystem(map))
     world.add_processor(CollisionSystem(map))
     selection_system = SelectionSystem(get_player_manager())
@@ -197,7 +167,8 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(PlayerMoveSystem())
     world.add_processor(EconomySystem(get_event_bus()))
     death_handler = DeathEventHandler(get_event_bus())
-    world.add_processor(TargetingSystem())
+    targeting_system = TargetingSystem()
+    world.add_processor(targeting_system)
     world.add_processor(CombatSystem())
     world.add_processor(CameraSystem(get_camera()))
 
@@ -206,11 +177,22 @@ def main(screen: pygame.Surface, map_size=24):
     victory_system = VictorySystem()
     arrow_system = ArrowSystem(render)
 
+    # Pathfinding system (doit être créé avant les systèmes de debug)
+    pathfinding_system = PathfindingSystem()
+
+    # Debug systems (après pathfinding)
+    debug_render_system = DebugRenderSystem(screen, pathfinding_system)
+    debug_event_handler = DebugEventHandler(pathfinding_system)
+
     world.add_processor(input_manager)
     world.add_processor(render)
     world.add_processor(arrow_system)  # Après le rendu de base
+    world.add_processor(pathfinding_system)  # Avant les systèmes de debug
+    world.add_processor(debug_event_handler)  # Écoute les événements F3
     world.add_processor(InputRouterSystem())
     world.add_processor(victory_system)
+
+    world.add_processor(CrossbowmanAISystemEnemy(pathfinding_system))
 
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
     game_state = {"running": True}
@@ -238,8 +220,9 @@ def main(screen: pygame.Surface, map_size=24):
             render.show_map()
             render.process(dt)
             arrow_system.process(dt)
+            debug_render_system.process(dt)  # Debug après le rendu principal
             selection_system.draw_selections(screen)
-            game_hud.draw()
+            game_hud.draw(dt)
 
         pygame.display.flip()
 
