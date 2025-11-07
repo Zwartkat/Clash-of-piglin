@@ -11,12 +11,15 @@ if TYPE_CHECKING:
     from core.ecs.event_bus import EventBus
     from core.game.camera import Camera
     from core.game.map import Map
+    from systems.world.player_move_system import PlayerMoveSystem
 
     from core.game.player_manager import PlayerManager
 
 
 def get_config() -> "Config":
     instance = DATA_BUS.get(DataBusKey.CONFIG)
+    if instance is None:
+        get_debugger().error("Config not found in DATA_BUS")
     return cast("Config", instance)
 
 
@@ -44,3 +47,13 @@ def get_entity(entity_type: EntityType) -> Entity:
     from config.units import UNITS
 
     return UNITS[entity_type]
+
+
+def get_player_move_system() -> "PlayerMoveSystem":
+    instance = DATA_BUS.get(DataBusKey.PLAYER_MOVEMENT_SYSTEM)
+    return cast("PlayerMoveSystem", instance)
+
+
+def get_map() -> "Map":
+    instance = DATA_BUS.get(DataBusKey.MAP)
+    return cast("Map", instance)

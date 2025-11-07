@@ -44,7 +44,10 @@ class EconomySystem(esper.Processor):
     def reward_money(self, event: DeathEvent):
         player_team: Team = event.player
         entity: int = event.entity
-        entity_cost = esper.component_for_entity(entity, Cost)
+        if esper.has_component(entity, Cost):
+            entity_cost = esper.component_for_entity(entity, Cost)
+        else:
+            entity_cost = Cost(0)
         player: Player = get_player_manager().players[player_team.team_id]
 
         reward = int(entity_cost.amount / 10)  # 10% du prix de l'entité
@@ -92,8 +95,7 @@ class EconomySystem(esper.Processor):
             # Debug give gold is disabled in config
             return
 
-        current_player_id = get_player_manager().get_current_player()
-        player: Player = get_player_manager().players[current_player_id]
+        player: Player = get_player_manager().get_current_player()
 
         # Apply cap similar to other money gains
         if player.money + amount >= 1500:
@@ -102,5 +104,5 @@ class EconomySystem(esper.Processor):
             player.money += amount
 
         print(
-            f"[DEBUG] Ajout de {amount} pépites d'or au joueur {current_player_id}. Nouveau solde: {player.money}"
+            f"[DEBUG] Ajout de {amount} pépites d'or au joueur {player.team_number}. Nouveau solde: {player.money}"
         )

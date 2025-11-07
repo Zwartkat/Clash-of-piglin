@@ -43,7 +43,6 @@ class TerrainEffectSystem(IteratingProcessor):
                 on_terrain.previous_terrain = on_terrain.terrain_type
                 on_terrain.terrain_type = current_case.type
             except:
-                # print(current_case, type(current_case), pos)
                 pass
 
     def get_terrain_at_position(self, pos: Position) -> Case | None:

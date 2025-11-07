@@ -1,4 +1,5 @@
 from typing import Tuple
+from components.ai_controller import AIController
 from components.base.team import Team
 from core.accessors import get_config, get_debugger, get_event_bus, get_player_manager
 from core.game.camera import CAMERA, Camera
@@ -73,6 +74,13 @@ class RenderSystem(IteratingProcessor):
         """
 
         frame: pygame.Surface = sprite.get_frame()
+
+        if esper.has_component(ent, AIController):
+            ctrl = esper.component_for_entity(ent, AIController)
+            state = ctrl.state
+
+            if not state.in_combat and sprite.current_animation == Animation.ATTACK:
+                self._set_animation(ent, Animation.IDLE)
 
         sprite.update(dt)
 

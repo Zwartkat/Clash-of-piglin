@@ -1,5 +1,6 @@
 # src/systems/combat_system.py
 import esper
+from components.ai_controller import AIController
 from core.accessors import get_event_bus
 from core.ecs.event_bus import EventBus
 from events.attack_event import AttackEvent
@@ -21,6 +22,7 @@ class CombatSystem(IteratingProcessor):
     def __init__(self):
         super().__init__(Attack, Target, Position, Team)
         self.frame_count = 0
+        get_event_bus().subscribe(AttackEvent, self.perform_attack)
 
     def can_attack(
         self, ent: int, attack: Attack, ent_target_id: int, pos: Position
@@ -78,7 +80,13 @@ class CombatSystem(IteratingProcessor):
         """
         self.frame_count += 1
 
+        if esper.has_component(ent, AIController):
+            return
+
         if not target.target_entity_id:
+            return
+
+        if True:
             return
 
         if self.can_attack(ent, attack, target.target_entity_id, pos):
@@ -107,21 +115,35 @@ class CombatSystem(IteratingProcessor):
             # Apply damage to target
             get_event_bus().emit(AttackEvent(ent, target.target_entity_id))
 
-            # Deal damage
-            old_hp: int = target_health.remaining
-            target_health.remaining -= attack.damage
             attack.last_attack = self.frame_count
 
-            # Handle target death
-            if target_health.remaining <= 0:
-                target_health.remaining = 0
-                dead_entity_id = target.target_entity_id
-                # Get entity cost before emitting death event
+    def perform_attack(self, event: AttackEvent):
+        """
+        Perform attack from attacker to target, dealing damage and handling death.
+        Emit a death event if the target's health reaches zero.
 
-                entity_cost = 0
+        Args:
+            event: Attack event containing attacker and target IDs
+        """
+        attacker_id: int = event.fighter
+        target_id: int = event.target
+        if not esper.entity_exists(attacker_id) or not esper.entity_exists(target_id):
+            return
 
-                if esper.has_component(dead_entity_id, Cost):
-                    cost_component = esper.component_for_entity(dead_entity_id, Cost)
-                    entity_cost = cost_component.amount
-                    get_event_bus().emit(DeathEvent(team, dead_entity_id, entity_cost))
-                target.target_entity_id = None
+        if not esper.has_component(attacker_id, Attack) or not esper.has_component(
+            target_id, Health
+        ):
+            return
+
+        atk: Attack = esper.component_for_entity(attacker_id, Attack)
+        target_health: Health = esper.component_for_entity(target_id, Health)
+
+        target_health.remaining = max(0, target_health.remaining - atk.damage)
+
+        if target_health.remaining == 0:
+            team = esper.component_for_entity(attacker_id, Team)
+            cost_amount = 0
+            if esper.has_component(target_id, Cost):
+                cost_amount = (esper.component_for_entity(target_id, Cost)).amount
+
+            get_event_bus().emit(DeathEvent(team, target_id, cost_amount))

@@ -316,7 +316,7 @@ class Hud:
             return
 
         player = get_player_manager().players[team_id]
-        current_player = get_player_manager().get_current_player()
+        current_player = get_player_manager().get_current_player_number()
 
         hud_pos = 0 if team_id == 1 else self.screen_width - self.hud_width
 
@@ -453,7 +453,7 @@ class Hud:
             return
 
         player = get_player_manager().players[team_id]
-        current_player_id = get_player_manager().get_current_player()
+        current_player_id = get_player_manager().get_current_player_number()
 
         # Sélectionner les bons boutons selon l'équipe
         buttons = self.team1_buttons if team_id == 1 else self.team2_buttons
@@ -542,7 +542,7 @@ class Hud:
         if not get_player_manager():
             return False
 
-        current_player_id = get_player_manager().get_current_player()
+        current_player_id = get_player_manager().get_current_player_number()
         current_player = get_player_manager().players.get(current_player_id)
 
         if not current_player:
@@ -599,9 +599,9 @@ class Hud:
 
                 # Spawn du bastion selon l'équipe
                 if player.team_number == 1:
-                    return Position(bastion_pos.x + 150, bastion_pos.y + 50)
+                    return Position(bastion_pos.x + 64, bastion_pos.y + 64)
                 else:
-                    return Position(bastion_pos.x - 150, bastion_pos.y - 50)
+                    return Position(bastion_pos.x - 32, bastion_pos.y - 32)
         except:
             pass
 

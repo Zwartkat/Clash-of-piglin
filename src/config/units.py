@@ -1,4 +1,5 @@
 from components.gameplay.fly import Fly
+from components.gameplay.target import Target
 from config.layer import ENTITY_LAYER
 from enums.entity.entity_type import *
 
@@ -76,6 +77,7 @@ UNITS = {
             Cost(amount=350),
             Selection(),
             Collider(Config.TILE_SIZE(), Config.TILE_SIZE()),
+            Target(allow_targets=[UnitType.WALK, UnitType.STRUCTURE]),
             Sprite(
                 "assets/sprites/spritesheet-brute.png",
                 128,
@@ -95,8 +97,8 @@ UNITS = {
                     },
                     Animation.ATTACK: {
                         Direction.DOWN: [18, 19],
-                        Direction.UP: [21, 22],
-                        Direction.LEFT: [0, 19, 20],
+                        Direction.UP: [22, 23],
+                        Direction.LEFT: [2, 20, 21],
                         Direction.RIGHT: [0, 16, 17],
                     },
                 },

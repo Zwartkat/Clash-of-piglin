@@ -32,8 +32,8 @@ class MovementSystem(IteratingProcessor):
                 normalized_y = vel.y / magnitude
 
                 old_x, old_y = pos.x, pos.y
-                pos.x += normalized_x * effective_speed * dt
-                pos.y += normalized_y * effective_speed * dt
+                pos.x += round(normalized_x * effective_speed * dt, 3)
+                pos.y += round(normalized_y * effective_speed * dt, 3)
 
     def _calculate_effective_speed(self, ent, vel):
         """

@@ -3,7 +3,8 @@ import pygame
 import esper
 import os
 
-from config import units
+from core.data_bus import DATA_BUS
+from core.services import Services
 from core.accessors import (
     get_camera,
     get_config,
@@ -12,7 +13,7 @@ from core.accessors import (
     get_event_bus,
     get_player_manager,
 )
-from core.data_bus import DATA_BUS
+from config import units
 from core.debugger import Debugger
 from core.game.camera import CAMERA
 from components.gameplay.effects import OnTerrain
@@ -22,6 +23,7 @@ from enums.data_bus_key import DataBusKey
 from enums.entity.entity_type import EntityType
 from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
+from systems.ai_system import AiSystem
 from systems.world.collision_system import CollisionSystem
 from systems.combat.combat_system import CombatSystem
 from systems.crossbowman_ai_system_enemy import CrossbowmanAISystemEnemy
@@ -114,6 +116,7 @@ def main(screen: pygame.Surface, map_size=24):
     map: Map = Map()
     map.generate(map_size)
 
+    DATA_BUS.register(DataBusKey.MAP, map)
     DATA_BUS.register(DataBusKey.CAMERA, CAMERA)
 
     tile_size: int = DATA_BUS.get(DataBusKey.CONFIG).get(ConfigKey.TILE_SIZE, 32)
@@ -162,9 +165,11 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(movement_system)
     world.add_processor(TerrainEffectSystem(map))
     world.add_processor(CollisionSystem(map))
+    world.add_processor(AiSystem())
     selection_system = SelectionSystem(get_player_manager())
-
-    world.add_processor(PlayerMoveSystem())
+    player_movement_system = PlayerMoveSystem()
+    DATA_BUS.register(DataBusKey.PLAYER_MOVEMENT_SYSTEM, player_movement_system)
+    world.add_processor(player_movement_system)
     world.add_processor(EconomySystem(get_event_bus()))
     death_handler = DeathEventHandler(get_event_bus())
     targeting_system = TargetingSystem()

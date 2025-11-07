@@ -1,5 +1,6 @@
 import pygame
 import esper
+from components.ai_controller import AIController
 from components.base.velocity import Velocity
 from core.accessors import get_event_bus, get_player_manager
 from core.game.camera import CAMERA
@@ -110,7 +111,7 @@ class SelectionSystem:
 
         for ent, (pos, team) in esper.get_components(Position, Team):
             # Only select units from current player's team
-            if team.team_id == self.player_manager.get_current_player():
+            if team.team_id == self.player_manager.get_current_player_number():
                 dx = mouse_pos[0] - pos.x
                 dy = mouse_pos[1] - pos.y
                 distance = (dx**2 + dy**2) ** 0.5
@@ -154,7 +155,7 @@ class SelectionSystem:
             Position, Team, Velocity
         ):
             # Only select units from current player's team
-            if team.team_id == self.player_manager.get_current_player():
+            if team.team_id == self.player_manager.get_current_player_number():
                 pos = CAMERA.apply_position(pos)
                 if self.selection_rect.collidepoint(pos.x, pos.y):
                     if esper.has_component(ent, Selection):

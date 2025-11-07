@@ -1,3 +1,4 @@
+from components.case import Case
 from core.game.camera import Camera
 from core.config import Config
 from core.ecs.event_bus import EventBus

@@ -4,6 +4,7 @@ from components.base.health import Health
 from components.base.team import Team
 from core import engine
 from core.accessors import get_event_bus, get_player_manager
+from core.services import Services
 from events.victory_event import VictoryEvent
 from events.death_event import DeathEvent
 from enums.entity.entity_type import EntityType

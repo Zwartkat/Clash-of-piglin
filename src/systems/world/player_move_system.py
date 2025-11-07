@@ -1,4 +1,6 @@
 import esper
+from ai.behaviors.brute_actions import MovementManager
+from components.ai_controller import AIController
 from components.base.position import Position
 from components.base.velocity import Velocity
 from core.accessors import get_event_bus
@@ -20,7 +22,7 @@ class PlayerMoveSystem(IteratingProcessor):
         self.target = {}
         self.last_group_order = None
 
-    def on_move(self, event):
+    def on_move(self, event: EventMoveTo):
         """
         Start moving entity to target position when move order is given.
 
@@ -35,8 +37,8 @@ class PlayerMoveSystem(IteratingProcessor):
             dy = event.target_y - pos.y
             dist = (dx**2 + dy**2) ** 0.5
 
-            if dist > 0:
-                speed = 100
+            if dist > 16:
+                speed = vel.speed
                 vel.x = (dx / dist) * speed
                 vel.y = (dy / dist) * speed
                 self.target[event.entity] = (event.target_x, event.target_y)
@@ -51,12 +53,23 @@ class PlayerMoveSystem(IteratingProcessor):
             pos: Entity current position
             vel: Entity velocity to update
         """
+        ctrl: AIController = None
+
+        if esper.has_component(ent, AIController):
+            ctrl = esper.component_for_entity(ent, AIController)
+
         if ent in self.target:
+            if ctrl:
+                x, y = self.target[ent][0], self.target[ent][1]
+                if ctrl.state.destination:
+                    x, y = ctrl.state.destination[0], ctrl.state.destination[1]
+
+                MovementManager.move_to(ctrl.state, (x, y))
+                return
             tx, ty = self.target[ent]
             dx = tx - pos.x
             dy = ty - pos.y
             dist = (dx**2 + dy**2) ** 0.5
-
             # Stop when close to target
             if dist < 5:
                 vel.x = 0
@@ -68,6 +81,9 @@ class PlayerMoveSystem(IteratingProcessor):
                 selection = esper.component_for_entity(ent, Selection)
                 if selection:
                     selection.is_selected = False
+                if ctrl:
+                    ctrl.target_pos = None
+                    ctrl.path = []
             else:
                 # Keep moving towards target
                 speed = 100
