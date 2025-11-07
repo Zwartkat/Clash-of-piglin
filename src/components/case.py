@@ -33,7 +33,7 @@ class Case(Entity):
                             Direction.NONE: list(range(1, 20)) + list(range(19, 0, -1))
                         }
                     },
-                    0.06,
+                    0.1,
                     sprite_size=(Config.get("tile_size"), Config.get("tile_size")),
                     default_animation=Animation.NONE,
                     default_direction=Direction.NONE,

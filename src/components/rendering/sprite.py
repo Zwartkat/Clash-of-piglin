@@ -1,3 +1,4 @@
+from core.accessors import get_debugger
 from enums.entity.animation import *
 from enums.entity.orientation import *
 from enums.entity.direction import *
@@ -91,7 +92,11 @@ class Sprite:
                         self.frame_height,
                     )
                 )
-                frame = pygame.transform.scale(frame, self.sprite_size)
+                if (
+                    self.frame_width != self.sprite_size
+                    or self.frame_height != self.sprite_size
+                ):
+                    frame = pygame.transform.scale(frame, self.sprite_size)
                 self.frames.append(frame)
 
     def set_animation(self, animation_name: Animation, direction: Direction) -> None:
@@ -143,7 +148,6 @@ class Sprite:
         """
         if self.image == None:
             self._load()
-
         return self.frames[
             self.animations[self.current_animation][self.current_direction][
                 self.current_frame_index

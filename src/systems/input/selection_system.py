@@ -1,6 +1,7 @@
 import pygame
 import esper
 from components.base.velocity import Velocity
+from core.accessors import get_event_bus, get_player_manager
 from core.game.camera import CAMERA
 from components.base.health import Health
 from components.base.position import Position
@@ -15,7 +16,6 @@ from events.select_event import SelectEvent
 from events.move_order_event import MoveOrderEvent
 from events.event_move import EventMoveTo
 from core.ecs.event_bus import EventBus
-from core.services import Services
 
 
 class SelectionSystem:
@@ -27,17 +27,17 @@ class SelectionSystem:
         self.selection_start = None
         self.selection_rect = None
         self.drag_threshold = 5  # Minimum pixels to consider it a drag
-        EventBus.get_event_bus().subscribe(SwitchEvent, self.on_switch)
-        EventBus.get_event_bus().subscribe(
+        get_event_bus().subscribe(SwitchEvent, self.on_switch)
+        get_event_bus().subscribe(
             StartSelectEvent, lambda e: self.handle_mouse_down(e.pos)
         )
-        EventBus.get_event_bus().subscribe(
+        get_event_bus().subscribe(
             StopSelectEvent, lambda e: self.handle_mouse_up(e.pos)
         )
-        EventBus.get_event_bus().subscribe(
+        get_event_bus().subscribe(
             SelectEvent, lambda e: self.handle_mouse_motion(e.pos)
         )
-        EventBus.get_event_bus().subscribe(MoveOrderEvent, self.on_move_order)
+        get_event_bus().subscribe(MoveOrderEvent, self.on_move_order)
 
     def handle_mouse_down(self, mouse_pos):
         """
@@ -228,7 +228,7 @@ class SelectionSystem:
         self.draw_selection_rect(screen)
 
     def on_switch(self, event: SwitchEvent):
-        Services.player_manager.switch_player()
+        get_player_manager().switch_player()
         self.clear_selection()
 
     def on_move_order(self, event: MoveOrderEvent):
@@ -253,4 +253,4 @@ class SelectionSystem:
             for i, ent in enumerate(selected_entities):
                 if i < len(positions):
                     target_x, target_y = positions[i]
-                    EventBus.get_event_bus().emit(EventMoveTo(ent, target_x, target_y))
+                    get_event_bus().emit(EventMoveTo(ent, target_x, target_y))

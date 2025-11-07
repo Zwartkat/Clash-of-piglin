@@ -3,9 +3,9 @@ import pygame
 from components.base.health import Health
 from components.base.team import Team
 from core import engine
+from core.accessors import get_event_bus, get_player_manager
 from events.victory_event import VictoryEvent
 from events.death_event import DeathEvent
-from core.services import Services
 from enums.entity.entity_type import EntityType
 
 
@@ -16,7 +16,7 @@ class VictorySystem(esper.Processor):
         self.game_ended = False
         self.victory_message = ""
 
-        Services.event_bus.subscribe(DeathEvent, self.on_entity_death)
+        get_event_bus().subscribe(DeathEvent, self.on_entity_death)
 
     def on_entity_death(self, event: DeathEvent):
         """
@@ -67,7 +67,7 @@ class VictorySystem(esper.Processor):
         """
         self.game_ended = True
         victory_event = VictoryEvent(winning_team, losing_team)
-        Services.event_bus.emit(victory_event)
+        get_event_bus().emit(victory_event)
         Services.finish_time = pygame.time.get_ticks()
 
     def process(self, dt: float):
@@ -78,10 +78,10 @@ class VictorySystem(esper.Processor):
         """
         Check bastions health
         """
-        if not Services.player_manager:
+        if not get_player_manager():
             return
 
-        for team_id, player in Services.player_manager.players.items():
+        for team_id, player in get_player_manager().players.items():
             try:
                 if esper.has_component(player.bastion, Health):
                     health = esper.component_for_entity(player.bastion, Health)

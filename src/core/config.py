@@ -1,6 +1,6 @@
 import yaml
 
-from enums.config_type import ConfigType
+from enums.config_key import ConfigKey
 
 
 class Config:
@@ -8,8 +8,11 @@ class Config:
     _config = {}
     tile_size = 0
 
+    def __init__(self, config_file: str = "config.yaml"):
+        self.load(config_file)
+
     @staticmethod
-    def load(config_file="config.yaml"):
+    def load(config_file: str):
         """
         Allows to load provieded config file.
         Provided config type will be used as key to store the loaded config.
@@ -44,7 +47,7 @@ class Config:
 
     def TILE_SIZE() -> int:
         if len(Config._config) == 0:
-            Config.load()
+            Config.load("config.yaml")
         if Config.tile_size == 0:
-            Config.tile_size = Config.get("tile_size", default=1)
+            Config.tile_size = Config.get(ConfigKey.TILE_SIZE, default=32)
         return Config.tile_size

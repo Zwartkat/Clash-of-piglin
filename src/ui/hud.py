@@ -1,6 +1,7 @@
 import esper
 import pygame
 from typing import Tuple
+from core.accessors import get_event_bus, get_player_manager
 from core.services import Services
 from core.game.player import Player
 from components.base.health import Health
@@ -79,7 +80,7 @@ class Hud:
         self.team2_buttons = {}
         self._init_unit_buttons()
 
-        Services.event_bus.subscribe(VictoryEvent, self.on_victory)
+        get_event_bus().subscribe(VictoryEvent, self.on_victory)
 
     def _load_textures(self):
         """Charge les textures nécessaires pour le HUD"""
@@ -318,14 +319,11 @@ class Hud:
 
     def drawTeamHud(self, team_id: int):
         """Dessine le HUD d'une équipe spécifique"""
-        if (
-            not Services.player_manager
-            or team_id not in Services.player_manager.players
-        ):
+        if not get_player_manager() or team_id not in get_player_manager().players:
             return
 
-        player = Services.player_manager.players[team_id]
-        current_player = Services.player_manager.get_current_player()
+        player = get_player_manager().players[team_id]
+        current_player = get_player_manager().get_current_player()
 
         hud_pos = 0 if team_id == 1 else self.screen_width - self.hud_width
 
@@ -452,14 +450,11 @@ class Hud:
 
     def draw_unit_buttons(self, team_id: int):
         """Dessine les boutons d'achat d'unités pour une équipe"""
-        if (
-            not Services.player_manager
-            or team_id not in Services.player_manager.players
-        ):
+        if not get_player_manager() or team_id not in get_player_manager().players:
             return
 
-        player = Services.player_manager.players[team_id]
-        current_player_id = Services.player_manager.get_current_player()
+        player = get_player_manager().players[team_id]
+        current_player_id = get_player_manager().get_current_player()
 
         # Sélectionner les bons boutons selon l'équipe
         buttons = self.team1_buttons if team_id == 1 else self.team2_buttons
@@ -513,11 +508,11 @@ class Hud:
 
     def buy_unit_by_key(self, unit_type: EntityType, team_id: int) -> bool:
         """Achète une unité via raccourci clavier"""
-        if not Services.player_manager:
+        if not get_player_manager():
             return False
 
         # Utiliser l'équipe spécifiée au lieu de l'équipe actuelle
-        player = Services.player_manager.players.get(team_id)
+        player = get_player_manager().players.get(team_id)
 
         if not player:
             return False
@@ -545,11 +540,11 @@ class Hud:
 
     def handle_mouse_click(self, mouse_pos: Tuple[int, int]) -> bool:
         """Gère les clics sur les boutons d'achat"""
-        if not Services.player_manager:
+        if not get_player_manager():
             return False
 
-        current_player_id = Services.player_manager.get_current_player()
-        current_player = Services.player_manager.players.get(current_player_id)
+        current_player_id = get_player_manager().get_current_player()
+        current_player = get_player_manager().players.get(current_player_id)
 
         if not current_player:
             return False
@@ -587,7 +582,7 @@ class Hud:
             team = Team(team_id)
 
             # Créer l'unité via l'événement
-            Services.event_bus.emit(SpawnUnitEvent(unit_type, team, spawn_pos))
+            get_event_bus().emit(SpawnUnitEvent(unit_type, team, spawn_pos))
 
             # Déduire le coût
             player.money -= cost

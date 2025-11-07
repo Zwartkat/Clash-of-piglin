@@ -1,5 +1,6 @@
 import esper
 import pygame
+from core.accessors import get_event_bus
 from core.game.camera import Camera
 from core.ecs.event_bus import EventBus
 from events.reset_cam_event import ResetCamEvent
@@ -17,13 +18,13 @@ class CameraSystem(esper.Processor):
 
         self.camera = camera
 
-        EventBus.get_event_bus().subscribe(ResetCamEvent, self.on_reset)
-        EventBus.get_event_bus().subscribe(CameraZoomEvent, self.on_zoom)
-        EventBus.get_event_bus().subscribe(ResizeEvent, self.on_resize)
-        EventBus.get_event_bus().subscribe(CameraUpEvent, self.cam_up)
-        EventBus.get_event_bus().subscribe(CameraDownEvent, self.cam_down)
-        EventBus.get_event_bus().subscribe(CameraLeftEvent, self.cam_left)
-        EventBus.get_event_bus().subscribe(CameraRightEvent, self.cam_right)
+        get_event_bus().subscribe(ResetCamEvent, self.on_reset)
+        get_event_bus().subscribe(CameraZoomEvent, self.on_zoom)
+        get_event_bus().subscribe(ResizeEvent, self.on_resize)
+        get_event_bus().subscribe(CameraUpEvent, self.cam_up)
+        get_event_bus().subscribe(CameraDownEvent, self.cam_down)
+        get_event_bus().subscribe(CameraLeftEvent, self.cam_left)
+        get_event_bus().subscribe(CameraRightEvent, self.cam_right)
 
     def process(self, dt):
         pass
