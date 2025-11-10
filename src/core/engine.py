@@ -284,9 +284,7 @@ def main(screen: pygame.Surface, map_size=24):
 
     while game_state["running"]:
 
-        clock.tick(60)
-
-        dt = min(clock.get_time() / 1000, dt)
+        dt = clock.tick(60) / 1000.0
 
         for event in pygame.event.get():
             # If paused, let pause menu handle events first
