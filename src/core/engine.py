@@ -63,6 +63,8 @@ from systems.combat.arrow_system import ArrowSystem
 from systems.debug_system import DebugRenderSystem
 from systems.debug_event_handler import DebugEventHandler
 from ui.loading import LoadingUISystem
+from ui.pause_menu import PauseMenuSystem
+from events.pause_events import QuitToMenuEvent
 
 
 def load_terrain_sprites(tile_size: int) -> dict[CaseType, pygame.Surface]:
@@ -110,7 +112,27 @@ def main(screen: pygame.Surface, map_size=24):
 
     global game_state
 
+    # Reset game state at the start
     dt = 0.05
+
+    # Clear Esper database before starting new game
+    esper.clear_database()
+    esper.clear_cache()
+
+    # Reset Services (important for timer and other global state)
+    Services.start_time = pygame.time.get_ticks()
+    Services.finish_time = None
+
+    # Clear DATA_BUS entries that need to be fresh
+    from enums.data_bus_key import DataBusKey
+
+    # Remove old game state from DATA_BUS
+    if DATA_BUS.has(DataBusKey.MAP):
+        del DATA_BUS._store[DataBusKey.MAP]
+    if DATA_BUS.has(DataBusKey.PLAYER_MANAGER):
+        del DATA_BUS._store[DataBusKey.PLAYER_MANAGER]
+    if DATA_BUS.has(DataBusKey.PLAYER_MOVEMENT_SYSTEM):
+        del DATA_BUS._store[DataBusKey.PLAYER_MOVEMENT_SYSTEM]
 
     win_w, win_h = 1200, 900
 
@@ -234,8 +256,19 @@ def main(screen: pygame.Surface, map_size=24):
 
     world.add_processor(CrossbowmanAISystemEnemy(pathfinding_system))
 
+    # Pause menu system (needs reference to game_hud for timer pause)
+    pause_menu_system = PauseMenuSystem(screen, font, game_hud)
+    world.add_processor(pause_menu_system)
+
+    # Subscribe to quit to menu event
+    def on_quit_to_menu(event: QuitToMenuEvent):
+        game_state["running"] = False
+        game_state["return_to_menu"] = True
+
+    get_event_bus().subscribe(QuitToMenuEvent, on_quit_to_menu)
+
     # J'ai fait un dictionnaire pour que lorsque le quitsystem modifie la valeur, la valeur est modifiée dans ce fichier aussi
-    game_state = {"running": True}
+    game_state = {"running": True, "return_to_menu": False}
 
     world.add_processor(QuitSystem(get_event_bus(), game_state))
 
@@ -256,13 +289,21 @@ def main(screen: pygame.Surface, map_size=24):
         dt = min(clock.get_time() / 1000, dt)
 
         for event in pygame.event.get():
+            # If paused, let pause menu handle events first
+            if pause_menu_system.is_paused:
+                if pause_menu_system.handle_event(event):
+                    continue
+
+            # Normal game events
             victory_handled = victory_system.handle_victory_input(event)
             if not victory_handled:
                 hud_handled = game_hud.process_event(event)
                 if not hud_handled:
                     input_manager.handle_event(event)
 
-        world.process(dt)
+        # Only process game if not paused
+        if not pause_menu_system.is_paused:
+            world.process(dt)
 
         if not victory_handled:
             render.show_map()
@@ -272,9 +313,27 @@ def main(screen: pygame.Surface, map_size=24):
             selection_system.draw_selections(screen)
             game_hud.draw(dt)
 
+        # Always draw pause menu on top
+        pause_menu_system.process(dt)
+
         pygame.display.flip()
 
-    pygame.quit()
+    # Clean up world resources
+    returning_to_menu = game_state.get("return_to_menu", False)
+
+    # Clear all entities and processors
+    esper.clear_database()
+    esper.clear_cache()
+
+    # Clear event bus subscriptions to avoid memory leaks
+    get_event_bus()._subscribers.clear()
+
+    # Only quit pygame if not returning to menu
+    if not returning_to_menu:
+        pygame.quit()
+
+    # Return to menu if requested
+    return returning_to_menu
 
 
 def resize(screen: pygame.Surface, map_size: int, hud_width: int = 100) -> tuple[int]:

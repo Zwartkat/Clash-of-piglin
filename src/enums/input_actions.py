@@ -17,3 +17,4 @@ class InputAction(Enum):
     QUIT = auto()
     DEBUG_TOGGLE = auto()
     GIVE_GOLD = auto()
+    PAUSE = auto()
