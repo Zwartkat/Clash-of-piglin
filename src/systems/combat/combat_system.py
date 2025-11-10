@@ -86,9 +86,6 @@ class CombatSystem(IteratingProcessor):
         if not target.target_entity_id:
             return
 
-        if True:
-            return
-
         if self.can_attack(ent, attack, target.target_entity_id, pos):
             if not esper.has_component(target.target_entity_id, Health):
                 target.target_entity_id = None
