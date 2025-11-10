@@ -21,6 +21,11 @@ from components.base.team import Team
 from enums.config_key import ConfigKey
 from enums.data_bus_key import DataBusKey
 from enums.entity.entity_type import EntityType
+from events.loading_events import (
+    LoadingProgressEvent,
+    LoadingStartEvent,
+    LoadingFinishEvent,
+)
 from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
 from systems.ai_system import AiSystem
@@ -57,6 +62,7 @@ from systems.combat.arrow_system import ArrowSystem
 # Import debug systems
 from systems.debug_system import DebugRenderSystem
 from systems.debug_event_handler import DebugEventHandler
+from ui.loading import LoadingUISystem
 
 
 def load_terrain_sprites(tile_size: int) -> dict[CaseType, pygame.Surface]:
@@ -112,22 +118,42 @@ def main(screen: pygame.Surface, map_size=24):
 
     clock = pygame.time.Clock()
 
-    # Charger la map et les sprites
+    # Crée le monde Esper
+    world = esper
+    font = pygame.font.Font(Config.get_assets(key="font"), 18)
+    loading_system = LoadingUISystem(screen, font)
+
+    def update_loading(progress: float, message: str):
+        event_bus = get_event_bus()
+        event_bus.emit(LoadingProgressEvent(progress, message))
+
+        # Petit délai pour laisser l'animation se jouer
+        start_time = pygame.time.get_ticks()
+        while pygame.time.get_ticks() - start_time < 16:  # ~60 FPS
+            dt = clock.tick(60) / 1000.0  # Delta time en secondes
+            loading_system.process(dt)  # Utiliser le vrai dt, pas 0
+            pygame.display.flip()
+            pygame.event.pump()  # Garde la fenêtre responsive
+
+    # === DÉBUT DU CHARGEMENT ===
+    get_event_bus().emit(LoadingStartEvent("Initializing game..."))
+    update_loading(0.0, "Initializing game...")
+
+    # Charger la map
+    update_loading(0.2, "Generating map...")
     map: Map = Map()
     map.generate(map_size)
-
     DATA_BUS.register(DataBusKey.MAP, map)
     DATA_BUS.register(DataBusKey.CAMERA, CAMERA)
 
+    # Charger les sprites
+    update_loading(0.4, "Loading sprites...")
     tile_size: int = DATA_BUS.get(DataBusKey.CONFIG).get(ConfigKey.TILE_SIZE, 32)
-
     sprites = load_terrain_sprites(tile_size)
     game_hud = HudSystem(screen)
 
-    # Add the generated map to the ECS as a component for pathfinding system
-    map_entity = esper.create_entity()
-    esper.add_component(map_entity, map)
-
+    # Créer les entités
+    update_loading(0.5, "Creating entities...")
     map_width, map_height = resize(screen, map_size, game_hud.hud.hud_width)
 
     for y in range(len(map.tab)):
@@ -157,11 +183,17 @@ def main(screen: pygame.Surface, map_size=24):
 
     DATA_BUS.register(DataBusKey.PLAYER_MANAGER, player_manager)
 
+    # Initialiser les joueurs
+    update_loading(0.6, "Initializing players...")
+
     from config.units import UNITS
 
-    # Crée le monde Esper
-    world = esper
+    # Charger les systèmes principaux
+    update_loading(0.75, "Loading systems...")
+
     movement_system = MovementSystem()
+    font = pygame.font.Font(Config.get_assets(key="font"), 18)
+    world.add_processor(LoadingUISystem(screen, font), priority=999)
     world.add_processor(movement_system)
     world.add_processor(TerrainEffectSystem(map))
     world.add_processor(CollisionSystem(map))
@@ -176,6 +208,9 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(targeting_system)
     world.add_processor(CombatSystem())
     world.add_processor(CameraSystem(get_camera()))
+
+    # Charger les systèmes de rendu
+    update_loading(0.85, "Loading rendering systems...")
 
     input_manager = InputManager()
     render = RenderSystem(screen, map, sprites)
@@ -204,7 +239,15 @@ def main(screen: pygame.Surface, map_size=24):
 
     world.add_processor(QuitSystem(get_event_bus(), game_state))
 
+    # Finaliser
+    update_loading(0.95, "Finalizing...")
+
     pygame.transform.set_smoothscale_backend("GENERIC")
+
+    # Chargement terminé
+    update_loading(1.0, "Ready!")
+    pygame.time.wait(500)  # Pause brève pour voir "Ready!"
+    get_event_bus().emit(LoadingFinishEvent(success=True))
 
     while game_state["running"]:
 
