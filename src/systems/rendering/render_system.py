@@ -1,6 +1,7 @@
 from typing import Tuple
 from components.ai_controller import AIController
 from components.base.team import Team
+from components.gameplay.damage import Damage
 from core.accessors import get_config, get_debugger, get_event_bus, get_player_manager
 from core.game.camera import CAMERA, Camera
 from components.case import Case
@@ -101,6 +102,23 @@ class RenderSystem(IteratingProcessor):
                 self._draw_health_bar(
                     ent, position, esper.component_for_entity(ent, Health)
                 )
+
+            if esper.has_component(ent, Damage):
+                damage: Damage = esper.component_for_entity(ent, Damage)
+                red_tint = pygame.Surface(frame.get_size(), pygame.SRCALPHA)
+                red_tint.fill((255, 0, 0, 50))
+
+                mask = pygame.mask.from_surface(frame)
+                mask_surface = mask.to_surface(
+                    setcolor=(255, 0, 0, 30), unsetcolor=(0, 0, 0, 0)
+                )
+
+                frame.blit(mask_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+
+                damage.timer -= dt
+                print(damage.timer)
+                if damage.timer <= 0:
+                    esper.remove_component(ent, Damage)
 
             self.draw_surface(frame, x, y)
 
