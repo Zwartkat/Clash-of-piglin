@@ -3,7 +3,7 @@ from ui.hud import Hud
 from enums.entity.entity_type import EntityType
 
 
-class HudSystem:
+class HudManager:
     """Système gérant l'interface utilisateur du jeu"""
 
     def __init__(self, screen: pygame.Surface):

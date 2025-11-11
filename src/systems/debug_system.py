@@ -327,9 +327,9 @@ class DebugRenderSystem(esper.Processor):
 
                     # Debug: afficher quelques positions avec caméra
                     if not hasattr(self, "_lava_debug_done"):
-                        print(
-                            f"DEBUG LAVA avec caméra: ({x},{y}) -> base({pixel_x},{pixel_y}) -> caméra({camera_pos[0]},{camera_pos[1]})"
-                        )
+                        # print(
+                        #    f"DEBUG LAVA avec caméra: ({x},{y}) -> base({pixel_x},{pixel_y}) -> caméra({camera_pos[0]},{camera_pos[1]})"
+                        # )
                         if x == 7 and y == 3:  # Premier point de lave
                             self._lava_debug_done = True
 

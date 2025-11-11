@@ -2,8 +2,8 @@ from copy import deepcopy
 import esper
 import pygame
 from typing import Tuple
-from core.accessors import get_event_bus, get_player_manager
-from core.services import Services
+from core.accessors import get_event_bus, get_played_time, get_player_manager
+from core.game.timer import Timer
 from core.game.player import Player
 from components.base.health import Health
 from events.victory_event import VictoryEvent
@@ -66,14 +66,6 @@ class Hud:
             1: (255, 85, 85),  # Rouge-orange Crimson
             2: (20, 180, 133),  # Cyan-vert Warped
         }
-
-        self.start_time = (
-            Services.start_time if Services.start_time else pygame.time.get_ticks()
-        )
-
-        # Pause time tracking
-        self.total_pause_time = 0  # Total milliseconds spent in pause
-        self.pause_start_time = None  # Timestamp when current pause started
 
         # huds dimensions
         self.hud_width = round(self.screen_width * 0.2)
@@ -266,49 +258,23 @@ class Hud:
             dark_color = tuple(max(0, c - 30) for c in base_color)
             pygame.draw.rect(surface, dark_color, rect, 2)
 
-    def getGameTime(self) -> str:
-        """Calculate and format the elapsed game time, excluding pause duration.
-
-        Returns:
-            Formatted time string in MM:SS format
-        """
-        if self.victory_team:
-            elapsed_ms = Services.finish_time - Services.start_time
-        else:
-            current_time = pygame.time.get_ticks()
-            elapsed_ms = current_time - Services.start_time - self.total_pause_time
-
-            # If currently paused, also subtract the duration of the current pause
-            if self.pause_start_time is not None:
-                current_pause_duration = current_time - self.pause_start_time
-                elapsed_ms -= current_pause_duration
-
-        elapsed_seconds = elapsed_ms // 1000
-        minutes = elapsed_seconds // 60
-        seconds = elapsed_seconds % 60
-        return f"{minutes:02d}:{seconds:02d}"
-
     def on_pause(self):
         """Called when the game enters pause state.
 
         Records the timestamp when pause started for time tracking.
         """
-        if self.pause_start_time is None:
-            self.pause_start_time = pygame.time.get_ticks()
+        get_played_time().pause()
 
     def on_resume(self):
         """Called when the game resumes from pause state.
 
         Calculates the pause duration and adds it to the total pause time.
         """
-        if self.pause_start_time is not None:
-            pause_duration = pygame.time.get_ticks() - self.pause_start_time
-            self.total_pause_time += pause_duration
-            self.pause_start_time = None
+        get_played_time().resume()
 
     def drawTimeDisplay(self):
         """Affiche le temps de jeu au centre en haut de l'écran."""
-        time_text = f"Temps: {self.getGameTime()}"
+        time_text = f"Temps: {get_played_time().get_format_elapsed()}"
         time_surface = self.font_large.render(time_text, True, self.gold_color)
 
         # panel for the clock
@@ -684,8 +650,12 @@ class Hud:
         )
         self.screen.blit(sub_surface, sub_rect)
 
+        timer: Timer = get_played_time()
+
+        timer.pause()
+
         # time spent since victory
-        elapsed_time = (Services.finish_time - Services.start_time) // 1000
+        elapsed_time = timer.elapsed() // 1000
         time_message = (
             f"Partie terminee en {elapsed_time // 60}:{elapsed_time % 60:02d}"
         )
