@@ -9,13 +9,14 @@ from factories.unit_factory import UnitFactory
 
 
 class PlayerManager:
-    def __init__(self, bastions: list[Position]):
+    def __init__(self, bastions: list[Position], colors: list[tuple[int]]):
 
         if len(bastions) <= 1:
             raise Exception("You must have at least 2 players.")
 
         self.players: dict[int, Player] = {}
         team: int = 1
+        color_index = 0
 
         for bastion_pos in bastions:
             bastion = UnitFactory.create_unit(
@@ -23,8 +24,11 @@ class PlayerManager:
                 Team(team),
                 bastion_pos,
             )
-            self.players[team] = Player(team, bastion, start_money=1000)
+            self.players[team] = Player(
+                team, bastion, start_money=1000, color=colors[color_index]
+            )
             team += 1
+            color_index += 1
 
         self.current_player = 1
 

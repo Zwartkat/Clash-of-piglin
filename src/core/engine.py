@@ -188,7 +188,8 @@ def main(screen: pygame.Surface, map_size=24):
         [
             Position(case_size, case_size),
             Position(map_width - case_size * 1.5, map_height - case_size * 1.5),
-        ]
+        ],
+        [(255, 85, 85), (20, 180, 133)],
     )
 
     DATA_BUS.register(DataBusKey.PLAYER_MANAGER, player_manager)

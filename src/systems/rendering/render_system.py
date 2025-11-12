@@ -16,6 +16,7 @@ from components.base.velocity import Velocity
 
 from core.config import Config
 
+from core.game.player_manager import PlayerManager
 from enums.case_type import *
 from enums.config_key import ConfigKey
 from enums.entity.animation import *
@@ -88,27 +89,43 @@ class RenderSystem(IteratingProcessor):
         if frame:
             x = position.x
             y = position.y
-            if sprite.current_animation != Animation.NONE:
+
+            # Show element if there is an entity of a player
+            if esper.has_component(ent, Team):
+
+                player_manager = get_player_manager()
+                team: Team = esper.component_for_entity(ent, Team)
+
+                color = player_manager.players[team.team_id].color
+
                 x = int(round(position.x - (frame.get_width() / 2)))
                 y = int(round(position.y - (frame.get_height() / 2)))
-                if get_player_manager().current_player == (
-                    esper.component_for_entity(ent, Team)
-                ).team_id and esper.has_component(ent, Selection):
+
+                if (
+                    player_manager.current_player == team.team_id
+                    and esper.has_component(ent, Selection)
+                ):
                     selection: Selection = esper.component_for_entity(ent, Selection)
-                    color = (0, 255, 0) if selection.is_selected else (255, 0, 0)
+                    color = (0, 255, 0) if selection.is_selected else color
 
                     self._draw_diamond(position, color)
 
                 self._draw_health_bar(
-                    ent, position, esper.component_for_entity(ent, Health)
+                    ent, position, esper.component_for_entity(ent, Health), color
                 )
 
+            # Show tinted frame when entity is damaged
             if esper.has_component(ent, Damage):
+
                 damage: Damage = esper.component_for_entity(ent, Damage)
+
+                # Copy to not modify original
                 frame = frame.copy()
+
                 red_tint = pygame.Surface(frame.get_size(), pygame.SRCALPHA)
                 red_tint.fill((255, 0, 0, 50))
 
+                # Tinted mask
                 mask = pygame.mask.from_surface(frame)
                 mask_surface = mask.to_surface(
                     setcolor=(255, 0, 0, 30), unsetcolor=(0, 0, 0, 0)
@@ -116,10 +133,14 @@ class RenderSystem(IteratingProcessor):
 
                 frame.blit(mask_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
-                damage.timer -= dt
+                # Remove damage components when timer is finish
                 if damage.timer <= 0:
                     esper.remove_component(ent, Damage)
 
+                # Reduce remaining time to show color
+                damage.timer -= dt
+
+            # Draw sprite
             self.draw_surface(frame, x, y)
 
     def show_map(self) -> None:
@@ -179,7 +200,7 @@ class RenderSystem(IteratingProcessor):
             event (AttackEvent): An event emit before an attack
         """
         self._set_animation(event.fighter, Animation.ATTACK)
-        self._set_animation(event.target, Animation.ATTACK)
+        # self._set_animation(event.target, Animation.ATTACK)
 
     def draw_surface(
         self, image: pygame.Surface, x: int = None, y: int = None
@@ -280,7 +301,7 @@ class RenderSystem(IteratingProcessor):
             color (_type_): Color of the diamond.
         """
         x: int = position.x
-        y: int = position.y - Config.TILE_SIZE() // 2
+        y: int = position.y - get_config().get(ConfigKey.TILE_SIZE) // 2
 
         diamond_points: list[tuple[int]] = [
             (x, y - 10),  # Top
@@ -290,7 +311,9 @@ class RenderSystem(IteratingProcessor):
         ]
         self.draw_polygon(diamond_points, color)
 
-    def _draw_health_bar(self, ent: int, position: Position, health: Health):
+    def _draw_health_bar(
+        self, ent: int, position: Position, health: Health, color: tuple[int]
+    ):
         """
         Draw a health bar above the entity's position.
 
@@ -303,14 +326,16 @@ class RenderSystem(IteratingProcessor):
         if not health or health.full <= 0:
             return
 
-        bar_width: int = Config.TILE_SIZE() - Config.TILE_SIZE() // 2
+        tile_size = get_config().get(ConfigKey.TILE_SIZE)
+
+        bar_width: int = tile_size - tile_size // 2
         bar_height: int = 4
 
         bar_x: int = int(position.x - bar_width // 2)
-        bar_y: int = int(position.y - Config.TILE_SIZE() // 2 - 3)
+        bar_y: int = int(position.y - tile_size // 2 - 3)
 
         # Border of the health bar (black background)
-        self.draw_rect((bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2), (0, 0, 0))
+        self.draw_rect((bar_x - 1, bar_y - 1, bar_width + 2, bar_height + 2), color)
 
         # Couleurs universelles pour toutes les équipes
         health_color = (50, 200, 50)  # Vert pour la vie
@@ -325,7 +350,7 @@ class RenderSystem(IteratingProcessor):
 
         # Debug temporaire
         if health.remaining == 0 and health.full > 0:
-            get_debugger().log(f"Unit {ent} has 0/{health.full} HP!")
+            get_debugger().warning(f"Unit {ent} has 0/{health.full} HP!")
 
         # Green part for remaining health
         hp_ratio = max(0, min(1.0, health.remaining / health.full))
