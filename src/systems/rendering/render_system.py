@@ -105,6 +105,7 @@ class RenderSystem(IteratingProcessor):
 
             if esper.has_component(ent, Damage):
                 damage: Damage = esper.component_for_entity(ent, Damage)
+                frame = frame.copy()
                 red_tint = pygame.Surface(frame.get_size(), pygame.SRCALPHA)
                 red_tint.fill((255, 0, 0, 50))
 
