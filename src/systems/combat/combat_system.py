@@ -147,5 +147,4 @@ class CombatSystem(IteratingProcessor):
             get_event_bus().emit(DeathEvent(team, target_id, cost_amount))
         else:
             if not esper.has_component(target_id, Damage):
-                print(atk.attack_speed, atk.last_attack, target_id, attacker_id)
-                esper.add_component(target_id, Damage(atk.attack_speed / 2))
+                esper.add_component(target_id, Damage(atk.attack_speed * 0.8))

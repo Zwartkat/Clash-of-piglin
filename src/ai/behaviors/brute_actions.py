@@ -473,7 +473,9 @@ class DefendBaseAction(BaseAction):
         base_pos = state.ally_base_pos
         tile_size = get_config().get(ConfigKey.TILE_SIZE.value)
 
-        get_debugger().log(f"{state.entity} > Defend base")
+        get_debugger().log(
+            f"{state.entity} > Defend base {state.action_weights} {state._emotions}"
+        )
 
         dist_to_base = math.hypot(base_pos.x - state.pos.x, base_pos.y - state.pos.y)
         if dist_to_base > tile_size * 8:

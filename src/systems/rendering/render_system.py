@@ -117,7 +117,6 @@ class RenderSystem(IteratingProcessor):
                 frame.blit(mask_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
                 damage.timer -= dt
-                print(damage.timer)
                 if damage.timer <= 0:
                     esper.remove_component(ent, Damage)
 
