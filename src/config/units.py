@@ -113,7 +113,7 @@ UNITS = {
             EntityType.GHAST,
             UnitType.FLY,
             Description("Ghast", "Unité à distance ne ciblant que les structures"),
-            Attack(damage=40, range=5, attack_speed=5),
+            Attack(damage=40, range=2, attack_speed=5),
             Health(700),
             Velocity(x=0, y=0, speed=2),
             Cost(amount=820),

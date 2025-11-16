@@ -20,6 +20,7 @@ from core.ecs.event_bus import EventBus
 from events.event_move import EventMoveTo
 from enums.input_actions import InputAction
 from core.game.camera import CAMERA
+from events.switch_control_event import SwitchControlEvent
 
 
 class InputRouterSystem(esper.Processor):
@@ -43,6 +44,7 @@ class InputRouterSystem(esper.Processor):
             InputAction.CAMERA_LEFT: CameraLeftEvent(),
             InputAction.QUIT: QuitEvent(),
             InputAction.RESIZE: ResizeEvent,
+            InputAction.SWITCH_CONTROL: SwitchControlEvent(),
             InputAction.DEBUG_TOGGLE: DebugToggleEvent(),
             InputAction.GIVE_GOLD: GiveGoldEvent(),
         }

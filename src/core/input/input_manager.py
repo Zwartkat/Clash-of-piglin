@@ -27,6 +27,7 @@ class InputManager(esper.Processor):
             pygame.K_SPACE: InputAction.CAMERA_RESET,
             pygame.K_F3: InputAction.DEBUG_TOGGLE,
             pygame.K_g: InputAction.GIVE_GOLD,
+            pygame.K_k: InputAction.SWITCH_CONTROL,
         }
 
         # Les touches qui seront utiles si on les release
