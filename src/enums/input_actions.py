@@ -18,3 +18,4 @@ class InputAction(Enum):
     SWITCH_CONTROL = auto()
     DEBUG_TOGGLE = auto()
     GIVE_GOLD = auto()
+    PAUSE = auto()

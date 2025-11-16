@@ -1,5 +1,6 @@
 from ai.ai_state import AiState
 from ai.brute import BruteAI
+from ai.ghast import JeromeGhast
 from components.ai import BaseAi
 
 from core.accessors import get_config, get_debugger
@@ -21,3 +22,6 @@ class AIController:
         if entity_type == EntityType.BRUTE:
             self.state: AiState = AiState(ent)
             self.brain: BaseAi = BruteAI(self.state)
+        if entity_type == EntityType.GHAST:
+            self.state: AiState = AiState(ent)
+            self.brain: BaseAi = JeromeGhast(self.state)

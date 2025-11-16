@@ -1,6 +1,7 @@
 import esper
 from core.accessors import get_event_bus
 from events.event_input import EventInput
+from events.pause_events import PauseToggleEvent
 from events.quit_event import QuitEvent
 from events.switch_event import SwitchEvent
 from events.reset_cam_event import ResetCamEvent
@@ -47,6 +48,7 @@ class InputRouterSystem(esper.Processor):
             InputAction.SWITCH_CONTROL: SwitchControlEvent(),
             InputAction.DEBUG_TOGGLE: DebugToggleEvent(),
             InputAction.GIVE_GOLD: GiveGoldEvent(),
+            InputAction.PAUSE: PauseToggleEvent(),
         }
 
     def handle_events(self, event: EventInput):
