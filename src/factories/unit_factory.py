@@ -45,7 +45,7 @@ class UnitFactory:
 
         ent: int = EntityFactory.create(*components)
 
-        if entity_type == EntityType.BRUTE:
+        if entity_type == EntityType.BRUTE or entity_type == EntityType.GHAST:
             from components.ai_controller import AIController
 
             esper.add_component(ent, AIController(ent, entity_type))
