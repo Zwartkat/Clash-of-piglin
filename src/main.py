@@ -133,7 +133,7 @@ def handle_click(pos: Tuple[int]):
     """
     Handle click on the main menu.
     """
-    global selected, credits_open
+    global selected, credits_open, screen
 
     if credits_open:
         credits_open = False
@@ -144,7 +144,13 @@ def handle_click(pos: Tuple[int]):
             selected = i
             if menu_items[selected] == menu_items[0]:  # Play
                 print("Play")
-                return game_manager.main(screen)
+                return_to_menu = game_manager.main(screen)
+                # If returned True, player quit to menu, so stay in menu loop
+                if return_to_menu:
+                    # Reset screen to menu size
+                    screen = pygame.display.set_mode((800, 600))
+                    return True
+                return False
             elif menu_items[selected] == menu_items[1]:  # Options ou Crédits
                 print("Credits opened")
                 credits_open = True

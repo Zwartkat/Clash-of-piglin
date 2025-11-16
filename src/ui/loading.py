@@ -11,9 +11,22 @@ from events.loading_events import (
 
 
 class LoadingUISystem(esper.Processor):
-    """Loading screen with expanding square (Minecraft-style)."""
+    """Loading screen with expanding square animation (Minecraft-style).
+
+    Displays a smooth loading screen with:
+    - Expanding square that grows with progress
+    - Percentage display at center
+    - Progress bar at bottom
+    - Color evolution from dark to bright
+    """
 
     def __init__(self, screen: pygame.Surface, font: pygame.font.Font):
+        """Initialize the loading screen system.
+
+        Args:
+            screen: Pygame surface to render the loading screen on
+            font: Font for rendering text messages
+        """
         super().__init__()
         self.screen = screen
         self.font = font
@@ -29,22 +42,42 @@ class LoadingUISystem(esper.Processor):
         event_bus.subscribe(LoadingFinishEvent, self._on_finish)
 
     def _on_start(self, event: LoadingStartEvent):
+        """Handle loading start event.
+
+        Args:
+            event: LoadingStartEvent containing initial message
+        """
         self.active = True
         self.progress = 0.0
         self.target_progress = 0.0
         self.message = event.message
 
     def _on_progress(self, event: LoadingProgressEvent):
+        """Handle loading progress update event.
+
+        Args:
+            event: LoadingProgressEvent with progress value (0.0-1.0) and optional message
+        """
         self.active = True
         self.target_progress = event.progress
         if event.message:
             self.message = event.message
 
     def _on_finish(self, event: LoadingFinishEvent):
+        """Handle loading completion event.
+
+        Args:
+            event: LoadingFinishEvent indicating success or failure
+        """
         self.target_progress = 1.0
         self.message = "Complete!" if event.success else "Failed"
 
     def process(self, dt: float):
+        """Render the loading screen with animated progress.
+
+        Args:
+            dt: Delta time since last frame in seconds
+        """
         if not self.active:
             return
 

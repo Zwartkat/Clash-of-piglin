@@ -71,6 +71,10 @@ class Hud:
             Services.start_time if Services.start_time else pygame.time.get_ticks()
         )
 
+        # Pause time tracking
+        self.total_pause_time = 0  # Total milliseconds spent in pause
+        self.pause_start_time = None  # Timestamp when current pause started
+
         # huds dimensions
         self.hud_width = round(self.screen_width * 0.2)
         self.hud_height = round(self.screen_height * 0.98)
@@ -91,6 +95,9 @@ class Hud:
         self._init_unit_buttons()
 
         get_event_bus().subscribe(VictoryEvent, self.on_victory)
+
+        # Par défaut le Ghast est contrôlé par l'IA
+        self.ghast_ai_controlled_by_player = True
 
     def _load_textures(self):
         """Load textures needed for the HUD with animated sprites"""
@@ -263,15 +270,44 @@ class Hud:
             pygame.draw.rect(surface, dark_color, rect, 2)
 
     def getGameTime(self) -> str:
-        """Retourne le temps de jeu formaté."""
+        """Calculate and format the elapsed game time, excluding pause duration.
+
+        Returns:
+            Formatted time string in MM:SS format
+        """
         if self.victory_team:
             elapsed_ms = Services.finish_time - Services.start_time
         else:
-            elapsed_ms = pygame.time.get_ticks() - Services.start_time
+            current_time = pygame.time.get_ticks()
+            elapsed_ms = current_time - Services.start_time - self.total_pause_time
+
+            # If currently paused, also subtract the duration of the current pause
+            if self.pause_start_time is not None:
+                current_pause_duration = current_time - self.pause_start_time
+                elapsed_ms -= current_pause_duration
+
         elapsed_seconds = elapsed_ms // 1000
         minutes = elapsed_seconds // 60
         seconds = elapsed_seconds % 60
         return f"{minutes:02d}:{seconds:02d}"
+
+    def on_pause(self):
+        """Called when the game enters pause state.
+
+        Records the timestamp when pause started for time tracking.
+        """
+        if self.pause_start_time is None:
+            self.pause_start_time = pygame.time.get_ticks()
+
+    def on_resume(self):
+        """Called when the game resumes from pause state.
+
+        Calculates the pause duration and adds it to the total pause time.
+        """
+        if self.pause_start_time is not None:
+            pause_duration = pygame.time.get_ticks() - self.pause_start_time
+            self.total_pause_time += pause_duration
+            self.pause_start_time = None
 
     def drawTimeDisplay(self):
         """Affiche le temps de jeu au centre en haut de l'écran."""
@@ -432,8 +468,15 @@ class Hud:
 
         # Instructions pour les raccourcis (seulement équipe 1)
         if team_id == 1:
+            # Affichage de l'état du Ghast
+            ghast_status = "IA" if not self.ghast_ai_controlled_by_player else "JOUEUR"
+            ghast_text = f"Ghast: {ghast_status}"
+            ghast_surface = self.font_medium.render(ghast_text, True, self.text_color)
+            self.screen.blit(ghast_surface, (hud_x + 15, info_y + 550))
+
             instructions = [
                 "CONTROLES:",
+                "K - Basculer IA/Joueur",
                 "CTRL - Changer joueur",
                 "1/2/3 - Acheter unite",
                 "Clic - Selectionner",
