@@ -29,6 +29,7 @@ from events.loading_events import (
 from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
 from systems.ai_system import AiSystem
+from systems.combat.fireball_system import FireballSystem
 from systems.world.collision_system import CollisionSystem
 from systems.combat.combat_system import CombatSystem
 from systems.crossbowman_ai_system_enemy import CrossbowmanAISystemEnemy
@@ -238,6 +239,7 @@ def main(screen: pygame.Surface, map_size=24):
     render = RenderSystem(screen, map, sprites)
     victory_system = VictorySystem()
     arrow_system = ArrowSystem(render)
+    fireball_system = FireballSystem(render)
 
     # Pathfinding system (doit être créé avant les systèmes de debug)
     pathfinding_system = PathfindingSystem()
@@ -248,6 +250,7 @@ def main(screen: pygame.Surface, map_size=24):
 
     world.add_processor(input_manager)
     world.add_processor(render)
+    world.add_processor(fireball_system)
     world.add_processor(arrow_system)  # Après le rendu de base
     world.add_processor(pathfinding_system)  # Avant les systèmes de debug
     world.add_processor(debug_event_handler)  # Écoute les événements F3
@@ -307,6 +310,7 @@ def main(screen: pygame.Surface, map_size=24):
             render.show_map()
             render.process(dt)
             arrow_system.process(dt)
+            fireball_system.process(dt)
             debug_render_system.process(dt)  # Debug après le rendu principal
             selection_system.draw_selections(screen)
             game_hud.draw(dt)
