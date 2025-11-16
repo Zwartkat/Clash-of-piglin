@@ -4,34 +4,59 @@ from components.base.position import Position
 from components.base.team import Team
 from components.base.velocity import Velocity
 from components.gameplay.attack import Attack
-from components.gameplay.structure import Structure
 from enums.entity.entity_type import EntityType
 from ai.ai_state import AiState, Action
 
 class JeromeGhast:
+    """
+        AI controller for a Ghast unit named 'JeromeGhast'.
+        
+        The AI alternates between ATTACK and PROTECT actions based on proximity
+        to the enemy base and enemy crossbowmen threats.
+    """
+
     def __init__(self, state: AiState):
-        self.action = Action.ATTACK
+        """
+            Initialize the JeromeGhast AI.
+            
+            Args:
+                state (AiState): The AI state containing entity info, position, attack, etc.
+        """
+
+        self.action = Action.ATTACK  # Initial action is ATTACK
         self.state = state
 
 
     def decide(self):
+        """
+            Determine the next action and update the unit's position.
+            
+            Behavior:
+            - ATTACK: Move towards enemy base while avoiding crossbowmen threats.
+            - PROTECT: Position defensively near allied units to protect against enemy crossbowmen.
+        """
+
+        # Get useful data
         team = self.state.team.team_id
-        team_adverse = 1 if team == 2 else 2
+        team_adverse = 1 if team == 2 else 2  
         velocity = esper.component_for_entity(self.state.entity, Velocity)
-        portee = self.state.atk.range
+        portee = self.state.atk.range  # Attack range
         entities = esper.get_components(EntityType, Team, Position)
         crossbowmen = list(filter(lambda x: x[1][0] == EntityType.CROSSBOWMAN and x[1][1].team_id == team_adverse, entities))
 
-        x, y = self.state.pos.getX(), self.state.pos.getY()
+        x, y = self.state.pos.getX(), self.state.pos.getY()  # Current position
 
         if self.action == Action.ATTACK:
+            # Vector to enemy base
             dx_bastion, dy_bastion = self.state.enemy_base_pos.getX() - x, self.state.enemy_base_pos.getY() - y
 
             dist_bastion = math.sqrt(dx_bastion**2 + dy_bastion**2)
 
+            # Normalize
             dir_x = dx_bastion / dist_bastion
             dir_y = dy_bastion / dist_bastion
 
+            # Init repulsion
             repulse_x, repulse_y = 0, 0
 
             for crossbowman in crossbowmen:
@@ -43,15 +68,17 @@ class JeromeGhast:
 
                 dist_crossbow = math.sqrt(dx_crossbow**2 + dy_crossbow**2)
 
+                # Repulsion force decreases with distance
                 if dist_crossbow < range_crossbow * 2:
                     force = (range_crossbow * 2 - dist_crossbow) / (range_crossbow * 2)
                     repulse_x += (x - cx) / dist_crossbow * force
                     repulse_y += (y - cy) / dist_crossbow * force
 
+            # Stop moving if no threat and in range
             if repulse_x == 0 and repulse_y == 0 and dist_bastion < portee:
                 return
             
-            # Pour fuir plus ou moins fort
+            # Scale repulsion to flee more strongly
             repulse_force = 3
             
             final_dx = dir_x + repulse_x * repulse_force
@@ -62,6 +89,7 @@ class JeromeGhast:
             if length == 0:
                 return
             
+            # Normalize
             final_dx /= length
             final_dy /= length
 
@@ -71,6 +99,7 @@ class JeromeGhast:
 
             avance = (x - old_x) * dir_x + (y - old_y) * dir_y
 
+            # If not progressing, switch to PROTECT
             if avance <= 0:
                 self.action = Action.PROTECT
 
@@ -80,7 +109,8 @@ class JeromeGhast:
 
 
         elif self.action == Action.PROTECT:
-            # On garde que les crossbow car il ne peuvent pas tanker des brutes car elles n'attaquent pas les ghasts
+
+            # Only consider crossbowmen
             enemies = list(filter(lambda x: x[1][1].team_id == team_adverse and x[1][0] == EntityType.CROSSBOWMAN, entities))
             allies = list(filter(lambda x: x[1][1].team_id == team and x[0] != self.state.entity, entities))
 
@@ -96,6 +126,7 @@ class JeromeGhast:
                     crossbow_in_bastion_range = True
                     break
 
+            # Switch back to ATTACK if no enemies threatening base
             if not crossbow_in_bastion_range:
                 self.action = Action.ATTACK
                 return
@@ -128,9 +159,11 @@ class JeromeGhast:
             dx, dy = ex - ax, ey - ay
             dist = math.sqrt(dx**2 + dy**2)
             
+            # Normalize
             dir_x = dx / dist
             dir_y = dy / dist
 
+            # Distance desired between ally and ghast
             distance_defense = 20
 
             target_x = ax + dir_x * distance_defense
@@ -140,6 +173,7 @@ class JeromeGhast:
             move_dy = target_y - y
             dist_move = math.sqrt(move_dx**2 + move_dy**2)
 
+            # Already close enough
             if dist_move <= velocity.speed:
                 return
             
