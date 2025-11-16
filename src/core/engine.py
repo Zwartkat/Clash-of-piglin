@@ -59,6 +59,7 @@ from systems.input.camera_system import CameraSystem
 from systems.rendering.hud_system import HudSystem
 from systems.victory_system import VictorySystem
 from systems.combat.arrow_system import ArrowSystem
+from systems.world.ai_system import AISystem
 
 # Import debug systems
 from systems.debug_system import DebugRenderSystem

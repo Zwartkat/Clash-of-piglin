@@ -13,6 +13,8 @@ from enums.entity.direction import *
 from enums.entity.unit_type import UnitType
 
 from components.base.description import Description
+from components.base.ai_flag import Ai_flag
+from components.gameplay.structure import Structure
 from components.gameplay.attack import Attack
 from components.base.health import Health
 from components.base.position import Position
@@ -35,6 +37,7 @@ UNITS = {
             Position(x=10, y=10),
             Cost(amount=425),
             Selection(),
+            Ai_flag(),
             Collider(Config.TILE_SIZE() - 2, Config.TILE_SIZE() - 2),
             Sprite(
                 "assets/sprites/spritesheet-piglin.png",
@@ -113,7 +116,7 @@ UNITS = {
             EntityType.GHAST,
             UnitType.FLY,
             Description("Ghast", "Unité à distance ne ciblant que les structures"),
-            Attack(damage=40, range=5, attack_speed=5),
+            Attack(damage=40, range=2, attack_speed=5),
             Health(700),
             Velocity(x=0, y=0, speed=2),
             Cost(amount=820),
@@ -155,6 +158,7 @@ UNITS = {
         components=[
             EntityType.BASTION,
             UnitType.STRUCTURE,
+            Structure(),
             Description("Bastion", "Base d'un joueur à défendre"),
             Health(1000),
             Sprite(

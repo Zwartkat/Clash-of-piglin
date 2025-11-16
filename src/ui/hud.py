@@ -96,6 +96,9 @@ class Hud:
 
         get_event_bus().subscribe(VictoryEvent, self.on_victory)
 
+        # Par défaut le Ghast est contrôlé par l'IA
+        self.ghast_ai_controlled_by_player = True
+
     def _load_textures(self):
         """Load textures needed for the HUD with animated sprites"""
         from components.rendering.sprite import Sprite
@@ -465,8 +468,15 @@ class Hud:
 
         # Instructions pour les raccourcis (seulement équipe 1)
         if team_id == 1:
+            # Affichage de l'état du Ghast
+            ghast_status = "IA" if not self.ghast_ai_controlled_by_player else "JOUEUR"
+            ghast_text = f"Ghast: {ghast_status}"
+            ghast_surface = self.font_medium.render(ghast_text, True, self.text_color)
+            self.screen.blit(ghast_surface, (hud_x + 15, info_y + 550))
+
             instructions = [
                 "CONTROLES:",
+                "K - Basculer IA/Joueur",
                 "CTRL - Changer joueur",
                 "1/2/3 - Acheter unite",
                 "Clic - Selectionner",
