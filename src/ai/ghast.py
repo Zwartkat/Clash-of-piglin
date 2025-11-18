@@ -162,16 +162,14 @@ class JeromeGhast:
                     dist_min = dist_allie
                     pos_allie_proche = pos_allie
 
+            if not pos_allie_proche:
+                pos_allie_proche = self.state.ally_base_pos
+
             dist_enemy_min = 999999
 
             for enemy in enemies:
                 enemy_pos = enemy[1][2]
                 ex, ey = enemy_pos.getX(), enemy_pos.getY()
-                ##### TO DEBUG
-
-                #                    dist_enemy = math.sqrt((ex - pos_allie_proche.getX())**2 + (ey - pos_allie_proche.getY())**2)
-                #                                 ^^^^^^^^^^^^^^^^
-                # UnboundLocalError: cannot access local variable 'pos_allie_proche' where it is not associated with a value
                 dist_enemy = math.sqrt(
                     (ex - pos_allie_proche.getX()) ** 2
                     + (ey - pos_allie_proche.getY()) ** 2
