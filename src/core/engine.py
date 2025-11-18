@@ -3,6 +3,7 @@ import pygame
 import esper
 import os
 
+from config.ai_mapping import IA_MAP_JCJ
 from core.data_bus import DATA_BUS
 from core.accessors import (
     get_camera,
@@ -104,7 +105,10 @@ def load_terrain_sprites(tile_size: int) -> dict[CaseType, pygame.Surface]:
     return sprites
 
 
-def main(screen: pygame.Surface, map_size=24):
+def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
+    """
+    args ia_mode: "jcia" pour Joueur contre IA, "iacia" pour IA contre IA
+    """
 
     global game_state
 
@@ -166,7 +170,10 @@ def main(screen: pygame.Surface, map_size=24):
 
     from config.ai_mapping import IA_MAP
 
-    DATA_BUS.register(DataBusKey.IA_MAPPING, IA_MAP)
+    if ia_mode == "iacia":
+        DATA_BUS.register(DataBusKey.IA_MAPPING, IA_MAP)
+    elif ia_mode == "jcia":
+        DATA_BUS.register(DataBusKey.IA_MAPPING, IA_MAP_JCJ)
 
     for y in range(len(map.tab)):
         for x in range(len(map.tab[y])):

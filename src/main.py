@@ -40,6 +40,12 @@ selected = 0
 # pygame.mixer.music.set_volume(1)
 # pygame.mixer.music.play(-1)
 
+play_options_open = False
+play_modes = ["Joueur vs IA", "IA vs IA"]
+play_option_rects = [
+    pygame.Rect(300, 250 + i * 50, 200, 30) for i in range(len(play_modes))
+]
+
 credits_open = False
 credits_text = [
     "Crédits",
@@ -121,6 +127,18 @@ def draw_menu():
         hovered: bool = rect.collidepoint(pygame.mouse.get_pos())
         draw_button(screen, rect, menu_items[i], hovered)
 
+    if play_options_open:
+        overlay = pygame.Surface((800, 600), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        screen.blit(overlay, (0, 0))
+
+        title_surf = font.render("Choisir le mode de jeu", True, (255, 255, 255))
+        screen.blit(title_surf, (400 - title_surf.get_width() // 2, 150))
+
+        for i, rect in enumerate(play_option_rects):
+            hovered = rect.collidepoint(pygame.mouse.get_pos())
+            draw_button(screen, rect, play_modes[i], hovered)
+
     info_font = pygame.font.Font(Config.get_assets(key="font"), 12)
     info_text = info_font.render("Presque pas Minecraft 1.16", True, (220, 220, 220))
     screen.blit(info_text, (20, 580))
@@ -133,24 +151,40 @@ def handle_click(pos: Tuple[int]):
     """
     Handle click on the main menu.
     """
-    global selected, credits_open, screen
+    # ajouter play_options_open ici pour éviter UnboundLocalError
+    global selected, credits_open, screen, play_options_open
 
     if credits_open:
         credits_open = False
+        return True
+
+    # Si le sous-menu Play est ouvert, gérer ses clics
+    if play_options_open:
+        # clic sur une option de jeu
+        for i, rect in enumerate(play_option_rects):
+            if rect.collidepoint(pos):
+                chosen = play_modes[i]
+                if chosen == play_modes[0]:  # Joueur vs IA
+                    return_to_menu = game_manager.main(screen, ia_mode="jcia")
+                else:  # IA vs IA
+                    return_to_menu = game_manager.main(screen, ia_mode="iacia")
+
+                play_options_open = False
+                if return_to_menu:
+                    screen = pygame.display.set_mode((800, 600))
+                    return True
+                return False
+        # clic hors des options ferme le sous-menu
+        play_options_open = False
         return True
 
     for i, rect in enumerate(button_rects):
         if rect.collidepoint(pos):
             selected = i
             if menu_items[selected] == menu_items[0]:  # Play
-                print("Play")
-                return_to_menu = game_manager.main(screen)
-                # If returned True, player quit to menu, so stay in menu loop
-                if return_to_menu:
-                    # Reset screen to menu size
-                    screen = pygame.display.set_mode((800, 600))
-                    return True
-                return False
+                # ouvrir le sous-menu Play au lieu de lancer directement
+                play_options_open = True
+                return True
             elif menu_items[selected] == menu_items[1]:  # Options ou Crédits
                 print("Credits opened")
                 credits_open = True
