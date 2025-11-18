@@ -148,7 +148,7 @@ class RenderSystem(IteratingProcessor):
         Draws the game map on the screen using the provided sprites for each terrain type.
         """
         self.screen.fill((67, 37, 36))
-        tile_size: int = get_config().get(ConfigKey.TILE_SIZE, 32)
+        tile_size: int = get_config().get("tile_size", 32)
 
         for y in range(len(self.map)):
             for x in range(len(self.map[y])):
@@ -301,7 +301,7 @@ class RenderSystem(IteratingProcessor):
             color (_type_): Color of the diamond.
         """
         x: int = position.x
-        y: int = position.y - get_config().get(ConfigKey.TILE_SIZE) // 2
+        y: int = position.y - get_config().get("tile_size") // 2
 
         diamond_points: list[tuple[int]] = [
             (x, y - 10),  # Top
@@ -326,7 +326,7 @@ class RenderSystem(IteratingProcessor):
         if not health or health.full <= 0:
             return
 
-        tile_size = get_config().get(ConfigKey.TILE_SIZE)
+        tile_size = get_config().get("tile_size")
 
         bar_width: int = tile_size - tile_size // 2
         bar_height: int = 4
