@@ -1997,72 +1997,65 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         Returns:
             bool: True if path is safe, False if blocked by obstacles
         """
+        # Prefer using the shared pathfinding terrain map (more reliable)
         try:
-            # Get map entities directly from esper
-            map_entities = list(esper.get_components(Map))
+            terrain_map = None
+            pf = getattr(self, "pathfinding_system", None)
+            if pf and hasattr(pf, "terrain_map") and pf.terrain_map:
+                terrain_map = pf.terrain_map
+                map_w = getattr(pf, "map_width", None)
+                map_h = getattr(pf, "map_height", None)
+            else:
+                # Fallback to local cached copy
+                terrain_map = getattr(self, "terrain_map", None)
+                map_w = None
+                map_h = None
 
-            for map_entity, map_comp in map_entities:
-                # IMPORTANT: esper returns a list containing the Map object!
-                # We need to access the first element if it's a list
-                if isinstance(map_comp, list) and len(map_comp) > 0:
-                    actual_map = map_comp[0]  # Get the actual Map object
-                elif isinstance(map_comp, Map):
-                    actual_map = map_comp
-                else:
-                    continue
+            CELL_SIZE = 32
+            start_x = int(current_pos.x // CELL_SIZE)
+            start_y = int(current_pos.y // CELL_SIZE)
+            end_x = int(destination.x // CELL_SIZE)
+            end_y = int(destination.y // CELL_SIZE)
 
-                # Now we should have the actual Map object
-                if not hasattr(actual_map, "tab") or not actual_map.tab:
-                    continue
+            # Bresenham line algorithm on grid coordinates
+            dx = abs(end_x - start_x)
+            dy = abs(end_y - start_y)
+            x = start_x
+            y = start_y
+            x_inc = 1 if start_x < end_x else -1
+            y_inc = 1 if start_y < end_y else -1
+            error = dx - dy
 
-                terrain = actual_map.tab
-
-                # Convert world positions to grid coordinates
-                CELL_SIZE = 32  # From config.yaml
-                start_x = int(current_pos.x // CELL_SIZE)
-                start_y = int(current_pos.y // CELL_SIZE)
-                end_x = int(destination.x // CELL_SIZE)
-                end_y = int(destination.y // CELL_SIZE)
-
-                # Simple line check between start and end
-                dx = abs(end_x - start_x)
-                dy = abs(end_y - start_y)
-                x, y = start_x, start_y
-                x_inc = 1 if start_x < end_x else -1
-                y_inc = 1 if start_y < end_y else -1
-                error = dx - dy
-
-                while True:
-                    # Check bounds
-                    if x < 0 or x >= len(terrain[0]) or y < 0 or y >= len(terrain):
+            # Step through the line and check terrain at each tile
+            while True:
+                # Bounds check if map dimensions are known
+                if map_w is not None and map_h is not None:
+                    if x < 0 or x >= map_w or y < 0 or y >= map_h:
                         break
 
-                    # Check if current tile is lava
-                    from enums.case_type import CaseType
+                terrain = "WALKABLE"
+                if terrain_map is not None:
+                    terrain = terrain_map.get((x, y), "WALKABLE")
 
-                    case = terrain[y][x]  # Get the Case object
-                    case_type = case.getType() if hasattr(case, "getType") else case
+                if terrain == "LAVA":
+                    return False
 
-                    if case_type == CaseType.LAVA:
-                        return False
+                if x == end_x and y == end_y:
+                    break
 
-                    if x == end_x and y == end_y:
-                        break
+                e2 = 2 * error
+                if e2 > -dy:
+                    error -= dy
+                    x += x_inc
+                if e2 < dx:
+                    error += dx
+                    y += y_inc
 
-                    e2 = 2 * error
-                    if e2 > -dy:
-                        error -= dy
-                        x += x_inc
-                    if e2 < dx:
-                        error += dx
-                        y += y_inc
-
-                return True
-
+            # No lava found along the straight line
+            return True
         except Exception:
-            pass
-
-        return True
+            # If anything goes wrong, be conservative and request A*
+            return False
 
     def _smart_move_to(self, ent, current_pos, destination):
         """Enhanced movement with pathfinding when obstacles are detected.
