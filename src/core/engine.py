@@ -4,23 +4,17 @@ import esper
 import os
 
 from core.data_bus import DATA_BUS
-from core.services import Services
 from core.accessors import (
     get_camera,
     get_config,
-    get_debugger,
-    get_entity,
     get_event_bus,
+    get_notification_manager,
     get_player_manager,
 )
-from config import units
-from core.debugger import Debugger
 from core.game.camera import CAMERA
-from components.gameplay.effects import OnTerrain
-from components.base.team import Team
+from core.game.timer import Timer
 from enums.config_key import ConfigKey
 from enums.data_bus_key import DataBusKey
-from enums.entity.entity_type import EntityType
 from events.loading_events import (
     LoadingProgressEvent,
     LoadingStartEvent,
@@ -55,7 +49,7 @@ from core.config import Config
 from systems.input.input_router_system import InputRouterSystem
 from systems.quit_system import QuitSystem
 from systems.input.camera_system import CameraSystem
-from systems.rendering.hud_system import HudSystem
+from ui.hud_manager import HudManager
 from systems.victory_system import VictorySystem
 from systems.combat.arrow_system import ArrowSystem
 from systems.scpr_ai_system import SCPRAISystem
@@ -64,6 +58,7 @@ from systems.scpr_ai_system import SCPRAISystem
 from systems.debug_system import DebugRenderSystem
 from systems.debug_event_handler import DebugEventHandler
 from ui.loading import LoadingUISystem
+from ui.notification_manager import NotificationManager
 from ui.pause_menu import PauseMenuSystem
 from events.pause_events import QuitToMenuEvent
 
@@ -120,20 +115,12 @@ def main(screen: pygame.Surface, map_size=24):
     esper.clear_database()
     esper.clear_cache()
 
-    # Reset Services (important for timer and other global state)
-    Services.start_time = pygame.time.get_ticks()
-    Services.finish_time = None
-
-    # Clear DATA_BUS entries that need to be fresh
-    from enums.data_bus_key import DataBusKey
-
     # Remove old game state from DATA_BUS
-    if DATA_BUS.has(DataBusKey.MAP):
-        del DATA_BUS._store[DataBusKey.MAP]
-    if DATA_BUS.has(DataBusKey.PLAYER_MANAGER):
-        del DATA_BUS._store[DataBusKey.PLAYER_MANAGER]
-    if DATA_BUS.has(DataBusKey.PLAYER_MOVEMENT_SYSTEM):
-        del DATA_BUS._store[DataBusKey.PLAYER_MOVEMENT_SYSTEM]
+    DATA_BUS.remove(DataBusKey.PLAYED_TIME)
+    DATA_BUS.remove(DataBusKey.MAP)
+    DATA_BUS.remove(DataBusKey.PLAYER_MANAGER)
+    DATA_BUS.remove(DataBusKey.NOTIFICATION_MANAGER)
+    DATA_BUS.remove(DataBusKey.PLAYER_MOVEMENT_SYSTEM)
 
     win_w, win_h = 1200, 900
 
@@ -169,14 +156,12 @@ def main(screen: pygame.Surface, map_size=24):
     DATA_BUS.register(DataBusKey.MAP, map)
     DATA_BUS.register(DataBusKey.CAMERA, CAMERA)
 
-    # Charger les sprites
     update_loading(0.4, "Loading sprites...")
     tile_size: int = DATA_BUS.get(DataBusKey.CONFIG).get(ConfigKey.TILE_SIZE, 32)
     sprites = load_terrain_sprites(tile_size)
-    game_hud = HudSystem(screen)
+    game_hud = HudManager(screen)
 
-    # Créer les entités
-    update_loading(0.5, "Creating entities...")
+    update_loading(0.5, "Rendering map...")
     map_width, map_height = resize(screen, map_size, game_hud.hud.hud_width)
 
     from config.ai_mapping import IA_MAP
@@ -201,19 +186,18 @@ def main(screen: pygame.Surface, map_size=24):
 
     case_size = get_config().get(ConfigKey.TILE_SIZE, 32)
 
+    # Initialiser les joueurs
+    update_loading(0.6, "Initializing players...")
+
     player_manager = PlayerManager(
         [
             Position(case_size, case_size),
             Position(map_width - case_size * 1.5, map_height - case_size * 1.5),
-        ]
+        ],
+        [(255, 85, 85), (20, 180, 133)],
     )
 
     DATA_BUS.register(DataBusKey.PLAYER_MANAGER, player_manager)
-
-    # Initialiser les joueurs
-    update_loading(0.6, "Initializing players...")
-
-    from config.units import UNITS
 
     # Charger les systèmes principaux
     update_loading(0.75, "Loading systems...")
@@ -239,6 +223,7 @@ def main(screen: pygame.Surface, map_size=24):
     # Charger les systèmes de rendu
     update_loading(0.85, "Loading rendering systems...")
 
+    DATA_BUS.register(DataBusKey.NOTIFICATION_MANAGER, NotificationManager())
     input_manager = InputManager()
     render = RenderSystem(screen, map, sprites)
     victory_system = VictorySystem()
@@ -284,9 +269,11 @@ def main(screen: pygame.Surface, map_size=24):
     pygame.transform.set_smoothscale_backend("GENERIC")
 
     # Chargement terminé
-    update_loading(1.0, "Ready!")
+    update_loading(1.0, "Ready ! ")
     pygame.time.wait(500)  # Pause brève pour voir "Ready!"
     get_event_bus().emit(LoadingFinishEvent(success=True))
+
+    DATA_BUS.register(DataBusKey.PLAYED_TIME, Timer("game"))
 
     while game_state["running"]:
 
@@ -318,6 +305,7 @@ def main(screen: pygame.Surface, map_size=24):
             debug_render_system.process(dt)  # Debug après le rendu principal
             selection_system.draw_selections(screen)
             game_hud.draw(dt)
+            get_notification_manager().draw(screen)
 
         # Always draw pause menu on top
         pause_menu_system.process(dt)

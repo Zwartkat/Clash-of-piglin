@@ -11,9 +11,12 @@ if TYPE_CHECKING:
     from core.ecs.event_bus import EventBus
     from core.game.camera import Camera
     from core.game.map import Map
+    from core.game.timer import Timer
+
     from systems.world.player_move_system import PlayerMoveSystem
 
     from core.game.player_manager import PlayerManager
+    from ui.notification_manager import NotificationManager
 
 
 def get_config() -> "Config":
@@ -43,6 +46,11 @@ def get_player_manager() -> "PlayerManager":
     return cast("PlayerManager", instance)
 
 
+def get_notification_manager() -> "NotificationManager":
+    instance = DATA_BUS.get(DataBusKey.NOTIFICATION_MANAGER)
+    return cast("NotificationManager", instance)
+
+
 def get_entity(entity_type: EntityType) -> Entity:
     from config.units import UNITS
 
@@ -59,6 +67,10 @@ def get_map() -> "Map":
     return cast("Map", instance)
 
 
+def get_played_time() -> "Timer":
+    instance = DATA_BUS.get(DataBusKey.PLAYED_TIME)
+    return cast("Timer", instance)
+  
 def get_ai_mapping() -> "dict[EntityType,dict[str,str]]":
     instance = DATA_BUS.get(DataBusKey.IA_MAPPING)
     return cast("dict[EntityType,dict[str,str]]", instance)

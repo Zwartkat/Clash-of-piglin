@@ -3,8 +3,7 @@ import pygame
 from components.base.health import Health
 from components.base.team import Team
 from core import engine
-from core.accessors import get_event_bus, get_player_manager
-from core.services import Services
+from core.accessors import get_event_bus, get_played_time, get_player_manager
 from events.victory_event import VictoryEvent
 from events.death_event import DeathEvent
 from enums.entity.entity_type import EntityType
@@ -69,7 +68,7 @@ class VictorySystem(esper.Processor):
         self.game_ended = True
         victory_event = VictoryEvent(winning_team, losing_team)
         get_event_bus().emit(victory_event)
-        Services.finish_time = pygame.time.get_ticks()
+        get_played_time().pause()
 
     def process(self, dt: float):
         if not self.game_ended:

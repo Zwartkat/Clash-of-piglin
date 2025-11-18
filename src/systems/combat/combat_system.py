@@ -1,6 +1,7 @@
 # src/systems/combat_system.py
 import esper
 from components.ai_controller import AIController
+from components.gameplay.damage import Damage
 from core.accessors import get_event_bus
 from core.ecs.event_bus import EventBus
 from events.attack_event import AttackEvent
@@ -154,3 +155,6 @@ class CombatSystem(IteratingProcessor):
                 cost_amount = (esper.component_for_entity(target_id, Cost)).amount
 
             get_event_bus().emit(DeathEvent(team, target_id, cost_amount))
+        else:
+            if not esper.has_component(target_id, Damage):
+                esper.add_component(target_id, Damage(atk.attack_speed * 0.8))

@@ -7,7 +7,7 @@ from core.ecs.event_bus import EventBus
 from core.config import Config
 from enums.data_bus_key import DataBusKey
 
-DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enabled=False))
+DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enable_warn=True, enable_error=True))
 DATA_BUS.get_debugger().log("Démarrage du jeu")
 
 Config.load("config.yaml")

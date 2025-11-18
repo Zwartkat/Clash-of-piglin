@@ -23,7 +23,11 @@ class BruteAI(BaseAi):
                 ConditionNode(Action.DEFEND_BASE, 1), ActionNode(DefendBaseAction)
             ),
             Sequence(ConditionNode(Action.PROTECT, 1), ActionNode(ProtectAction)),
-            Sequence(ConditionNode(Action.RETREAT, 0.6), ActionNode(RetreatAction)),
+            Sequence(
+                ConditionNode(Action.RETREAT, 0.6),
+                ConditionNode(Action.ATTACK, 0.8, False),
+                ActionNode(RetreatAction),
+            ),
             Sequence(ConditionNode(Action.ATTACK, 0.5), ActionNode(AttackAction)),
             Sequence(ConditionNode(Action.GOAL, 0), ActionNode(TargetObjective)),
             # Must be unused
