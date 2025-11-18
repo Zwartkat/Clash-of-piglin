@@ -33,9 +33,11 @@ class AiSystem(IteratingProcessor):
             )
             return
 
-        if ai_key not in ["ADMA", "JEVA"]:
+        if ai_key not in ["ADMA", "JEVA", "MAPI"]:
             return
 
         self.world_perception.update()
-        ctrl.state.update(self.world_perception, dt)
-        ctrl.brain.decide()
+        if ctrl.state:
+            ctrl.state.update(self.world_perception, dt)
+        if ctrl.brain:
+            ctrl.brain.decide()

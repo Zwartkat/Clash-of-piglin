@@ -77,8 +77,8 @@ class RenderSystem(IteratingProcessor):
 
         if esper.has_component(ent, AIController):
             ctrl = esper.component_for_entity(ent, AIController)
-            state = ctrl.state
 
+            state = ctrl.state
             if not state.in_combat and sprite.current_animation == Animation.ATTACK:
                 self._set_animation(ent, Animation.IDLE)
 

@@ -3,8 +3,9 @@ import copy
 import esper
 
 from ai.ai_state import AiState
-from ai.brute import BruteAI
-from ai.ghast import JeromeGhast
+from ai.brute import BruteAI as ADMABrute
+from ai.ghast import JeromeGhast as JEVAGhast
+from ai.ia_ghast import MAPIGhast
 from components.base.cost import Cost
 from components.gameplay.effects import OnTerrain
 from components.base.position import Position
@@ -61,15 +62,18 @@ class UnitFactory:
 
         ai = mapping[entity_type][team.team_id]
 
-        if ai in ["ADMA", "JEVA"]:
+        if ai in ["ADMA", "JEVA", "MAPI"]:
             from components.ai_controller import AIController
 
             if ai == "ADMA":
                 state = AiState(ent)
-                esper.add_component(ent, AIController(ent, state, BruteAI(state)))
+                esper.add_component(ent, AIController(ent, state, ADMABrute(state)))
             elif ai == "JEVA":
                 state = AiState(ent)
-                esper.add_component(ent, AIController(ent, state, JeromeGhast(state)))
+                esper.add_component(ent, AIController(ent, state, JEVAGhast(state)))
+            elif ai == "MAPI":
+                state = AiState(ent)
+                esper.add_component(ent, AIController(ent, state, MAPIGhast(ent)))
         elif ai == "SCPR":
             from components.base.ai_flag import Ai_flag
 
