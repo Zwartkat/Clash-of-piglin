@@ -25,7 +25,7 @@ from events.spawn_unit_event import SpawnUnitEvent
 from systems.ai_system import AiSystem
 from systems.world.collision_system import CollisionSystem
 from systems.combat.combat_system import CombatSystem
-from systems.crossbowman_ai_system_enemy import CrossbowmanAISystemEnemy
+from systems.lova_ai_system import LOVAAiSystem
 from systems.pathfinding_system import PathfindingSystem
 from systems.death_event_handler import DeathEventHandler
 from systems.combat.combat_system import CombatSystem
@@ -52,6 +52,7 @@ from systems.input.camera_system import CameraSystem
 from ui.hud_manager import HudManager
 from systems.victory_system import VictorySystem
 from systems.combat.arrow_system import ArrowSystem
+from systems.scpr_ai_system import SCPRAISystem
 
 # Import debug systems
 from systems.debug_system import DebugRenderSystem
@@ -163,6 +164,10 @@ def main(screen: pygame.Surface, map_size=24):
     update_loading(0.5, "Rendering map...")
     map_width, map_height = resize(screen, map_size, game_hud.hud.hud_width)
 
+    from config.ai_mapping import IA_MAP
+
+    DATA_BUS.register(DataBusKey.IA_MAPPING, IA_MAP)
+
     for y in range(len(map.tab)):
         for x in range(len(map.tab[y])):
             tile_type = map.tab[y][x]
@@ -239,7 +244,8 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(InputRouterSystem())
     world.add_processor(victory_system)
 
-    world.add_processor(CrossbowmanAISystemEnemy(pathfinding_system))
+    world.add_processor(LOVAAiSystem(pathfinding_system))
+    world.add_processor(SCPRAISystem())
 
     # Pause menu system (needs reference to game_hud for timer pause)
     pause_menu_system = PauseMenuSystem(screen, font, game_hud)
@@ -271,7 +277,9 @@ def main(screen: pygame.Surface, map_size=24):
 
     while game_state["running"]:
 
-        dt = clock.tick(60) / 1000.0
+        clock.tick(60)
+
+        dt = min(clock.get_time() / 1000, dt)
 
         for event in pygame.event.get():
             # If paused, let pause menu handle events first

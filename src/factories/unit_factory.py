@@ -2,11 +2,15 @@ import copy
 
 import esper
 
+from ai.ai_state import AiState
+from ai.brute import BruteAI as ADMABrute
+from ai.ghast import JeromeGhast as JEVAGhast
+from ai.ia_ghast import MAPIGhast
 from components.base.cost import Cost
 from components.gameplay.effects import OnTerrain
 from components.base.position import Position
 from components.base.team import Team
-from core.accessors import get_debugger, get_entity
+from core.accessors import get_ai_mapping, get_debugger, get_entity
 from core.ecs.entity import Entity
 from enums.entity.entity_type import EntityType
 from events.spawn_unit_event import SpawnUnitEvent
@@ -45,12 +49,35 @@ class UnitFactory:
 
         ent: int = EntityFactory.create(*components)
 
-        if entity_type == EntityType.BRUTE:
-            from components.ai_controller import AIController
-
-            esper.add_component(ent, AIController(ent, entity_type))
+        UnitFactory._apply_ai(ent, entity_type, team)
 
         return ent
+
+    def _apply_ai(ent: int, entity_type: EntityType, team: Team):
+
+        mapping = get_ai_mapping()
+
+        if entity_type not in mapping or team.team_id not in mapping[entity_type]:
+            return
+
+        ai = mapping[entity_type][team.team_id]
+
+        if ai in ["ADMA", "JEVA", "MAPI"]:
+            from components.ai_controller import AIController
+
+            if ai == "ADMA":
+                state = AiState(ent)
+                esper.add_component(ent, AIController(ent, state, ADMABrute(state)))
+            elif ai == "JEVA":
+                state = AiState(ent)
+                esper.add_component(ent, AIController(ent, state, JEVAGhast(state)))
+            elif ai == "MAPI":
+                state = AiState(ent)
+                esper.add_component(ent, AIController(ent, state, MAPIGhast(ent)))
+        elif ai == "SCPR":
+            from components.base.ai_flag import Ai_flag
+
+            esper.add_component(ent, Ai_flag())
 
     @staticmethod
     def create_unit_event(event: SpawnUnitEvent):

@@ -7,6 +7,7 @@ from core.ecs.event_bus import EventBus
 from events.attack_event import AttackEvent
 from events.death_event import DeathEvent
 from events.arrow_fired_event import ArrowFiredEvent
+from events.fireball_fired_event import FireballFiredEvent
 from components.base.team import Team
 from components.gameplay.attack import Attack
 from components.base.health import Health
@@ -81,7 +82,12 @@ class CombatSystem(IteratingProcessor):
         """
         self.frame_count += 1
 
-        if esper.has_component(ent, AIController):
+        components = esper.components_for_entity(ent)
+
+        if (
+            esper.has_component(ent, AIController)
+            and EntityType.GHAST not in components
+        ):
             return
 
         if not target.target_entity_id:
@@ -101,13 +107,17 @@ class CombatSystem(IteratingProcessor):
             )
 
             # Fire arrow if attacker is a Crossbowman
-            components = esper.components_for_entity(ent)
             for component in components:
                 if (
                     isinstance(component, EntityType)
                     and component == EntityType.CROSSBOWMAN
                 ):
                     get_event_bus().emit(ArrowFiredEvent(ent, pos, target_pos))
+                    break
+
+                # Fire fireball if attacker is a Ghast
+                if isinstance(component, EntityType) and component == EntityType.GHAST:
+                    get_event_bus().emit(FireballFiredEvent(ent, pos, target_pos))
                     break
 
             # Apply damage to target

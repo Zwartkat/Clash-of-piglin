@@ -21,6 +21,7 @@ import esper
 from components.ai import AIMemory, AIState, AIStateType, PathRequest
 from components.gameplay.attack import Attack
 from components.base.health import Health
+from core.accessors import get_ai_mapping
 from core.game.map import Map
 from components.base.position import Position
 from components.gameplay.target import Target
@@ -39,7 +40,7 @@ from systems.ai_helpers import (
 )
 
 
-class CrossbowmanAISystemEnemy(esper.Processor):
+class LOVAAiSystem(esper.Processor):
     """Processor that implements tactical behaviour for enemy crossbowmen.
 
     The processor is responsible for evaluating the local battlefield and
@@ -69,6 +70,8 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         self.target_prioritizer = TargetPrioritizer(self)
         self.movement_controller = MovementController(self)
 
+        self.ai_mapping = get_ai_mapping()
+
     def process(self, dt):
         """Run AI update for all enemy crossbowmen.
 
@@ -88,9 +91,8 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         for ent, (team, entity_type, pos, attack, health) in esper.get_components(
             Team, EntityType, Position, Attack, Health
         ):
-            if (
-                entity_type == EntityType.CROSSBOWMAN and team.team_id == 2
-            ):  # Enemy team
+
+            if self._is_lova_ai(entity_type, team.team_id):  # Enemy team
                 # Add AI components if missing
                 if not esper.has_component(ent, AIState):
                     esper.add_component(ent, AIState())
@@ -120,11 +122,32 @@ class CrossbowmanAISystemEnemy(esper.Processor):
             health,
             ai_state,
         ) in esper.get_components(Team, EntityType, Position, Attack, Health, AIState):
-            if team.team_id != 2 or entity_type != EntityType.CROSSBOWMAN:
+            if not self._is_lova_ai(entity_type, team.team_id):
                 continue
 
             # Smart AI logic with pathfinding
             self._smart_ai_behavior(ent, pos, attack, team.team_id)
+
+    def _is_lova_ai(self, entity_type: EntityType, team_id: int) -> bool:
+        """
+        Check if entity have a LOVA AI
+        Args:
+            entity_type (_type_): Entity type of entity
+            team_id (_type_): Team id of entity
+
+        Returns:
+            bool : True if there is a LOVA Ai else False
+        """
+
+        availables_ai = self.ai_mapping[entity_type]
+        if not availables_ai:
+            return False
+
+        ai = availables_ai[team_id]
+
+        if not ai == "LOVA":
+            return False
+        return True
 
     def _smart_ai_behavior(self, ent, pos, attack, team_id):
         """Top-level decision flow for a single crossbowman.
@@ -1997,72 +2020,65 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         Returns:
             bool: True if path is safe, False if blocked by obstacles
         """
+        # Prefer using the shared pathfinding terrain map (more reliable)
         try:
-            # Get map entities directly from esper
-            map_entities = list(esper.get_components(Map))
+            terrain_map = None
+            pf = getattr(self, "pathfinding_system", None)
+            if pf and hasattr(pf, "terrain_map") and pf.terrain_map:
+                terrain_map = pf.terrain_map
+                map_w = getattr(pf, "map_width", None)
+                map_h = getattr(pf, "map_height", None)
+            else:
+                # Fallback to local cached copy
+                terrain_map = getattr(self, "terrain_map", None)
+                map_w = None
+                map_h = None
 
-            for map_entity, map_comp in map_entities:
-                # IMPORTANT: esper returns a list containing the Map object!
-                # We need to access the first element if it's a list
-                if isinstance(map_comp, list) and len(map_comp) > 0:
-                    actual_map = map_comp[0]  # Get the actual Map object
-                elif isinstance(map_comp, Map):
-                    actual_map = map_comp
-                else:
-                    continue
+            CELL_SIZE = 32
+            start_x = int(current_pos.x // CELL_SIZE)
+            start_y = int(current_pos.y // CELL_SIZE)
+            end_x = int(destination.x // CELL_SIZE)
+            end_y = int(destination.y // CELL_SIZE)
 
-                # Now we should have the actual Map object
-                if not hasattr(actual_map, "tab") or not actual_map.tab:
-                    continue
+            # Bresenham line algorithm on grid coordinates
+            dx = abs(end_x - start_x)
+            dy = abs(end_y - start_y)
+            x = start_x
+            y = start_y
+            x_inc = 1 if start_x < end_x else -1
+            y_inc = 1 if start_y < end_y else -1
+            error = dx - dy
 
-                terrain = actual_map.tab
-
-                # Convert world positions to grid coordinates
-                CELL_SIZE = 32  # From config.yaml
-                start_x = int(current_pos.x // CELL_SIZE)
-                start_y = int(current_pos.y // CELL_SIZE)
-                end_x = int(destination.x // CELL_SIZE)
-                end_y = int(destination.y // CELL_SIZE)
-
-                # Simple line check between start and end
-                dx = abs(end_x - start_x)
-                dy = abs(end_y - start_y)
-                x, y = start_x, start_y
-                x_inc = 1 if start_x < end_x else -1
-                y_inc = 1 if start_y < end_y else -1
-                error = dx - dy
-
-                while True:
-                    # Check bounds
-                    if x < 0 or x >= len(terrain[0]) or y < 0 or y >= len(terrain):
+            # Step through the line and check terrain at each tile
+            while True:
+                # Bounds check if map dimensions are known
+                if map_w is not None and map_h is not None:
+                    if x < 0 or x >= map_w or y < 0 or y >= map_h:
                         break
 
-                    # Check if current tile is lava
-                    from enums.case_type import CaseType
+                terrain = "WALKABLE"
+                if terrain_map is not None:
+                    terrain = terrain_map.get((x, y), "WALKABLE")
 
-                    case = terrain[y][x]  # Get the Case object
-                    case_type = case.getType() if hasattr(case, "getType") else case
+                if terrain == "LAVA":
+                    return False
 
-                    if case_type == CaseType.LAVA:
-                        return False
+                if x == end_x and y == end_y:
+                    break
 
-                    if x == end_x and y == end_y:
-                        break
+                e2 = 2 * error
+                if e2 > -dy:
+                    error -= dy
+                    x += x_inc
+                if e2 < dx:
+                    error += dx
+                    y += y_inc
 
-                    e2 = 2 * error
-                    if e2 > -dy:
-                        error -= dy
-                        x += x_inc
-                    if e2 < dx:
-                        error += dx
-                        y += y_inc
-
-                return True
-
+            # No lava found along the straight line
+            return True
         except Exception:
-            pass
-
-        return True
+            # If anything goes wrong, be conservative and request A*
+            return False
 
     def _smart_move_to(self, ent, current_pos, destination):
         """Enhanced movement with pathfinding when obstacles are detected.
