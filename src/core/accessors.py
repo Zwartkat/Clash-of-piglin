@@ -57,3 +57,8 @@ def get_player_move_system() -> "PlayerMoveSystem":
 def get_map() -> "Map":
     instance = DATA_BUS.get(DataBusKey.MAP)
     return cast("Map", instance)
+
+
+def get_ai_mapping() -> "dict[EntityType,dict[str,str]]":
+    instance = DATA_BUS.get(DataBusKey.IA_MAPPING)
+    return cast("dict[EntityType,dict[str,str]]", instance)

@@ -83,7 +83,10 @@ class CombatSystem(IteratingProcessor):
 
         components = esper.components_for_entity(ent)
 
-        if esper.has_component(ent, AIController) and EntityType.GHAST not in components:
+        if (
+            esper.has_component(ent, AIController)
+            and EntityType.GHAST not in components
+        ):
             return
 
         if not target.target_entity_id:
@@ -112,10 +115,7 @@ class CombatSystem(IteratingProcessor):
                     break
 
                 # Fire fireball if attacker is a Ghast
-                if (
-                    isinstance(component, EntityType)
-                    and component == EntityType.GHAST
-                ):
+                if isinstance(component, EntityType) and component == EntityType.GHAST:
                     get_event_bus().emit(FireballFiredEvent(ent, pos, target_pos))
                     break
 

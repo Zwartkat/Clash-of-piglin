@@ -7,48 +7,57 @@ from components.gameplay.attack import Attack
 from enums.entity.entity_type import EntityType
 from ai.ai_state import AiState, Action
 
+
 class JeromeGhast:
     """
-        AI controller for a Ghast unit named 'JeromeGhast'.
-        
-        The AI alternates between ATTACK and PROTECT actions based on proximity
-        to the enemy base and enemy crossbowmen threats.
+    AI controller for a Ghast unit named 'JeromeGhast'.
+
+    The AI alternates between ATTACK and PROTECT actions based on proximity
+    to the enemy base and enemy crossbowmen threats.
     """
 
     def __init__(self, state: AiState):
         """
-            Initialize the JeromeGhast AI.
-            
-            Args:
-                state (AiState): The AI state containing entity info, position, attack, etc.
+        Initialize the JeromeGhast AI.
+
+        Args:
+            state (AiState): The AI state containing entity info, position, attack, etc.
         """
 
         self.action = Action.ATTACK  # Initial action is ATTACK
         self.state = state
 
-
     def decide(self):
         """
-            Determine the next action and update the unit's position.
-            
-            Behavior:
-            - ATTACK: Move towards enemy base while avoiding crossbowmen threats.
-            - PROTECT: Position defensively near allied units to protect against enemy crossbowmen.
+        Determine the next action and update the unit's position.
+
+        Behavior:
+        - ATTACK: Move towards enemy base while avoiding crossbowmen threats.
+        - PROTECT: Position defensively near allied units to protect against enemy crossbowmen.
         """
 
         # Get useful data
         team = self.state.team.team_id
-        team_adverse = 1 if team == 2 else 2  
+        team_adverse = 1 if team == 2 else 2
         velocity = esper.component_for_entity(self.state.entity, Velocity)
         portee = self.state.atk.range  # Attack range
         entities = esper.get_components(EntityType, Team, Position)
-        crossbowmen = list(filter(lambda x: x[1][0] == EntityType.CROSSBOWMAN and x[1][1].team_id == team_adverse, entities))
+        crossbowmen = list(
+            filter(
+                lambda x: x[1][0] == EntityType.CROSSBOWMAN
+                and x[1][1].team_id == team_adverse,
+                entities,
+            )
+        )
 
         x, y = self.state.pos.getX(), self.state.pos.getY()  # Current position
 
         if self.action == Action.ATTACK:
             # Vector to enemy base
-            dx_bastion, dy_bastion = self.state.enemy_base_pos.getX() - x, self.state.enemy_base_pos.getY() - y
+            dx_bastion, dy_bastion = (
+                self.state.enemy_base_pos.getX() - x,
+                self.state.enemy_base_pos.getY() - y,
+            )
 
             dist_bastion = math.sqrt(dx_bastion**2 + dy_bastion**2)
 
@@ -61,7 +70,9 @@ class JeromeGhast:
 
             for crossbowman in crossbowmen:
                 pos_crossbow = crossbowman[1][2]
-                range_crossbow = esper.component_for_entity(crossbowman[0], Attack).range
+                range_crossbow = esper.component_for_entity(
+                    crossbowman[0], Attack
+                ).range
                 cx, cy = pos_crossbow.getX(), pos_crossbow.getY()
 
                 dx_crossbow, dy_crossbow = cx - x, cy - y
@@ -77,10 +88,10 @@ class JeromeGhast:
             # Stop moving if no threat and in range
             if repulse_x == 0 and repulse_y == 0 and dist_bastion < portee:
                 return
-            
+
             # Scale repulsion to flee more strongly
             repulse_force = 3
-            
+
             final_dx = dir_x + repulse_x * repulse_force
             final_dy = dir_y + repulse_y * repulse_force
 
@@ -88,7 +99,7 @@ class JeromeGhast:
 
             if length == 0:
                 return
-            
+
             # Normalize
             final_dx /= length
             final_dy /= length
@@ -106,13 +117,22 @@ class JeromeGhast:
             self.state.pos.setX(x)
             self.state.pos.setY(y)
 
-
-
         elif self.action == Action.PROTECT:
 
             # Only consider crossbowmen
-            enemies = list(filter(lambda x: x[1][1].team_id == team_adverse and x[1][0] == EntityType.CROSSBOWMAN, entities))
-            allies = list(filter(lambda x: x[1][1].team_id == team and x[0] != self.state.entity, entities))
+            enemies = list(
+                filter(
+                    lambda x: x[1][1].team_id == team_adverse
+                    and x[1][0] == EntityType.CROSSBOWMAN,
+                    entities,
+                )
+            )
+            allies = list(
+                filter(
+                    lambda x: x[1][1].team_id == team and x[0] != self.state.entity,
+                    entities,
+                )
+            )
 
             crossbow_in_bastion_range = False
             for enemy in enemies:
@@ -121,7 +141,7 @@ class JeromeGhast:
                 dy = enemy_pos.getY() - self.state.enemy_base_pos.getY()
                 dist = math.sqrt(dx**2 + dy**2)
                 range_enemy = esper.component_for_entity(enemy[0], Attack).range
-                
+
                 if dist <= range_enemy * 2:
                     crossbow_in_bastion_range = True
                     break
@@ -136,18 +156,26 @@ class JeromeGhast:
             for allie in allies:
                 pos_allie = allie[1][2]
                 ax, ay = pos_allie.getX(), pos_allie.getY()
-                dist_allie = math.sqrt((ax - x)**2 + (ay - y)**2)
+                dist_allie = math.sqrt((ax - x) ** 2 + (ay - y) ** 2)
 
                 if dist_allie < dist_min:
                     dist_min = dist_allie
                     pos_allie_proche = pos_allie
-            
+
             dist_enemy_min = 999999
 
             for enemy in enemies:
                 enemy_pos = enemy[1][2]
                 ex, ey = enemy_pos.getX(), enemy_pos.getY()
-                dist_enemy = math.sqrt((ex - pos_allie_proche.getX())**2 + (ey - pos_allie_proche.getY())**2)
+                ##### TO DEBUG
+
+                #                    dist_enemy = math.sqrt((ex - pos_allie_proche.getX())**2 + (ey - pos_allie_proche.getY())**2)
+                #                                 ^^^^^^^^^^^^^^^^
+                # UnboundLocalError: cannot access local variable 'pos_allie_proche' where it is not associated with a value
+                dist_enemy = math.sqrt(
+                    (ex - pos_allie_proche.getX()) ** 2
+                    + (ey - pos_allie_proche.getY()) ** 2
+                )
 
                 if dist_enemy < dist_enemy_min:
                     dist_enemy_min = dist_enemy
@@ -158,7 +186,7 @@ class JeromeGhast:
 
             dx, dy = ex - ax, ey - ay
             dist = math.sqrt(dx**2 + dy**2)
-            
+
             # Normalize
             dir_x = dx / dist
             dir_y = dy / dist
@@ -176,7 +204,7 @@ class JeromeGhast:
             # Already close enough
             if dist_move <= velocity.speed:
                 return
-            
+
             move_dx /= dist_move
             move_dy /= dist_move
 

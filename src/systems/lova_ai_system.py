@@ -21,6 +21,7 @@ import esper
 from components.ai import AIMemory, AIState, AIStateType, PathRequest
 from components.gameplay.attack import Attack
 from components.base.health import Health
+from core.accessors import get_ai_mapping
 from core.game.map import Map
 from components.base.position import Position
 from components.gameplay.target import Target
@@ -39,7 +40,7 @@ from systems.ai_helpers import (
 )
 
 
-class CrossbowmanAISystemEnemy(esper.Processor):
+class LOVAAiSystem(esper.Processor):
     """Processor that implements tactical behaviour for enemy crossbowmen.
 
     The processor is responsible for evaluating the local battlefield and
@@ -69,6 +70,8 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         self.target_prioritizer = TargetPrioritizer(self)
         self.movement_controller = MovementController(self)
 
+        self.ai_mapping = get_ai_mapping()
+
     def process(self, dt):
         """Run AI update for all enemy crossbowmen.
 
@@ -88,9 +91,8 @@ class CrossbowmanAISystemEnemy(esper.Processor):
         for ent, (team, entity_type, pos, attack, health) in esper.get_components(
             Team, EntityType, Position, Attack, Health
         ):
-            if (
-                entity_type == EntityType.CROSSBOWMAN and team.team_id == 2
-            ):  # Enemy team
+
+            if self._is_lova_ai(entity_type, team.team_id):  # Enemy team
                 # Add AI components if missing
                 if not esper.has_component(ent, AIState):
                     esper.add_component(ent, AIState())
@@ -120,11 +122,32 @@ class CrossbowmanAISystemEnemy(esper.Processor):
             health,
             ai_state,
         ) in esper.get_components(Team, EntityType, Position, Attack, Health, AIState):
-            if team.team_id != 2 or entity_type != EntityType.CROSSBOWMAN:
+            if not self._is_lova_ai(entity_type, team.team_id):
                 continue
 
             # Smart AI logic with pathfinding
             self._smart_ai_behavior(ent, pos, attack, team.team_id)
+
+    def _is_lova_ai(self, entity_type: EntityType, team_id: int) -> bool:
+        """
+        Check if entity have a LOVA AI
+        Args:
+            entity_type (_type_): Entity type of entity
+            team_id (_type_): Team id of entity
+
+        Returns:
+            bool : True if there is a LOVA Ai else False
+        """
+
+        availables_ai = self.ai_mapping[entity_type]
+        if not availables_ai:
+            return False
+
+        ai = availables_ai[team_id]
+
+        if not ai == "LOVA":
+            return False
+        return True
 
     def _smart_ai_behavior(self, ent, pos, attack, team_id):
         """Top-level decision flow for a single crossbowman.
