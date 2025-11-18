@@ -53,6 +53,7 @@ from factories.unit_factory import UnitFactory
 from core.input.input_manager import InputManager
 from enums.case_type import CaseType
 from core.config import Config
+import core.options as option
 from systems.input.input_router_system import InputRouterSystem
 from systems.quit_system import QuitSystem
 from systems.input.camera_system import CameraSystem
@@ -136,9 +137,7 @@ def main(screen: pygame.Surface, map_size=24):
     if DATA_BUS.has(DataBusKey.PLAYER_MOVEMENT_SYSTEM):
         del DATA_BUS._store[DataBusKey.PLAYER_MOVEMENT_SYSTEM]
 
-    win_w, win_h = 1200, 900
-
-    screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
+    screen = pygame.display.set_mode(option.current_resolution, pygame.RESIZABLE)
 
     clock = pygame.time.Clock()
 
