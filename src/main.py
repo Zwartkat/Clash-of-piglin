@@ -43,7 +43,7 @@ selected = 0
 play_options_open = False
 play_modes = ["Joueur vs IA", "IA vs IA"]
 play_option_rects = [
-    pygame.Rect(300, 250 + i * 50, 200, 30) for i in range(len(play_modes))
+    pygame.Rect(250, 250 + i * 100, 300, 60) for i in range(len(play_modes))
 ]
 
 credits_open = False
