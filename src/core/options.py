@@ -3,12 +3,11 @@
 
 import pygame
 
-options_buttons = ["Resolution", "Fullscreen", "Volume", "IA Joueur", "Back"]
+options_buttons = ["Resolution", "Fullscreen", "Volume", "Sound", "IA Joueur", "Back"]
 
 current_resolution = (1280, 720)
 flags = 0
 fullscreen = False
-# volume 0.0 - 1.0
 current_volume = 0.8
 
 
@@ -96,6 +95,8 @@ def main():
                 text += f": {'On' if fullscreen else 'Off'}"
             elif button == "Volume":
                 text += f": {int(current_volume * 100)}%"
+            elif button == "Sound":
+                text += f": {'On' if current_volume > 0 else 'Off'}"
 
             rendered_text = font.render(text, True, color)
             screen.blit(rendered_text, (50, 50 + i * 50))
@@ -142,13 +143,27 @@ def main():
                         flags = pygame.FULLSCREEN if fullscreen else 0
                         screen = pygame.display.set_mode(current_resolution, flags)
                         pygame.display.flip()
+
                     elif options_buttons[selected] == "Fullscreen":
                         fullscreen = not fullscreen
                         flags = pygame.FULLSCREEN if fullscreen else 0
                         screen = pygame.display.set_mode(current_resolution, flags)
                         pygame.display.flip()
+
+                    elif options_buttons[selected] == "Sound":
+                        if current_volume > 0:
+                            current_volume = 0.0
+                        else:
+                            current_volume = 0.5
+                        try:
+                            pygame.mixer.music.set_volume(current_volume)
+                        except Exception:
+                            pass
+                        pygame.display.flip()
+
                     elif options_buttons[selected] == "Back":
                         return True, current_resolution, flags
+
                 elif event.key == pygame.K_RIGHT:
                     # if volume selected, increase
                     if selected == vol_index:
@@ -219,6 +234,5 @@ def main():
                     pygame.mixer.music.set_volume(current_volume)
                 except Exception:
                     pass
-
     # fallback
     return True, current_resolution, flags

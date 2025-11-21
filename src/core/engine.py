@@ -137,7 +137,9 @@ def main(screen: pygame.Surface, map_size=24):
     if DATA_BUS.has(DataBusKey.PLAYER_MOVEMENT_SYSTEM):
         del DATA_BUS._store[DataBusKey.PLAYER_MOVEMENT_SYSTEM]
 
-    screen = pygame.display.set_mode(option.current_resolution, pygame.RESIZABLE)
+    screen = pygame.display.set_mode(
+        option.current_resolution, option.flags | pygame.RESIZABLE
+    )
 
     clock = pygame.time.Clock()
 

@@ -40,7 +40,7 @@ menu_items = Config.get(key="menu_buttons")
 selected = 0
 
 pygame.mixer.music.load("assets/audio/pigstep.mp3")
-pygame.mixer.music.set_volume(1)
+pygame.mixer.music.set_volume(0.5)
 pygame.mixer.music.play(-1)
 
 credits_open = False
