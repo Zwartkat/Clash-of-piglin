@@ -9,6 +9,8 @@ from core.debugger import Debugger
 from core.ecs.event_bus import EventBus
 from core.config import Config
 from enums.data_bus_key import DataBusKey
+import core.engine as game_manager
+import core.options as option
 
 DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enabled=False))
 DATA_BUS.get_debugger().log("Démarrage du jeu")
@@ -18,14 +20,11 @@ Config.load("config.yaml")
 DATA_BUS.register(DataBusKey.CONFIG, Config)
 DATA_BUS.register(DataBusKey.EVENT_BUS, EventBus.get_event_bus())
 
-import core.engine as game_manager
-import core.options as option
-
 
 pygame.init()
 pygame.display.set_caption(Config.get(key="game_name"))
 
-screen = pygame.display.set_mode(option.current_resolution)
+screen = pygame.display.set_mode(option.current_resolution, option.flags)
 
 font = pygame.font.Font(Config.get_assets(key="font"), 18)
 
@@ -40,9 +39,9 @@ pygame.display.set_icon(logo)
 menu_items = Config.get(key="menu_buttons")
 selected = 0
 
-# pygame.mixer.music.load("assets/audio/pigstep.mp3")
-# pygame.mixer.music.set_volume(1)
-# pygame.mixer.music.play(-1)
+pygame.mixer.music.load("assets/audio/pigstep.mp3")
+pygame.mixer.music.set_volume(1)
+pygame.mixer.music.play(-1)
 
 credits_open = False
 credits_text = [
@@ -198,7 +197,9 @@ def handle_click(pos: Tuple[int]):
                 print("Play")
                 return_to_menu = game_manager.main(screen)
                 if return_to_menu:
-                    screen = pygame.display.set_mode(option.current_resolution)
+                    screen = pygame.display.set_mode(
+                        option.current_resolution, option.flags
+                    )
                     apply_display_settings()
                     return True
                 return False
@@ -210,7 +211,9 @@ def handle_click(pos: Tuple[int]):
                 option_open = True
                 return_to_menu = option.main()
                 if return_to_menu:
-                    screen = pygame.display.set_mode(option.current_resolution)
+                    screen = pygame.display.set_mode(
+                        option.current_resolution, option.flags
+                    )
                     apply_display_settings()
                     return True
             elif menu_items[selected] == menu_items[3]:  # Quit
