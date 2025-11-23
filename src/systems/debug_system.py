@@ -72,9 +72,9 @@ class DebugRenderSystem(esper.Processor):
 
         if should_refresh_paths:
             self.path_refresh_timer = 0.0
-            print(
-                f"[DEBUG] Refresh périodique des chemins (toutes les {self.path_refresh_interval}s)"
-            )
+            # print(
+            #    f"[DEBUG] Refresh périodique des chemins (toutes les {self.path_refresh_interval}s)"
+            # )
 
         # Dessiner les zones de lave (non-walkable)
         self._draw_terrain_debug(pathfinder)
@@ -149,9 +149,9 @@ class DebugRenderSystem(esper.Processor):
             "last_update": pygame.time.get_ticks(),
         }
 
-        print(
-            f"[DEBUG] Entité {entity_id}: affichage waypoints {start_index}-{end_index-1} sur {total_waypoints}"
-        )
+        # print(
+        #    f"[DEBUG] Entité {entity_id}: affichage waypoints {start_index}-{end_index-1} sur {total_waypoints}"
+        # )
 
     def _draw_entity_path(self, entity_id, current_position):
         """Dessiner le chemin pour une entité spécifique."""
@@ -299,17 +299,17 @@ class DebugRenderSystem(esper.Processor):
 
         # Debug info seulement au début
         if not hasattr(self, "_debug_printed"):
-            print(
-                f"DEBUG: Terrain map a {len(pathfinder.terrain_map)} cases, tile_size={tile_size}"
-            )
+            # print(
+            #    f"DEBUG: Terrain map a {len(pathfinder.terrain_map)} cases, tile_size={tile_size}"
+            # )
             lava_positions = [
                 (x, y)
                 for (x, y), terrain_type in pathfinder.terrain_map.items()
                 if terrain_type == "LAVA"
             ]
-            print(
-                f"DEBUG: {len(lava_positions)} zones de lave aux positions (premières): {lava_positions[:10]}"
-            )
+            # print(
+            #    f"DEBUG: {len(lava_positions)} zones de lave aux positions (premières): {lava_positions[:10]}"
+            # )
             self._debug_printed = True
 
         # Parcourir la carte terrain et marquer les zones de lave

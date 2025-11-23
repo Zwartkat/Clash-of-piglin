@@ -660,15 +660,11 @@ class Hud:
         )
         self.screen.blit(sub_surface, sub_rect)
 
-        timer: Timer = get_played_time()
+        timer = get_played_time()
+        if not timer.is_paused():
+            timer.pause()
 
-        timer.pause()
-
-        # time spent since victory
-        elapsed_time = timer.elapsed() // 1000
-        time_message = (
-            f"Partie terminee en {elapsed_time // 60}:{elapsed_time % 60:02d}"
-        )
+        time_message = f"Partie terminee en {timer.get_format_elapsed()}"
         time_surface = self.font_medium.render(time_message, True, (200, 200, 200))
         time_rect = time_surface.get_rect(
             center=(self.screen.get_width() // 2, self.screen.get_height() // 2 + 60)

@@ -70,7 +70,8 @@ def get_map() -> "Map":
 def get_played_time() -> "Timer":
     instance = DATA_BUS.get(DataBusKey.PLAYED_TIME)
     return cast("Timer", instance)
-  
+
+
 def get_ai_mapping() -> "dict[EntityType,dict[str,str]]":
     instance = DATA_BUS.get(DataBusKey.IA_MAPPING)
     return cast("dict[EntityType,dict[str,str]]", instance)

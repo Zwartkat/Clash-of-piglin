@@ -4,6 +4,7 @@ from components.base.health import Health
 from components.base.team import Team
 from core import engine
 from core.accessors import get_event_bus, get_played_time, get_player_manager
+from events.pause_events import QuitToMenuEvent
 from events.victory_event import VictoryEvent
 from events.death_event import DeathEvent
 from enums.entity.entity_type import EntityType
@@ -54,7 +55,7 @@ class VictorySystem(esper.Processor):
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                engine.game_state["running"] = False
+                get_event_bus().emit(QuitToMenuEvent())
                 return True
 
     def trigger_victory(self, winning_team: int, losing_team: int):
@@ -68,7 +69,10 @@ class VictorySystem(esper.Processor):
         self.game_ended = True
         victory_event = VictoryEvent(winning_team, losing_team)
         get_event_bus().emit(victory_event)
-        get_played_time().pause()
+
+        timer = get_played_time()
+        if not timer.is_paused():
+            timer.pause()
 
     def process(self, dt: float):
         if not self.game_ended:

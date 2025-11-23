@@ -259,9 +259,9 @@ class WorldPerception:
             # Lissage : ne pas avoir de variations brutales
             # On redescend progressivement si plus de menace
             decay_rate = 0.1
-            print(danger)
+
             danger = (prev_danger * (1 - decay_rate)) + (danger * decay_rate)
-            print(danger)
+
             # Clamp final entre 0 et 1
-            danger = max(0.0, min(danger, 1.0))
+            danger = max(0.0, min(round(danger, 3), 1.0))
             self.bases[team] = (ent, danger)

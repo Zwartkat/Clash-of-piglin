@@ -77,3 +77,6 @@ class Timer:
         self.paused = False
         self.elapsed_paused = 0.0
         self.pause_start = 0.0
+
+    def is_paused(self):
+        return self.pause_start != 0.0

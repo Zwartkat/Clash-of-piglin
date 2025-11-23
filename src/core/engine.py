@@ -302,7 +302,7 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
                     input_manager.handle_event(event)
 
         # Only process game if not paused
-        if not pause_menu_system.is_paused:
+        if not pause_menu_system.is_paused and not victory_handled:
             world.process(dt)
 
         if not victory_handled:
@@ -314,8 +314,8 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
             game_hud.draw(dt)
             get_notification_manager().draw(screen)
 
-        # Always draw pause menu on top
-        pause_menu_system.process(dt)
+            # Always draw pause menu on top
+            pause_menu_system.process(dt)
 
         pygame.display.flip()
 
@@ -325,6 +325,9 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     # Clear all entities and processors
     esper.clear_database()
     esper.clear_cache()
+    esper.clear_dead_entities()
+
+    esper._processors = []
 
     # Clear event bus subscriptions to avoid memory leaks
     get_event_bus()._subscribers.clear()

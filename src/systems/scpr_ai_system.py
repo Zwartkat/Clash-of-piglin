@@ -1,5 +1,5 @@
 import esper
-from core.accessors import get_ai_mapping
+from core.accessors import get_ai_mapping, get_player_manager
 from enums.entity.entity_type import *
 from components.base.position import Position
 from components.base.velocity import Velocity
@@ -248,7 +248,7 @@ class SCPRAISystem(IteratingProcessor):
 
     def get_ennemy_bastion(self, self_team):
 
-        return esper.get_component(Structure)[-self_team][0]
+        return get_player_manager().get_enemy_player(self_team).bastion
 
     def get_own_bastion(self, self_team):
 
@@ -376,7 +376,12 @@ class SCPRAISystem(IteratingProcessor):
     def attack_behavior(
         self, self_ent, self_team, self_pos, self_vel
     ):  # foncer sur le bastion
+
         ennemy_bastion = self.get_ennemy_bastion(self_team)
+
+        if not esper.entity_exists(ennemy_bastion):
+            return
+
         ennemy_bastion_pos = esper.component_for_entity(ennemy_bastion, Position)
 
         self_attack = esper.component_for_entity(self_ent, Attack)
@@ -425,7 +430,6 @@ class SCPRAISystem(IteratingProcessor):
             self_ent, self_team, self_range * 1.5
         )
 
-        print(nearest_ghast)
         # 3. Si un Crossbow ennemi est à portée, le prioriser
         if nearest_crossbow:
             crossbow_ent, crossbow_pos = nearest_crossbow

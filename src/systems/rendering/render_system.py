@@ -346,7 +346,7 @@ class RenderSystem(IteratingProcessor):
 
         # Red part for lost health
         if health.remaining < health.full:
-            self.draw_rect((bar_x, bar_y, bar_width, bar_height), damage_color)
+            self.draw_rect((bar_x, bar_y, bar_width, bar_height), (0, 0, 0))
 
         # Debug temporaire
         if health.remaining == 0 and health.full > 0:
@@ -356,4 +356,4 @@ class RenderSystem(IteratingProcessor):
         hp_ratio = max(0, min(1.0, health.remaining / health.full))
         health_width = int(bar_width * hp_ratio)
         if health_width > 0:
-            self.draw_rect((bar_x, bar_y, health_width, bar_height), health_color)
+            self.draw_rect((bar_x, bar_y, health_width, bar_height), color)
