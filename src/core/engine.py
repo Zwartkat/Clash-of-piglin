@@ -3,11 +3,14 @@ import pygame
 import esper
 import os
 
+from ai.world_perception import WorldPerception
+from components.gameplay.attack import Attack
 from config.ai_mapping import IA_MAP_JCJ
 from core.data_bus import DATA_BUS
 from core.accessors import (
     get_camera,
     get_config,
+    get_entity,
     get_event_bus,
     get_notification_manager,
     get_player_manager,
@@ -16,6 +19,7 @@ from core.game.camera import CAMERA
 from core.game.timer import Timer
 from enums.config_key import ConfigKey
 from enums.data_bus_key import DataBusKey
+from enums.entity.entity_type import EntityType
 from events.loading_events import (
     LoadingProgressEvent,
     LoadingStartEvent,
@@ -113,19 +117,10 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
 
     global game_state
 
+    reset()
+
     # Reset game state at the start
     dt = 0.05
-
-    # Clear Esper database before starting new game
-    esper.clear_database()
-    esper.clear_cache()
-
-    # Remove old game state from DATA_BUS
-    DATA_BUS.remove(DataBusKey.PLAYED_TIME)
-    DATA_BUS.remove(DataBusKey.MAP)
-    DATA_BUS.remove(DataBusKey.PLAYER_MANAGER)
-    DATA_BUS.remove(DataBusKey.NOTIFICATION_MANAGER)
-    DATA_BUS.remove(DataBusKey.PLAYER_MOVEMENT_SYSTEM)
 
     win_w, win_h = 1200, 900
 
@@ -197,13 +192,7 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     # Initialiser les joueurs
     update_loading(0.6, "Initializing players...")
 
-    player_manager = PlayerManager(
-        [
-            Position(case_size, case_size),
-            Position(map_width - case_size * 1.5, map_height - case_size * 1.5),
-        ],
-        [(255, 85, 85), (20, 180, 133)],
-    )
+    player_manager = PlayerManager()
 
     DATA_BUS.register(DataBusKey.PLAYER_MANAGER, player_manager)
 
@@ -284,6 +273,18 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
 
     DATA_BUS.register(DataBusKey.PLAYED_TIME, Timer("game"))
 
+    world_perception = WorldPerception(
+        get_config().get("tile_size", 32),
+        {
+            EntityType.BRUTE: (get_entity(EntityType.BRUTE).get_component(Attack)).range
+            * tile_size,
+            EntityType.GHAST: (get_entity(EntityType.GHAST).get_component(Attack)).range
+            * tile_size,
+        },
+    )
+
+    DATA_BUS.register(DataBusKey.WORLD_PERCEPTION, world_perception)
+
     while game_state["running"]:
 
         clock.tick(60)
@@ -306,6 +307,7 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
         # Only process game if not paused
         if not pause_menu_system.is_paused and not victory_handled:
             world.process(dt)
+            world_perception.update()
 
         if not victory_handled:
             render.show_map()
@@ -324,15 +326,7 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     # Clean up world resources
     returning_to_menu = game_state.get("return_to_menu", False)
 
-    # Clear all entities and processors
-    esper.clear_database()
-    esper.clear_cache()
-    esper.clear_dead_entities()
-
-    esper._processors = []
-
-    # Clear event bus subscriptions to avoid memory leaks
-    get_event_bus()._subscribers.clear()
+    reset()
 
     # Only quit pygame if not returning to menu
     if not returning_to_menu:
@@ -356,3 +350,20 @@ def resize(screen: pygame.Surface, map_size: int, hud_width: int = 100) -> tuple
     get_camera().set_offset(hud_width + 10, 0)
 
     return map_width, map_height
+
+
+def reset():
+    """Reset the engine state, clearing data bus entries."""
+    DATA_BUS.remove(DataBusKey.PLAYED_TIME)
+    DATA_BUS.remove(DataBusKey.MAP)
+    DATA_BUS.remove(DataBusKey.PLAYER_MANAGER)
+    DATA_BUS.remove(DataBusKey.NOTIFICATION_MANAGER)
+    DATA_BUS.remove(DataBusKey.PLAYER_MOVEMENT_SYSTEM)
+    DATA_BUS.remove(DataBusKey.WORLD_PERCEPTION)
+
+    esper.clear_database()
+    esper.clear_cache()
+    esper.clear_dead_entities()
+    esper._processors = []
+
+    get_event_bus()._subscribers.clear()

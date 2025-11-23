@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
     from core.game.player_manager import PlayerManager
     from ui.notification_manager import NotificationManager
+    from ai.world_perception import WorldPerception
 
 
 def get_config() -> "Config":
@@ -75,3 +76,8 @@ def get_played_time() -> "Timer":
 def get_ai_mapping() -> "dict[EntityType,dict[str,str]]":
     instance = DATA_BUS.get(DataBusKey.IA_MAPPING)
     return cast("dict[EntityType,dict[str,str]]", instance)
+
+
+def get_world_perception() -> "WorldPerception":
+    instance = DATA_BUS.get(DataBusKey.WORLD_PERCEPTION)
+    return cast("WorldPerception", instance)

@@ -1,4 +1,5 @@
 from typing import Tuple
+from ai.ai_state import BruteAiState
 from components.ai_controller import AIController
 from components.base.team import Team
 from components.gameplay.damage import Damage
@@ -77,12 +78,12 @@ class RenderSystem(IteratingProcessor):
 
         frame: pygame.Surface = sprite.get_frame()
 
-        if esper.has_component(ent, AIController):
-            ctrl = esper.component_for_entity(ent, AIController)
-
-            state = ctrl.state
-            if not state.in_combat and sprite.current_animation == Animation.ATTACK:
-                self._set_animation(ent, Animation.IDLE)
+        # if esper.has_component(ent, AIController):
+        #    ctrl = esper.component_for_entity(ent, AIController)
+        #
+        #    state = ctrl.state
+        #    if not state.in_combat and sprite.current_animation == Animation.ATTACK:
+        #        self._set_animation(ent, Animation.IDLE)
 
         sprite.update(dt)
 

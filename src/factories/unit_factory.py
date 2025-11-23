@@ -2,7 +2,7 @@ import copy
 
 import esper
 
-from ai.ai_state import AiState
+from ai.ai_state import AiState, BruteAiState
 from ai.brute import BruteAI as ADMABrute
 from ai.ghast import JeromeGhast as JEVAGhast
 from ai.ia_ghast import MAPIGhast
@@ -66,7 +66,7 @@ class UnitFactory:
             from components.ai_controller import AIController
 
             if ai == "ADMA":
-                state = AiState(ent)
+                state = BruteAiState(ent)
                 esper.add_component(ent, AIController(ent, state, ADMABrute(state)))
             elif ai == "JEVA":
                 state = AiState(ent)

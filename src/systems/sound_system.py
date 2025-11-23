@@ -11,12 +11,13 @@ from events.button_clicked_event import ButtonClickedEvent
 
 pygame.mixer.init()
 
+
 class SoundSystem(esper.Processor):
     """
     System to manage sounds and musics according to events received
     """
 
-    # Variables de classe
+    # Variables de classe
 
     # Chargement de tous les sons pour ne pas les recréer à chaque fois qu'on veut les jouer
     SOUNDS = {
@@ -25,13 +26,11 @@ class SoundSystem(esper.Processor):
         "piglin_death": pygame.mixer.Sound("assets/audio/sounds/piglin_death.ogg"),
         "ghast_death": pygame.mixer.Sound("assets/audio/sounds/ghast_death.ogg"),
         "victory": pygame.mixer.Sound("assets/audio/sounds/victory.mp3"),
-        "button_clicked": pygame.mixer.Sound("assets/audio/sounds/button_clicked.ogg")
+        "button_clicked": pygame.mixer.Sound("assets/audio/sounds/button_clicked.ogg"),
     }
 
     # Répertoire des musiques (on pourra en ajouter pour le menu par exemple)
-    MUSICS = {
-        "pigstep": "assets/audio/pigstep.mp3"
-    }
+    MUSICS = {"pigstep": "assets/audio/pigstep.mp3"}
 
     IS_MUSIC_LOADED = False
     IS_MUSIC_PLAYED = False
@@ -51,10 +50,8 @@ class SoundSystem(esper.Processor):
         get_event_bus().subscribe(PauseToggleEvent, SoundSystem.pause_music)
         get_event_bus().subscribe(ResumeGameEvent, SoundSystem.play_music)
 
-    
     def process(self, dt):
         pass
-
 
     @staticmethod
     def set_music(music):
@@ -62,7 +59,7 @@ class SoundSystem(esper.Processor):
         SoundSystem.IS_MUSIC_LOADED = True
 
     @staticmethod
-    def play_music(event = None):
+    def play_music(event=None):
         if SoundSystem.IS_MUSIC_LOADED:
             if SoundSystem.IS_MUSIC_PLAYED:
                 pygame.mixer.music.unpause()
@@ -73,9 +70,8 @@ class SoundSystem(esper.Processor):
             print("Musique non chargée")
 
     @staticmethod
-    def pause_music(event = None):
+    def pause_music(event=None):
         pygame.mixer.music.pause()
-        
 
     @staticmethod
     def set_music_volume(value: int):
@@ -100,7 +96,6 @@ class SoundSystem(esper.Processor):
         for sound in SoundSystem.SOUNDS.values():
             sound.set_volume(value)
 
-
     @staticmethod
     def play_button_clicked(event: ButtonClickedEvent = None):
         """
@@ -108,7 +103,6 @@ class SoundSystem(esper.Processor):
         """
 
         SoundSystem.SOUNDS["button_clicked"].play()
-
 
     def play_arrow_fired(self, event: ArrowFiredEvent):
         SoundSystem.SOUNDS["arrow_fired"].play()
@@ -132,5 +126,5 @@ class SoundSystem(esper.Processor):
             SoundSystem.SOUNDS["piglin_death"].play()
         elif entity_type == EntityType.GHAST:
             SoundSystem.SOUNDS["ghast_death"].play()
-        
+
         # On pourra rajouter le bastion si nécessaire et le beacon si implémenté
