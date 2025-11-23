@@ -24,6 +24,7 @@ from events.loading_events import (
 from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
 from systems.ai_system import AiSystem
+from systems.sound_system import SoundSystem
 from systems.world.collision_system import CollisionSystem
 from systems.combat.combat_system import CombatSystem
 from systems.lova_ai_system import LOVAAiSystem
@@ -211,6 +212,7 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
 
     movement_system = MovementSystem()
     font = pygame.font.Font(Config.get_assets(key="font"), 18)
+    world.add_processor(SoundSystem())
     world.add_processor(LoadingUISystem(screen, font), priority=999)
     world.add_processor(movement_system)
     world.add_processor(TerrainEffectSystem(map))
