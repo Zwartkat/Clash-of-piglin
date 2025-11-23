@@ -6,6 +6,7 @@ from core.debugger import Debugger
 from core.ecs.event_bus import EventBus
 from core.config import Config
 from enums.data_bus_key import DataBusKey
+from systems.sound_system import SoundSystem
 
 DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enable_warn=True, enable_error=True))
 DATA_BUS.get_debugger().log("Démarrage du jeu")
@@ -36,9 +37,9 @@ pygame.display.set_icon(logo)
 menu_items = Config.get(key="menu_buttons")
 selected = 0
 
-# pygame.mixer.music.load("assets/audio/pigstep.mp3")
-# pygame.mixer.music.set_volume(1)
-# pygame.mixer.music.play(-1)
+SoundSystem.set_music(SoundSystem.MUSICS["pigstep"])
+SoundSystem.set_music_volume(0.1)
+SoundSystem.play_music()
 
 play_options_open = False
 play_modes = ["Joueur vs IA", "IA vs IA"]
@@ -54,7 +55,7 @@ credits_text = [
     "- Zwartkat",
     "- xMegumi",
     "- darkell",
-    "- WorKrai",
+    "- WorKai",
     "- Sparkness",
     "- MatthieuPinceel",
     "Graphismes: Zwartkat,Mojang Studio",
@@ -163,6 +164,7 @@ def handle_click(pos: Tuple[int]):
         # clic sur une option de jeu
         for i, rect in enumerate(play_option_rects):
             if rect.collidepoint(pos):
+                SoundSystem.play_button_clicked()
                 chosen = play_modes[i]
                 if chosen == play_modes[0]:  # Joueur vs IA
                     return_to_menu = game_manager.main(screen, ia_mode="jcia")
@@ -180,6 +182,7 @@ def handle_click(pos: Tuple[int]):
 
     for i, rect in enumerate(button_rects):
         if rect.collidepoint(pos):
+            SoundSystem.play_button_clicked()
             selected = i
             if menu_items[selected] == menu_items[0]:  # Play
                 # ouvrir le sous-menu Play au lieu de lancer directement
