@@ -7,6 +7,7 @@ from events.death_event import DeathEvent
 from enums.entity.entity_type import EntityType
 from events.victory_event import VictoryEvent
 from events.pause_events import PauseToggleEvent, ResumeGameEvent
+from events.button_clicked_event import ButtonClickedEvent
 
 pygame.mixer.init()
 
@@ -23,7 +24,8 @@ class SoundSystem(esper.Processor):
         "fireball_fired": pygame.mixer.Sound("assets/audio/sounds/fireball_fired.ogg"),
         "piglin_death": pygame.mixer.Sound("assets/audio/sounds/piglin_death.ogg"),
         "ghast_death": pygame.mixer.Sound("assets/audio/sounds/ghast_death.ogg"),
-        "victory": pygame.mixer.Sound("assets/audio/sounds/victory.mp3")
+        "victory": pygame.mixer.Sound("assets/audio/sounds/victory.mp3"),
+        "button_clicked": pygame.mixer.Sound("assets/audio/sounds/button_clicked.ogg")
     }
 
     # Répertoire des musiques (on pourra en ajouter pour le menu par exemple)
@@ -45,6 +47,7 @@ class SoundSystem(esper.Processor):
         get_event_bus().subscribe(FireballFiredEvent, self.play_fireball_fired)
         get_event_bus().subscribe(DeathEvent, self.play_death_sound)
         get_event_bus().subscribe(VictoryEvent, self.play_victory)
+        get_event_bus().subscribe(ButtonClickedEvent, SoundSystem.play_button_clicked)
         get_event_bus().subscribe(PauseToggleEvent, SoundSystem.pause_music)
         get_event_bus().subscribe(ResumeGameEvent, SoundSystem.play_music)
 
@@ -85,7 +88,7 @@ class SoundSystem(esper.Processor):
 
         pygame.mixer.music.set_volume(value)
 
-
+    @staticmethod
     def set_sounds_volume(value: int):
         """
         Method to update game sounds volume
@@ -96,6 +99,15 @@ class SoundSystem(esper.Processor):
 
         for sound in SoundSystem.SOUNDS.values():
             sound.set_volume(value)
+
+
+    @staticmethod
+    def play_button_clicked(event: ButtonClickedEvent = None):
+        """
+        Method to play click sound (static because the world isn't initialized in the menu)
+        """
+
+        SoundSystem.SOUNDS["button_clicked"].play()
 
 
     def play_arrow_fired(self, event: ArrowFiredEvent):

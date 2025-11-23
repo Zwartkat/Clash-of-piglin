@@ -164,6 +164,7 @@ def handle_click(pos: Tuple[int]):
         # clic sur une option de jeu
         for i, rect in enumerate(play_option_rects):
             if rect.collidepoint(pos):
+                SoundSystem.play_button_clicked()
                 chosen = play_modes[i]
                 if chosen == play_modes[0]:  # Joueur vs IA
                     return_to_menu = game_manager.main(screen, ia_mode="jcia")
@@ -181,6 +182,7 @@ def handle_click(pos: Tuple[int]):
 
     for i, rect in enumerate(button_rects):
         if rect.collidepoint(pos):
+            SoundSystem.play_button_clicked()
             selected = i
             if menu_items[selected] == menu_items[0]:  # Play
                 # ouvrir le sous-menu Play au lieu de lancer directement

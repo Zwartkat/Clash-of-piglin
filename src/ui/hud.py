@@ -14,6 +14,7 @@ from components.base.position import Position
 from factories.unit_factory import UnitFactory
 from components.base.team import Team
 from events.spawn_unit_event import SpawnUnitEvent
+from events.button_clicked_event import ButtonClickedEvent
 
 # from components.rendering.sprite import Sprite
 
@@ -588,6 +589,9 @@ class Hud:
             # Créer l'unité près du bastion du joueur
             spawn_pos = self._get_spawn_position(player)
             team = Team(team_id)
+
+            # Jouer le son de clic
+            get_event_bus().emit(ButtonClickedEvent())
 
             # Créer l'unité via l'événement
             get_event_bus().emit(SpawnUnitEvent(unit_type, team, spawn_pos))
