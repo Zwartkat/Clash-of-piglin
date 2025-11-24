@@ -27,7 +27,11 @@ class AiBastion(AiState):
     def __init__(self, team_id: int):
         self.team_id = team_id
 
-        self.base_defense_radius = get_config().get("tile_size", 32) * 10
+        config = get_config()
+
+        self.base_defense_radius = config.get("tile_size", 32) * 10
+        self.money_cap = config.get("money_cap", 1500)
+        self.surplus_threshold = int(self.money_cap * 0.85)
 
         self.costs = {
             EntityType.BRUTE: (get_entity(EntityType.BRUTE).get_component(Cost)).amount,
@@ -37,47 +41,129 @@ class AiBastion(AiState):
             EntityType.GHAST: (get_entity(EntityType.GHAST).get_component(Cost)).amount,
         }
 
+        self.guard_buffer_cost = (
+            self.costs[EntityType.BRUTE] + self.costs[EntityType.CROSSBOWMAN]
+        )
+
+        self.counter_attack_wave = [
+            (EntityType.BRUTE, 2),
+            (EntityType.CROSSBOWMAN, 2),
+        ]
+        self.counter_attack_cooldown = 20.0
+        self.time_since_last_counter_attack = self.counter_attack_cooldown
+        self.counter_attack_budget = sum(
+            self.costs[entity_type] * count
+            for entity_type, count in self.counter_attack_wave
+        )
+
     def update(self, dt):
 
         world_perception = get_world_perception()
+        player = get_player_manager().players[self.team_id]
+
+        self.time_since_last_counter_attack += dt
+        self._maintain_minimum_guard(world_perception, player)
 
         base_entity, _ = world_perception.bases[self.team_id]
-        money = get_player_manager().players[self.team_id].money
+        money = player.money
 
         enemies = self._get_enemies_near_base(world_perception, base_entity)
 
         if not enemies:
-            self._attack_setup(money)
+            launched = self._plan_counter_attack(player)
+            if not launched:
+                self._drain_surplus_gold(player)
             return
 
         summary = self._summarize_by_entity_type(world_perception, enemies)
 
         if summary.get(EntityType.GHAST, 0) > 0:
             self._spawn_counter_ghast(summary, money)
+            self._drain_surplus_gold(player)
             return
 
         if summary.get(EntityType.BRUTE, 0) > 0:
             self._spawn_counter_brute(summary, money)
+            self._drain_surplus_gold(player)
             return
 
         if summary.get(EntityType.CROSSBOWMAN, 0) > 0:
             self._spawn_counter_ranged(money)
+            self._drain_surplus_gold(player)
             return
 
-    def _attack_setup(self, money):
-        """
-        Attack enemy bastion if there is no enemy
-        """
-        needed = [
-            (EntityType.BRUTE, 2),
-            (EntityType.CROSSBOWMAN, 1),
-        ]
+        self._drain_surplus_gold(player)
 
-        for unit_type, count in needed:
+    def _maintain_minimum_guard(self, world_perception: WorldPerception, player):
+        """Ensure at least one brute and one crossbowman stay alive."""
+        guard_requirements = {
+            EntityType.BRUTE: 1,
+            EntityType.CROSSBOWMAN: 1,
+        }
+
+        friendly_counts = {entity_type: 0 for entity_type in guard_requirements}
+
+        for ent, team in world_perception.teams.items():
+            if team.team_id != self.team_id:
+                continue
+            entity_type = world_perception.entity_types.get(ent)
+            if entity_type in friendly_counts:
+                friendly_counts[entity_type] += 1
+
+        guard_priority = [EntityType.BRUTE, EntityType.CROSSBOWMAN]
+
+        for entity_type in guard_priority:
+            desired = guard_requirements[entity_type]
+            current = friendly_counts.get(entity_type, 0)
+            missing = max(0, desired - current)
+
+            for _ in range(missing):
+                if not self._can_afford(entity_type, player.money):
+                    break
+                self.spawn_unit(entity_type, self.team_id)
+
+    def _plan_counter_attack(self, player):
+        """Stockpile gold and launch a predefined wave when conditions are met."""
+        if self.time_since_last_counter_attack < self.counter_attack_cooldown:
+            return False
+
+        if player.money < self.counter_attack_budget:
+            return False
+
+        for entity_type, count in self.counter_attack_wave:
             for _ in range(count):
-                if self._can_afford(unit_type, money):
-                    money -= self.costs[unit_type]
-                    self.spawn_unit(unit_type, self.team_id)
+                if not self._can_afford(entity_type, player.money):
+                    return False
+                self.spawn_unit(entity_type, self.team_id)
+
+        self.time_since_last_counter_attack = 0.0
+        return True
+
+    def _drain_surplus_gold(self, player):
+        """Spend excess gold so we never hit the money cap while idle."""
+
+        target_threshold = max(self.surplus_threshold, self.guard_buffer_cost)
+        if player.money <= target_threshold:
+            return
+
+        reserve = max(self.counter_attack_budget, self.guard_buffer_cost)
+
+        filler_cycle = [EntityType.BRUTE, EntityType.CROSSBOWMAN]
+
+        while player.money > target_threshold:
+            spent = False
+            for entity_type in filler_cycle:
+                cost = self.costs[entity_type]
+                if not self._can_afford(entity_type, player.money):
+                    continue
+                if player.money - cost < reserve:
+                    continue
+                self.spawn_unit(entity_type, self.team_id)
+                spent = True
+                break
+
+            if not spent:
+                break
 
     def _spawn_counter_ghast(self, summary, money):
 
