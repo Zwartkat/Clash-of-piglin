@@ -1,12 +1,17 @@
 from typing import Tuple
 import esper
 import pygame
+import os
+
+os.environ["SDL_VIDEO_CENTERED"] = "1"
 from core.data_bus import DATA_BUS
 from core.debugger import Debugger
 from core.ecs.event_bus import EventBus
 from core.config import Config
 from enums.data_bus_key import DataBusKey
 from systems.sound_system import SoundSystem
+import core.engine as game_manager
+import core.options as option
 
 DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enable_warn=True, enable_error=True))
 DATA_BUS.get_debugger().log("Démarrage du jeu")
@@ -16,18 +21,16 @@ Config.load("config.yaml")
 DATA_BUS.register(DataBusKey.CONFIG, Config)
 DATA_BUS.register(DataBusKey.EVENT_BUS, EventBus.get_event_bus())
 
-import core.engine as game_manager
-
 
 pygame.init()
 pygame.display.set_caption(Config.get(key="game_name"))
 
-screen = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode(option.current_resolution, option.flags)
 
 font = pygame.font.Font(Config.get_assets(key="font"), 18)
 
 background = pygame.image.load(Config.get_assets(key="background")).convert()
-background = pygame.transform.scale(background, (800, 600))
+background = pygame.transform.scale(background, option.current_resolution)
 
 logo = pygame.image.load(Config.get_assets(key="logo")).convert_alpha()
 logo = pygame.transform.scale(logo, (180, 270))
@@ -70,7 +73,7 @@ scroll_speed = 0
 def draw_credits():
     global scroll_offset
 
-    overlay = pygame.Surface((800, 600), pygame.SRCALPHA)
+    overlay = pygame.Surface((option.current_resolution), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 200))
     screen.blit(overlay, (0, 0))
 
@@ -121,8 +124,14 @@ def draw_menu():
     """
     Display the main menu.
     """
+    # Ensure assets and button rects are up-to-date with the current screen size
+    apply_display_settings()
+
     screen.blit(background, (0, 0))
-    screen.blit(logo, (310, -20))
+
+    # center logo horizontally and keep same vertical offset
+    logo_x = (screen.get_width() - logo.get_width()) // 2
+    screen.blit(logo, (logo_x, -20))
 
     for i, rect in enumerate(button_rects):
         hovered: bool = rect.collidepoint(pygame.mouse.get_pos())
@@ -142,10 +151,48 @@ def draw_menu():
 
     info_font = pygame.font.Font(Config.get_assets(key="font"), 12)
     info_text = info_font.render("Presque pas Minecraft 1.16", True, (220, 220, 220))
-    screen.blit(info_text, (20, 580))
+    screen.blit(info_text, (20, screen.get_height() - 20))
 
 
 credits_open = False  # global
+option_open = False  # global
+
+
+def apply_display_settings():
+    """
+    Rescale background, logo and recreate button_rects proportionally to current screen size.
+    Does not decide the display mode (set_mode should be called by caller if needed).
+    """
+    global screen, background, logo, button_rects
+
+    w, h = screen.get_size()
+    base_w, base_h = 800, 600
+
+    # Background scaled to fill screen
+    background_img = pygame.image.load(Config.get_assets(key="background")).convert()
+    background = pygame.transform.scale(background_img, (w, h))
+
+    # Logo: scale relative to base sizes (1024x1536)
+    logo_img = pygame.image.load(Config.get_assets(key="logo")).convert_alpha()
+    logo_w = max(1, int(180 * w / base_w))
+    logo_h = max(1, int(270 * h / base_h))
+    logo = pygame.transform.scale(logo_img, (logo_w, logo_h))
+    pygame.display.set_icon(logo)
+
+    # Buttons: positions/sizes proportional to base layout
+    btn_w = max(1, int(350 * w / base_w))
+    btn_h = max(1, int(40 * h / base_h))
+    start_x = int(225 * w / base_w)
+    start_y = int(220 * h / base_h)
+    gap = int(50 * h / base_h)
+    button_rects = [
+        pygame.Rect(start_x, start_y + i * gap, btn_w, btn_h)
+        for i in range(len(menu_items))
+    ]
+
+
+# Initial apply to setup assets/button rects for the current screen
+apply_display_settings()
 
 
 def handle_click(pos: Tuple[int]):
@@ -158,6 +205,10 @@ def handle_click(pos: Tuple[int]):
     if credits_open:
         credits_open = False
         return True
+    #
+    # if option_open:
+    #    option_open = False
+    #    return True
 
     # Si le sous-menu Play est ouvert, gérer ses clics
     if play_options_open:
@@ -191,7 +242,17 @@ def handle_click(pos: Tuple[int]):
             elif menu_items[selected] == menu_items[1]:  # Options ou Crédits
                 print("Credits opened")
                 credits_open = True
-            elif menu_items[selected] == menu_items[2]:  # Quit
+            elif menu_items[selected] == menu_items[2]:  # Options
+                print("Options")
+                option_open = True
+                return_to_menu = option.main()
+                if return_to_menu:
+                    screen = pygame.display.set_mode(
+                        option.current_resolution, option.flags
+                    )
+                    apply_display_settings()
+                    return True
+            elif menu_items[selected] == menu_items[3]:  # Quit
                 print("Quit")
                 pygame.quit()
                 exit()

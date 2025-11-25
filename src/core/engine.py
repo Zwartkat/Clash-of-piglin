@@ -52,6 +52,7 @@ from factories.unit_factory import UnitFactory
 from core.input.input_manager import InputManager
 from enums.case_type import CaseType
 from core.config import Config
+import core.options as option
 from systems.input.input_router_system import InputRouterSystem
 from systems.quit_system import QuitSystem
 from systems.input.camera_system import CameraSystem
@@ -122,9 +123,28 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     # Reset game state at the start
     dt = 0.05
 
-    win_w, win_h = 1200, 900
+    # Clear Esper database before starting new game
+    esper.clear_database()
+    esper.clear_cache()
 
-    screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
+    # Reset Services (important for timer and other global state)
+    Services.start_time = pygame.time.get_ticks()
+    Services.finish_time = None
+
+    # Clear DATA_BUS entries that need to be fresh
+    from enums.data_bus_key import DataBusKey
+
+    # Remove old game state from DATA_BUS
+    if DATA_BUS.has(DataBusKey.MAP):
+        del DATA_BUS._store[DataBusKey.MAP]
+    if DATA_BUS.has(DataBusKey.PLAYER_MANAGER):
+        del DATA_BUS._store[DataBusKey.PLAYER_MANAGER]
+    if DATA_BUS.has(DataBusKey.PLAYER_MOVEMENT_SYSTEM):
+        del DATA_BUS._store[DataBusKey.PLAYER_MOVEMENT_SYSTEM]
+
+    screen = pygame.display.set_mode(
+        option.current_resolution, option.flags | pygame.RESIZABLE
+    )
 
     clock = pygame.time.Clock()
 

@@ -3,16 +3,17 @@
 import pygame
 import esper
 
-from core.ecs.event_bus import EventBus
+from core.accessors import get_event_bus
 from events.pause_events import PauseToggleEvent, ResumeGameEvent, QuitToMenuEvent
 from core.config import Config
+import core.options as option
 
 
 class PauseMenuSystem(esper.Processor):
     """Pause menu overlay with Minecraft-style design.
 
     Manages the pause state, handles input events, and renders the pause menu
-    with three options: Resume, Credits, and Return to Menu.
+    with three options: Resume, Options, and Return to Menu.
     """
 
     def __init__(self, screen: pygame.Surface, font: pygame.font.Font, hud_system=None):
@@ -28,11 +29,11 @@ class PauseMenuSystem(esper.Processor):
         self.font = font
         self.is_paused = False
         self.hud_system = hud_system
-        self.menu_items = ["Reprendre", "Credits", "Retour au menu"]
+        self.menu_items = ["Reprendre", "Options", "Retour au menu"]
         self.selected_index = 0
         self.button_rects = []
 
-        event_bus = EventBus.get_event_bus()
+        event_bus = get_event_bus()
         event_bus.subscribe(PauseToggleEvent, self._on_pause_toggle)
 
     def _on_pause_toggle(self, event: PauseToggleEvent):
@@ -98,7 +99,7 @@ class PauseMenuSystem(esper.Processor):
                 self.is_paused = False
                 if self.hud_system:
                     self.hud_system.hud.on_resume()
-                EventBus.get_event_bus().emit(ResumeGameEvent())
+                get_event_bus().emit(ResumeGameEvent())
                 return True
             elif event.key == pygame.K_UP:
                 self.selected_index = (self.selected_index - 1) % len(self.menu_items)
@@ -129,18 +130,22 @@ class PauseMenuSystem(esper.Processor):
 
         Emits appropriate events based on selection:
         - Reprendre: ResumeGameEvent
-        - Credits: Print placeholder message
+        - Options: Print placeholder message
         - Retour au menu: QuitToMenuEvent
         """
-        event_bus = EventBus.get_event_bus()
+        event_bus = get_event_bus()
 
         if self.menu_items[self.selected_index] == "Reprendre":
             self.is_paused = False
             if self.hud_system:
                 self.hud_system.hud.on_resume()
             event_bus.emit(ResumeGameEvent())
-        elif self.menu_items[self.selected_index] == "Credits":
-            print("Credits - TODO")
+        elif self.menu_items[self.selected_index] == "Options":
+            return_to_menu = option.main()
+            if return_to_menu:
+                self.is_paused = False
+                if self.hud_system:
+                    self.hud_system.hud.on_resume()
         elif self.menu_items[self.selected_index] == "Retour au menu":
             self.is_paused = False
             event_bus.emit(QuitToMenuEvent())
