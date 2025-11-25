@@ -5,7 +5,9 @@ from typing import List, Tuple, Optional, Set
 
 from components.base.position import Position
 from components.ai import PathRequest
+from core.data_bus import DataBus
 from enums.case_type import CaseType
+from core.accessors import get_map
 
 
 class Node:
@@ -108,15 +110,9 @@ class PathfindingSystem(esper.Processor):
             )
 
             # Method 1: Try the original way
-            for ent, map_comp in esper.get_components(Map):
-                if (
-                    isinstance(map_comp, Map)
-                    and hasattr(map_comp, "tab")
-                    and map_comp.tab
-                ):
-                    map_found = True
-                    self._process_map_data(map_comp)
-                    break
+            if get_map():
+                self._process_map_data(get_map())
+                map_found = True
 
             # Method 2: If not found, try checking all entities directly
             if not map_found:

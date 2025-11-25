@@ -1,4 +1,5 @@
 import esper
+from core.accessors import get_ai_mapping, get_player_manager
 from enums.entity.entity_type import *
 from components.base.position import Position
 from components.base.velocity import Velocity
@@ -10,16 +11,18 @@ from core.game.map import Map
 from components.base.ai_flag import Ai_flag
 from core.ecs.iterator_system import IteratingProcessor
 
-class AISystem(IteratingProcessor):
+
+class SCPRAISystem(IteratingProcessor):
 
     def __init__(self):
-        super().__init__(Position, Velocity)
+        super().__init__(Position, Velocity, EntityType, Team)
         self.map = None
         self.map_size = 0
+        self.ai_mapping = get_ai_mapping()
 
-#-----------------------------------------------------------
-#                   Fonctions utiles
-#-----------------------------------------------------------
+    # -----------------------------------------------------------
+    #                   Fonctions utiles
+    # -----------------------------------------------------------
 
     def get_map_data(self):
         """Récupère les données de la map depuis le monde ECS"""
@@ -124,9 +127,11 @@ class AISystem(IteratingProcessor):
 
             # Explorer les voisins
             for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                neighbor = (current[0] + dx*50, current[1] + dy*50)
+                neighbor = (current[0] + dx * 50, current[1] + dy * 50)
 
-                if (neighbor not in visited and self.is_position_accessible(neighbor[0], neighbor[1])):
+                if neighbor not in visited and self.is_position_accessible(
+                    neighbor[0], neighbor[1]
+                ):
                     visited[neighbor] = current
                     queue.append(neighbor)
 
@@ -155,7 +160,7 @@ class AISystem(IteratingProcessor):
         start_x, start_y = int(start_pos.x), int(start_pos.y)
 
         best_pos = start_pos
-        min_distance = float('inf')
+        min_distance = float("inf")
 
         # Chercher dans un rayon autour de la cible
         for radius in range(1, min(15, self.map_size)):
@@ -163,10 +168,15 @@ class AISystem(IteratingProcessor):
                 for dy in range(-radius, radius + 1):
                     if abs(dx) <= radius and abs(dy) <= radius:
                         test_x, test_y = target_x + dx, target_y + dy
-                        if (self.is_position_accessible(test_x, test_y) and
-                            self.is_direct_path_clear(start_pos, Position(test_x, test_y))):
+                        if self.is_position_accessible(
+                            test_x, test_y
+                        ) and self.is_direct_path_clear(
+                            start_pos, Position(test_x, test_y)
+                        ):
 
-                            distance = ((test_x - target_x)**2 + (test_y - target_y)**2) ** 0.5
+                            distance = (
+                                (test_x - target_x) ** 2 + (test_y - target_y) ** 2
+                            ) ** 0.5
                             if distance < min_distance:
                                 min_distance = distance
                                 best_pos = Position(test_x, test_y)
@@ -238,14 +248,14 @@ class AISystem(IteratingProcessor):
 
     def get_ennemy_bastion(self, self_team):
 
-        return esper.get_component(Structure)[-self_team][0]
-    
+        return get_player_manager().get_enemy_player(self_team).bastion
+
     def get_own_bastion(self, self_team):
 
-        return esper.get_component(Structure)[self_team-1][0]
+        return esper.get_component(Structure)[self_team - 1][0]
 
-    def get_units(self, searched_unit:EntityType=EntityType.BRUTE):
-        unit_sorted = [[],[]]
+    def get_units(self, searched_unit: EntityType = EntityType.BRUTE):
+        unit_sorted = [[], []]
         unit_list = esper.get_component(EntityType)
         unit_list = list(filter(lambda x: x[1] == searched_unit, unit_list))
         for ent in unit_list:
@@ -262,13 +272,17 @@ class AISystem(IteratingProcessor):
         Trouve le Ghast allié le plus proche
         """
         nearest_ghast = None
-        min_distance = float('inf')
+        min_distance = float("inf")
 
         # Parcourir toutes les entités pour trouver les Ghast alliés
-        for ent, (entity_type, team, pos) in esper.get_components(EntityType, Team, Position):
-            if (ent != self_ent and
-                team.team_id == self_team and
-                entity_type == EntityType.GHAST):
+        for ent, (entity_type, team, pos) in esper.get_components(
+            EntityType, Team, Position
+        ):
+            if (
+                ent != self_ent
+                and team.team_id == self_team
+                and entity_type == EntityType.GHAST
+            ):
 
                 # Calculer la distance avec le Ghast
                 self_pos = esper.component_for_entity(self_ent, Position)
@@ -287,13 +301,17 @@ class AISystem(IteratingProcessor):
         Trouve l'archer ennemi (Crossbow) le plus proche
         """
         nearest_crossbow = None
-        min_distance = float('inf')
+        min_distance = float("inf")
 
         # Parcourir toutes les entités pour trouver les Crossbow ennemis
-        for ent, (entity_type, team, pos) in esper.get_components(EntityType, Team, Position):
-            if (ent != self_ent and
-                team.team_id != self_team and
-                entity_type == EntityType.CROSSBOWMAN):
+        for ent, (entity_type, team, pos) in esper.get_components(
+            EntityType, Team, Position
+        ):
+            if (
+                ent != self_ent
+                and team.team_id != self_team
+                and entity_type == EntityType.CROSSBOWMAN
+            ):
 
                 # Calculer la distance avec l'archer ennemi
                 self_pos = esper.component_for_entity(self_ent, Position)
@@ -313,9 +331,9 @@ class AISystem(IteratingProcessor):
             return esper.component_for_entity(ent, Attack).range
         return 0
 
-#-----------------------------------------------------------
-#                Comportements principaux
-#-----------------------------------------------------------
+    # -----------------------------------------------------------
+    #                Comportements principaux
+    # -----------------------------------------------------------
 
     def coward_behavior(self, self_ent, self_team, self_pos, self_vel):
         """Recule hors de portée de l'adversaire"""
@@ -325,7 +343,7 @@ class AISystem(IteratingProcessor):
 
         # Trouver l'ennemi le plus proche
         closest_enemy = None
-        min_distance = float('inf')
+        min_distance = float("inf")
 
         for ent, (pos, team) in esper.get_components(Position, Team):
             if team.team_id != self_team and ent != self_ent:
@@ -355,8 +373,15 @@ class AISystem(IteratingProcessor):
                 safe_flee_pos = self.find_path_around_obstacles(self_pos, flee_pos, 0)
                 self.move_towards(self_pos, safe_flee_pos, self_speed)
 
-    def attack_behavior(self, self_ent, self_team, self_pos, self_vel): #foncer sur le bastion
+    def attack_behavior(
+        self, self_ent, self_team, self_pos, self_vel
+    ):  # foncer sur le bastion
+
         ennemy_bastion = self.get_ennemy_bastion(self_team)
+
+        if not esper.entity_exists(ennemy_bastion):
+            return
+
         ennemy_bastion_pos = esper.component_for_entity(ennemy_bastion, Position)
 
         self_attack = esper.component_for_entity(self_ent, Attack)
@@ -364,7 +389,9 @@ class AISystem(IteratingProcessor):
         self_speed = esper.component_for_entity(self_ent, Velocity)
         self_speed = self_speed.speed
 
-        safe_target = self.find_path_around_obstacles(self_pos, ennemy_bastion_pos, self_range)
+        safe_target = self.find_path_around_obstacles(
+            self_pos, ennemy_bastion_pos, self_range
+        )
 
         # Se déplacer vers la position safe
         stop_position = self.get_in_range(self_pos, safe_target, self_range)
@@ -387,7 +414,6 @@ class AISystem(IteratingProcessor):
         stop_position = self.get_in_range(self_pos, safe_target, self_range)
         self.move_towards(self_pos, stop_position, self_speed)
 
-
     def support_behavior(self, self_ent, self_team, self_pos, self_vel):
         """
         Comportement de support : rester près d'un Ghast allié et prioriser les Crossbow ennemis
@@ -400,15 +426,18 @@ class AISystem(IteratingProcessor):
         nearest_ghast = self.find_nearest_ally_ghast(self_ent, self_team)
 
         # 2. Chercher un Crossbow ennemi à portée
-        nearest_crossbow = self.find_nearest_enemy_crossbow(self_ent, self_team, self_range * 1.5)
+        nearest_crossbow = self.find_nearest_enemy_crossbow(
+            self_ent, self_team, self_range * 1.5
+        )
 
-        print(nearest_ghast)
         # 3. Si un Crossbow ennemi est à portée, le prioriser
         if nearest_crossbow:
             crossbow_ent, crossbow_pos = nearest_crossbow
 
             # Se positionner à portée d'attaque du Crossbow
-            safe_target = self.find_path_around_obstacles(self_pos, crossbow_pos, self_range)
+            safe_target = self.find_path_around_obstacles(
+                self_pos, crossbow_pos, self_range
+            )
             stop_position = self.get_in_range(self_pos, safe_target, self_range)
             self.move_towards(self_pos, stop_position, self_speed)
 
@@ -435,7 +464,9 @@ class AISystem(IteratingProcessor):
                 support_pos = Position(support_x, support_y)
 
                 # Vérifier l'accessibilité et trouver un chemin sûr
-                safe_support_pos = self.find_path_around_obstacles(self_pos, support_pos, 0)
+                safe_support_pos = self.find_path_around_obstacles(
+                    self_pos, support_pos, 0
+                )
                 self.move_towards(self_pos, safe_support_pos, self_speed)
             else:
                 # Position de fallback : cercle autour du Ghast
@@ -445,25 +476,55 @@ class AISystem(IteratingProcessor):
         else:
             self.attack_behavior(self_ent, self_team, self_pos, self_vel)
 
-#-----------------------------------------------------------
-#                   boucle principale
-#-----------------------------------------------------------
+    # -----------------------------------------------------------
+    #                   boucle principale
+    # -----------------------------------------------------------
 
-    def process_entity(self, ent: int, dt: float, pos: Position, vel: Velocity):
-        if esper.has_component(ent, Ai_flag):
+    def process_entity(
+        self,
+        ent: int,
+        dt: float,
+        pos: Position,
+        vel: Velocity,
+        ent_type: EntityType,
+        team: Team,
+    ):
+
+        team = team.team_id
+
+        if self._is_scpr_ai(ent_type, team) and esper.has_component(ent, Ai_flag):
             ai_component = esper.component_for_entity(ent, Ai_flag)
             if ai_component.ai_controlled:
-                team = esper.component_for_entity(ent, Team)
-                team = team.team_id
                 if self.is_unit_threatened(ent):
                     # Si en danger, adopter un comportement de fuite
                     self.coward_behavior(ent, team, pos, vel)
                 elif len(self.get_units(EntityType.GHAST)[-team]) != 0:
                     # Si base potentiellement en danger, la défendre
                     self.defence_behavior(ent, team, pos, vel)
-                elif len(self.get_units(EntityType.GHAST)[team-1]) != 0:
+                elif len(self.get_units(EntityType.GHAST)[team - 1]) != 0:
                     # Si possibilité d'attaque, se regrouper avec les alliés
                     self.support_behavior(ent, team, pos, vel)
                 else:
                     # Sinon essayer d'aller attaquer la base adverse
                     self.attack_behavior(ent, team, pos, vel)
+
+    def _is_scpr_ai(self, entity_type: EntityType, team_id: int) -> bool:
+        """
+        Check if entity have a SCPR AI
+        Args:
+            entity_type (_type_): Entity type of entity
+            team_id (_type_): Team id of entity
+
+        Returns:
+            bool : True if there is a SCPR Ai else False
+        """
+
+        availables_ai = self.ai_mapping[entity_type]
+        if not availables_ai:
+            return False
+
+        ai = availables_ai[team_id]
+
+        if not ai == "SCPR":
+            return False
+        return True

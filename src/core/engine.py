@@ -3,21 +3,20 @@ import pygame
 import esper
 import os
 
+from ai.world_perception import WorldPerception
+from components.gameplay.attack import Attack
+from config.ai_mapping import IA_MAP_JCJ
 from core.data_bus import DATA_BUS
-from core.services import Services
 from core.accessors import (
     get_camera,
     get_config,
-    get_debugger,
     get_entity,
     get_event_bus,
+    get_notification_manager,
     get_player_manager,
 )
-from config import units
-from core.debugger import Debugger
 from core.game.camera import CAMERA
-from components.gameplay.effects import OnTerrain
-from components.base.team import Team
+from core.game.timer import Timer
 from enums.config_key import ConfigKey
 from enums.data_bus_key import DataBusKey
 from enums.entity.entity_type import EntityType
@@ -29,10 +28,10 @@ from events.loading_events import (
 from events.resize_event import ResizeEvent
 from events.spawn_unit_event import SpawnUnitEvent
 from systems.ai_system import AiSystem
-from systems.combat.fireball_system import FireballSystem
+from systems.sound_system import SoundSystem
 from systems.world.collision_system import CollisionSystem
 from systems.combat.combat_system import CombatSystem
-from systems.crossbowman_ai_system_enemy import CrossbowmanAISystemEnemy
+from systems.lova_ai_system import LOVAAiSystem
 from systems.pathfinding_system import PathfindingSystem
 from systems.death_event_handler import DeathEventHandler
 from systems.combat.combat_system import CombatSystem
@@ -57,15 +56,16 @@ import core.options as option
 from systems.input.input_router_system import InputRouterSystem
 from systems.quit_system import QuitSystem
 from systems.input.camera_system import CameraSystem
-from systems.rendering.hud_system import HudSystem
+from ui.hud_manager import HudManager
 from systems.victory_system import VictorySystem
 from systems.combat.arrow_system import ArrowSystem
-from systems.world.ai_system import AISystem
+from systems.scpr_ai_system import SCPRAISystem
 
 # Import debug systems
 from systems.debug_system import DebugRenderSystem
 from systems.debug_event_handler import DebugEventHandler
 from ui.loading import LoadingUISystem
+from ui.notification_manager import NotificationManager
 from ui.pause_menu import PauseMenuSystem
 from events.pause_events import QuitToMenuEvent
 
@@ -111,9 +111,14 @@ def load_terrain_sprites(tile_size: int) -> dict[CaseType, pygame.Surface]:
     return sprites
 
 
-def main(screen: pygame.Surface, map_size=24):
+def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
+    """
+    args ia_mode: "jcia" pour Joueur contre IA, "iacia" pour IA contre IA
+    """
 
     global game_state
+
+    reset()
 
     # Reset game state at the start
     dt = 0.05
@@ -171,15 +176,20 @@ def main(screen: pygame.Surface, map_size=24):
     DATA_BUS.register(DataBusKey.MAP, map)
     DATA_BUS.register(DataBusKey.CAMERA, CAMERA)
 
-    # Charger les sprites
     update_loading(0.4, "Loading sprites...")
     tile_size: int = DATA_BUS.get(DataBusKey.CONFIG).get(ConfigKey.TILE_SIZE, 32)
     sprites = load_terrain_sprites(tile_size)
-    game_hud = HudSystem(screen)
+    game_hud = HudManager(screen)
 
-    # Créer les entités
-    update_loading(0.5, "Creating entities...")
+    update_loading(0.5, "Rendering map...")
     map_width, map_height = resize(screen, map_size, game_hud.hud.hud_width)
+
+    from config.ai_mapping import IA_MAP
+
+    if ia_mode == "iacia":
+        DATA_BUS.register(DataBusKey.IA_MAPPING, IA_MAP)
+    elif ia_mode == "jcia":
+        DATA_BUS.register(DataBusKey.IA_MAPPING, IA_MAP_JCJ)
 
     for y in range(len(map.tab)):
         for x in range(len(map.tab[y])):
@@ -199,25 +209,19 @@ def main(screen: pygame.Surface, map_size=24):
 
     case_size = get_config().get(ConfigKey.TILE_SIZE, 32)
 
-    player_manager = PlayerManager(
-        [
-            Position(case_size, case_size),
-            Position(map_width - case_size * 1.5, map_height - case_size * 1.5),
-        ]
-    )
-
-    DATA_BUS.register(DataBusKey.PLAYER_MANAGER, player_manager)
-
     # Initialiser les joueurs
     update_loading(0.6, "Initializing players...")
 
-    from config.units import UNITS
+    player_manager = PlayerManager(ai_player_1=(ia_mode == "iacia"), ai_player_2=True)
+
+    DATA_BUS.register(DataBusKey.PLAYER_MANAGER, player_manager)
 
     # Charger les systèmes principaux
     update_loading(0.75, "Loading systems...")
 
     movement_system = MovementSystem()
     font = pygame.font.Font(Config.get_assets(key="font"), 18)
+    world.add_processor(SoundSystem())
     world.add_processor(LoadingUISystem(screen, font), priority=999)
     world.add_processor(movement_system)
     world.add_processor(TerrainEffectSystem(map))
@@ -237,11 +241,11 @@ def main(screen: pygame.Surface, map_size=24):
     # Charger les systèmes de rendu
     update_loading(0.85, "Loading rendering systems...")
 
+    DATA_BUS.register(DataBusKey.NOTIFICATION_MANAGER, NotificationManager())
     input_manager = InputManager()
     render = RenderSystem(screen, map, sprites)
     victory_system = VictorySystem()
     arrow_system = ArrowSystem(render)
-    fireball_system = FireballSystem(render)
 
     # Pathfinding system (doit être créé avant les systèmes de debug)
     pathfinding_system = PathfindingSystem()
@@ -252,14 +256,14 @@ def main(screen: pygame.Surface, map_size=24):
 
     world.add_processor(input_manager)
     world.add_processor(render)
-    world.add_processor(fireball_system)
     world.add_processor(arrow_system)  # Après le rendu de base
     world.add_processor(pathfinding_system)  # Avant les systèmes de debug
     world.add_processor(debug_event_handler)  # Écoute les événements F3
     world.add_processor(InputRouterSystem())
     world.add_processor(victory_system)
 
-    world.add_processor(CrossbowmanAISystemEnemy(pathfinding_system))
+    world.add_processor(LOVAAiSystem(pathfinding_system))
+    world.add_processor(SCPRAISystem())
 
     # Pause menu system (needs reference to game_hud for timer pause)
     pause_menu_system = PauseMenuSystem(screen, font, game_hud)
@@ -283,13 +287,29 @@ def main(screen: pygame.Surface, map_size=24):
     pygame.transform.set_smoothscale_backend("GENERIC")
 
     # Chargement terminé
-    update_loading(1.0, "Ready!")
+    update_loading(1.0, "Ready ! ")
     pygame.time.wait(500)  # Pause brève pour voir "Ready!"
     get_event_bus().emit(LoadingFinishEvent(success=True))
 
+    DATA_BUS.register(DataBusKey.PLAYED_TIME, Timer("game"))
+
+    world_perception = WorldPerception(
+        get_config().get("tile_size", 32),
+        {
+            EntityType.BRUTE: (get_entity(EntityType.BRUTE).get_component(Attack)).range
+            * tile_size,
+            EntityType.GHAST: (get_entity(EntityType.GHAST).get_component(Attack)).range
+            * tile_size,
+        },
+    )
+
+    DATA_BUS.register(DataBusKey.WORLD_PERCEPTION, world_perception)
+
     while game_state["running"]:
 
-        dt = clock.tick(60) / 1000.0
+        clock.tick(60)
+
+        dt = min(clock.get_time() / 1000, dt)
 
         for event in pygame.event.get():
             # If paused, let pause menu handle events first
@@ -305,32 +325,29 @@ def main(screen: pygame.Surface, map_size=24):
                     input_manager.handle_event(event)
 
         # Only process game if not paused
-        if not pause_menu_system.is_paused:
+        if not pause_menu_system.is_paused and not victory_handled:
             world.process(dt)
+            world_perception.update()
 
         if not victory_handled:
             render.show_map()
-            render.process(dt)
+            if not pause_menu_system.is_paused:
+                render.process(dt)
             arrow_system.process(dt)
-            fireball_system.process(dt)
             debug_render_system.process(dt)  # Debug après le rendu principal
             selection_system.draw_selections(screen)
             game_hud.draw(dt)
+            get_notification_manager().draw(screen)
 
-        # Always draw pause menu on top
-        pause_menu_system.process(dt)
+            # Always draw pause menu on top
+            pause_menu_system.process(dt)
 
         pygame.display.flip()
 
     # Clean up world resources
     returning_to_menu = game_state.get("return_to_menu", False)
 
-    # Clear all entities and processors
-    esper.clear_database()
-    esper.clear_cache()
-
-    # Clear event bus subscriptions to avoid memory leaks
-    get_event_bus()._subscribers.clear()
+    reset()
 
     # Only quit pygame if not returning to menu
     if not returning_to_menu:
@@ -354,3 +371,20 @@ def resize(screen: pygame.Surface, map_size: int, hud_width: int = 100) -> tuple
     get_camera().set_offset(hud_width + 10, 0)
 
     return map_width, map_height
+
+
+def reset():
+    """Reset the engine state, clearing data bus entries."""
+    DATA_BUS.remove(DataBusKey.PLAYED_TIME)
+    DATA_BUS.remove(DataBusKey.MAP)
+    DATA_BUS.remove(DataBusKey.PLAYER_MANAGER)
+    DATA_BUS.remove(DataBusKey.NOTIFICATION_MANAGER)
+    DATA_BUS.remove(DataBusKey.PLAYER_MOVEMENT_SYSTEM)
+    DATA_BUS.remove(DataBusKey.WORLD_PERCEPTION)
+
+    esper.clear_database()
+    esper.clear_cache()
+    esper.clear_dead_entities()
+    esper._processors = []
+
+    get_event_bus()._subscribers.clear()

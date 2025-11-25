@@ -16,12 +16,6 @@ class AIController:
     Il stocke les infos nécessaires pour la prise de décision.
     """
 
-    def __init__(self, ent: int, entity_type: EntityType):
-        self.state = None
-        self.brain = None
-        if entity_type == EntityType.BRUTE:
-            self.state: AiState = AiState(ent)
-            self.brain: BaseAi = BruteAI(self.state)
-        if entity_type == EntityType.GHAST:
-            self.state: AiState = AiState(ent)
-            self.brain: BaseAi = JeromeGhast(self.state)
+    def __init__(self, ent: int, state: AiState = None, brain: BaseAi = None):
+        self.state = state
+        self.brain = brain

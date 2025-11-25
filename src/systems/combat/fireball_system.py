@@ -33,17 +33,12 @@ class FireballSystem(IteratingProcessor):
         pygame.draw.circle(self.fireball_surface, (90, 50, 30), (8, 8), 7, width=2)
 
         # Little red orange sparks
-        spark_colors = [
-            (255, 180, 40),
-            (220, 120, 30),
-            (200, 80, 20)
-        ]
+        spark_colors = [(255, 180, 40), (220, 120, 30), (200, 80, 20)]
 
         spark_positions = [(3, 5), (12, 6), (6, 12), (10, 3)]
 
         for (x, y), col in zip(spark_positions, spark_colors):
             self.fireball_surface.set_at((x, y), col)
-
 
     def on_fireball_fired(self, event: FireballFiredEvent):
         """
@@ -59,7 +54,9 @@ class FireballSystem(IteratingProcessor):
         position_component = Position(event.start_pos.x, event.start_pos.y)
         EntityFactory.create(fireball_component, position_component)
 
-    def process_entity(self, ent: int, dt: float, fireball: Fireball, position: Position):
+    def process_entity(
+        self, ent: int, dt: float, fireball: Fireball, position: Position
+    ):
         """
         Update individual fireball position and render it.
 
@@ -73,18 +70,18 @@ class FireballSystem(IteratingProcessor):
         fireball.current_time += dt
 
         # Remove fireball if expired or reached target
-        if (fireball.current_time >= fireball.lifetime):
+        if fireball.current_time >= fireball.lifetime:
             esper.delete_entity(ent)
             return
-        
+
         dx = fireball.target_pos.x - position.x
         dy = fireball.target_pos.y - position.y
-        distance = math.sqrt(dx*dx + dy*dy)
+        distance = math.sqrt(dx * dx + dy * dy)
 
         if distance < 5:
             esper.delete_entity(ent)
             return
-        
+
         # Normalisation
         if distance > 0:
             nx = dx / distance
@@ -96,4 +93,6 @@ class FireballSystem(IteratingProcessor):
         position.x += nx * fireball.speed * dt
         position.y += ny * fireball.speed * dt
 
-        self.render_system.draw_surface(self.fireball_surface, position.x - 8, position.y - 8)
+        self.render_system.draw_surface(
+            self.fireball_surface, position.x - 8, position.y - 8
+        )

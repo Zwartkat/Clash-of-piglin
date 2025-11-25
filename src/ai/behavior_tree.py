@@ -41,13 +41,17 @@ class Selector(Node):
 
 class ConditionNode(Node):
 
-    def __init__(self, action: Action, threshold: float):
+    def __init__(self, action: Action, threshold: float, sup: bool = True):
         self.action = action
         self.threshold = threshold
+        self.sup = sup
 
     def tick(self, ai_state: AiState) -> str:
         weight = ai_state.action_weights.get(self.action, 0.0)
-        return Status.SUCCESS if weight >= self.threshold else Status.FAILURE
+        if self.sup:
+            return Status.SUCCESS if weight >= self.threshold else Status.FAILURE
+        else:
+            return Status.SUCCESS if weight <= self.threshold else Status.FAILURE
 
 
 class ActionNode(Node):

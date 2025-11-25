@@ -1,6 +1,7 @@
 import math
 from time import sleep
 import esper
+from abc import abstractmethod
 
 from ai.world_perception import WorldPerception
 from components.base.health import Health
@@ -8,7 +9,7 @@ from components.base.position import Position
 from components.base.team import Team
 from components.gameplay.attack import Attack
 from components.gameplay.target import Target
-from core.accessors import get_config, get_map, get_player_manager
+from core.accessors import get_config, get_map, get_player_manager, get_world_perception
 from enums.config_key import ConfigKey
 from enums.entity.action import ActionType
 from enums.entity.entity_type import EntityType
@@ -16,6 +17,12 @@ from enums.entity.unit_type import UnitType
 
 
 class AiState:
+    @abstractmethod
+    def update(self, dt: float) -> None:
+        pass
+
+
+class BruteAiState(AiState):
     def __init__(self, ent: int):
         """
         Initialize AI state for a given entity.
@@ -277,7 +284,7 @@ class AiState:
                 self.action_weights[k] = round(self.action_weights[k] / max_w, 3)
         # print(self.action_weights[Action.DEFEND_BASE])
 
-    def update(self, wordl_perception: WorldPerception, dt: float) -> None:
+    def update(self, dt: float) -> None:
         """
         Update AI state for the current frame:
         - Perceive surroundings
@@ -286,7 +293,8 @@ class AiState:
         Args:
             dt (float): Delta time since last update
         """
-        self.perceive(wordl_perception, dt)
+        world_perception = get_world_perception()
+        self.perceive(world_perception, dt)
         self.evaluate_context(dt)
 
 

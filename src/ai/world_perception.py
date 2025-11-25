@@ -250,7 +250,7 @@ class WorldPerception:
 
             # Santé de la base : plus elle est basse, plus le danger monte
             health_ratio = self.health_ratios.get(ent, 1.0)
-            danger += (1.0 - health_ratio) * 0.7  # pondération douce
+            danger += (1.0 - health_ratio) * 0.5  # pondération douce
 
             # Pas d’alliés proches => petit bonus de danger
             if ally_support == 0 and enemy_pressure > 0:
@@ -259,8 +259,9 @@ class WorldPerception:
             # Lissage : ne pas avoir de variations brutales
             # On redescend progressivement si plus de menace
             decay_rate = 0.1
-            danger = (prev_danger * (1 - decay_rate)) + (danger * decay_rate * 5)
+
+            danger = (prev_danger * (1 - decay_rate)) + (danger * decay_rate)
 
             # Clamp final entre 0 et 1
-            danger = max(0.0, min(danger, 1.0))
+            danger = max(0.0, min(round(danger, 3), 1.0))
             self.bases[team] = (ent, danger)

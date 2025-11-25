@@ -1,14 +1,17 @@
 import random
-from components.position import Position
-from components.health import Health
-from components.team import Team
-from components.attack import Attack
-from components.velocity import Velocity
-from enums.entity_type import EntityType
+
+import esper
+from components.ai import BaseAi
+from components.base.position import Position
+from components.base.health import Health
+from components.base.team import Team
+from components.gameplay.attack import Attack
+from components.base.velocity import Velocity
+from enums.entity.entity_type import EntityType
 from config.units import UNITS
 
 
-class IAGhast:
+class MAPIGhast(BaseAi):
     """
     IA avancée pour Ghast :
     - Attaque a tout prix si proche de gagner ou perdre
@@ -20,9 +23,8 @@ class IAGhast:
 
     LOW_HEALTH = 30
 
-    def __init__(self, ghast_entity, world):
+    def __init__(self, ghast_entity):
         self.ghast = ghast_entity
-        self.world = world
         self.target_building = None
 
         ghast_base = UNITS[EntityType.GHAST]
@@ -37,26 +39,26 @@ class IAGhast:
             elif isinstance(comp, Health):
                 self.stats["max_health"] = comp.full
 
-    def update(self):
+    def decide(self):
 
-        pos = self.world.component_for_entity(self.ghast, Position)
-        health = self.world.component_for_entity(self.ghast, Health)
-        team = self.world.component_for_entity(self.ghast, Team)
+        pos = esper.component_for_entity(self.ghast, Position)
+        health = esper.component_for_entity(self.ghast, Health)
+        team = esper.component_for_entity(self.ghast, Team)
 
         ally_base, enemy_base = self._get_bases(team.team_id)
 
         if not self.target_building or not self._entity_exists(self.target_building):
-            print("- Finding new target building")
+            # print("- Finding new target building")
             self.target_building = self._find_enemy_building(team.team_id)
 
         if not self.target_building:
-            print("- No target building found")
+            # print("- No target building found")
             return
 
-        building_pos = self.world.component_for_entity(self.target_building, Position)
+        building_pos = esper.component_for_entity(self.target_building, Position)
 
         enemies = []
-        for ent, t in self.world.get_component(Team):
+        for ent, t in esper.get_component(Team):
             if t.team_id != team.team_id:
                 enemies.append(ent)
 
@@ -66,38 +68,38 @@ class IAGhast:
             ally = None
 
         ##décision en cours
-        print("IA Ghast update called")
-        print("Position:", pos)
-        print("Health:", health.remaining)
-        print("Crossbow man nearby:", self._get_number_crossbow_near(pos, team.team_id))
-        print("Position ally nearby:", self._get_closest_ally(pos, team.team_id))
-        print("Decisions en cours:")
+        # print("IA Ghast update called")
+        # print("Position:", pos)
+        # print("Health:", health.remaining)
+        # print("Crossbow man nearby:", self._get_number_crossbow_near(pos, team.team_id))
+        # print("Position ally nearby:", self._get_closest_ally(pos, team.team_id))
+        # print("Decisions en cours:")
 
         if ally_base and ally_base[1].remaining < 300:
-            print(" Near deffeat, attack at all cost")
+            # print(" Near deffeat, attack at all cost")
             self._move_towards(pos, building_pos)
             return
 
         elif enemy_base and enemy_base[1].remaining < 300:
-            print(" Near victory, attack at all cost")
+            # print(" Near victory, attack at all cost")
             self._move_towards(pos, building_pos)
             return
 
         # Fuir si PV bas
         if health.remaining < self.LOW_HEALTH:
-            print("- Fleeing due to low health")
+            # print("- Fleeing due to low health")
             self._flee(pos, enemies)
             return
 
         # Fuir si trop de crossbow proches
         if self._get_number_crossbow_near(pos, team.team_id)[0] > 0:
-            print("- Fleeing due to too many nearby enemies")
+            # print("- Fleeing due to too many nearby enemies")
             self._flee(pos, enemies)
             return
 
         # Voir si c'est bénéfique de rester derrière un allié en fonction de la distance ennemie
         if ally and self._get_number_crossbow_near(pos, team.team_id)[1] < 90:
-            print("- Staying behind ally")
+            # print("- Staying behind ally")
             self._stay_behind_ally(pos, ally)
             return
 
@@ -106,16 +108,16 @@ class IAGhast:
 
         dist = ((building_pos.x - pos.x) ** 2 + (building_pos.y - pos.y) ** 2) ** 0.5
         total_enemies = len(self._get_all_enemies(pos, team.team_id))
-        print("Total enemies:", total_enemies)
+        # print("Total enemies:", total_enemies)
         total_allies = len(self._get_all_allies(pos, team.team_id))
-        print("Total allies:", total_allies)
+        # print("Total allies:", total_allies)
         if total_enemies <= total_allies:
             # Attaquer si à portée
             if dist > self.stats["attack_range"]:
-                print("- Moving towards target building")
+                # print("- Moving towards target building")
                 self._move_towards(pos, building_pos)
         else:
-            print("- Staying near base")
+            # print("- Staying near base")
             self._stay_near_base(pos)
 
     # ------------------------
@@ -124,21 +126,21 @@ class IAGhast:
 
     def _entity_exists(self, entity_id):
         try:
-            self.world.component_for_entity(entity_id, Position)
+            esper.component_for_entity(entity_id, Position)
             return True
         except KeyError:
             return False
 
     def _get_all_enemies(self, pos, my_team) -> list:
         enemies = []
-        for ent, t in self.world.get_component(Team):
+        for ent, t in esper.get_component(Team):
             if t.team_id != my_team:
                 enemies.append(ent)
         return enemies
 
     def _get_all_allies(self, pos, my_team) -> list:
         allies = []
-        for ent, t in self.world.get_component(Team):
+        for ent, t in esper.get_component(Team):
             if t.team_id == my_team and ent != self.ghast:
                 allies.append(ent)
         return allies
@@ -149,10 +151,10 @@ class IAGhast:
         """
         nb_enemies = 0
         dist = float("inf")
-        for ent, t in self.world.get_component(Team):
-            entity_type = self.world.component_for_entity(ent, EntityType)
+        for ent, t in esper.get_component(Team):
+            entity_type = esper.component_for_entity(ent, EntityType)
             if t.team_id != my_team and entity_type == EntityType.CROSSBOWMAN:
-                ent_pos = self.world.component_for_entity(ent, Position)
+                ent_pos = esper.component_for_entity(ent, Position)
                 dist = ((ent_pos.x - pos.x) ** 2 + (ent_pos.y - pos.y) ** 2) ** 0.5
                 if dist < 150:
                     nb_enemies += 1
@@ -164,9 +166,9 @@ class IAGhast:
         """
         ally = None
         min_dist = float("inf")
-        for ent, t in self.world.get_component(Team):
+        for ent, t in esper.get_component(Team):
             if t.team_id == my_team and ent != self.ghast:
-                ent_pos = self.world.component_for_entity(ent, Position)
+                ent_pos = esper.component_for_entity(ent, Position)
                 dist = ((ent_pos.x - pos.x) ** 2 + (ent_pos.y - pos.y) ** 2) ** 0.5
                 if dist < min_dist:
                     min_dist = dist
@@ -175,10 +177,10 @@ class IAGhast:
 
     def _flee_range_enemy(self, pos, my_team):
         enemy = []
-        for ent, t in self.world.get_component(Team):
+        for ent, t in esper.get_component(Team):
             if t.team_id != my_team:
                 if ent == UNITS[EntityType.CROSSBOWMAN]:
-                    ent_pos = self.world.component_for_entity(ent, Position)
+                    ent_pos = esper.component_for_entity(ent, Position)
                     dist = ((ent_pos.x - pos.x) ** 2 + (ent_pos.y - pos.y) ** 2) ** 0.5
                     if dist < +30:
                         enemy.append((ent_pos, dist))
@@ -188,12 +190,12 @@ class IAGhast:
     def _flee(self, pos, enemies):
         if not enemies:
             return
-        avg_x = sum(
-            self.world.component_for_entity(e, Position).x for e in enemies
-        ) / len(enemies)
-        avg_y = sum(
-            self.world.component_for_entity(e, Position).y for e in enemies
-        ) / len(enemies)
+        avg_x = sum(esper.component_for_entity(e, Position).x for e in enemies) / len(
+            enemies
+        )
+        avg_y = sum(esper.component_for_entity(e, Position).y for e in enemies) / len(
+            enemies
+        )
         dx = pos.x - avg_x
         dy = pos.y - avg_y
         flee_x = pos.x + dx
@@ -218,16 +220,16 @@ class IAGhast:
     def _find_enemy_building(self, my_team_id):
         min_dist = float("inf")
         target_ent = None
-        ghast_pos = self.world.component_for_entity(self.ghast, Position)
+        ghast_pos = esper.component_for_entity(self.ghast, Position)
 
-        for ent, t in self.world.get_component(Team):
+        for ent, t in esper.get_component(Team):
             if t.team_id != my_team_id:
                 try:
-                    entity_type = self.world.component_for_entity(ent, EntityType)
+                    entity_type = esper.component_for_entity(ent, EntityType)
                 except KeyError:
                     continue
                 if entity_type == EntityType.BASTION:
-                    ent_pos = self.world.component_for_entity(ent, Position)
+                    ent_pos = esper.component_for_entity(ent, Position)
                     dist = (
                         (ent_pos.x - ghast_pos.x) ** 2 + (ent_pos.y - ghast_pos.y) ** 2
                     ) ** 0.5
@@ -252,7 +254,7 @@ class IAGhast:
         """
         base_pos = (
             Position(50, 50)
-            if self.world.component_for_entity(self.ghast, Team).team_id == 1
+            if esper.component_for_entity(self.ghast, Team).team_id == 1
             else Position(730, 730)
         )
         dist = ((base_pos.x - pos.x) ** 2 + (base_pos.y - pos.y) ** 2) ** 0.5
@@ -262,13 +264,13 @@ class IAGhast:
     def _get_bases(self, my_team_id):
         ally_base = None
         enemy_base = None
-        for ent, t in self.world.get_component(Team):
+        for ent, t in esper.get_component(Team):
             try:
-                etype = self.world.component_for_entity(ent, EntityType)
+                etype = esper.component_for_entity(ent, EntityType)
             except KeyError:
                 continue
             if etype == EntityType.BASTION:
-                h = self.world.component_for_entity(ent, Health)
+                h = esper.component_for_entity(ent, Health)
                 if t.team_id == my_team_id:
                     ally_base = (ent, h)
                 else:

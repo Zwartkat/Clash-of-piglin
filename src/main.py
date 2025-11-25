@@ -9,10 +9,11 @@ from core.debugger import Debugger
 from core.ecs.event_bus import EventBus
 from core.config import Config
 from enums.data_bus_key import DataBusKey
+from systems.sound_system import SoundSystem
 import core.engine as game_manager
 import core.options as option
 
-DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enabled=False))
+DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enable_warn=True, enable_error=True))
 DATA_BUS.get_debugger().log("Démarrage du jeu")
 
 Config.load("config.yaml")
@@ -39,9 +40,15 @@ pygame.display.set_icon(logo)
 menu_items = Config.get(key="menu_buttons")
 selected = 0
 
-pygame.mixer.music.load("assets/audio/pigstep.mp3")
-pygame.mixer.music.set_volume(0.5)
-pygame.mixer.music.play(-1)
+SoundSystem.set_music(SoundSystem.MUSICS["pigstep"])
+SoundSystem.set_music_volume(0.1)
+SoundSystem.play_music()
+
+play_options_open = False
+play_modes = ["Joueur vs IA", "IA vs IA"]
+play_option_rects = [
+    pygame.Rect(250, 250 + i * 100, 300, 60) for i in range(len(play_modes))
+]
 
 credits_open = False
 credits_text = [
@@ -51,7 +58,7 @@ credits_text = [
     "- Zwartkat",
     "- xMegumi",
     "- darkell",
-    "- WorKrai",
+    "- WorKai",
     "- Sparkness",
     "- MatthieuPinceel",
     "Graphismes: Zwartkat,Mojang Studio",
@@ -130,6 +137,18 @@ def draw_menu():
         hovered: bool = rect.collidepoint(pygame.mouse.get_pos())
         draw_button(screen, rect, menu_items[i], hovered)
 
+    if play_options_open:
+        overlay = pygame.Surface((800, 600), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        screen.blit(overlay, (0, 0))
+
+        title_surf = font.render("Choisir le mode de jeu", True, (255, 255, 255))
+        screen.blit(title_surf, (400 - title_surf.get_width() // 2, 150))
+
+        for i, rect in enumerate(play_option_rects):
+            hovered = rect.collidepoint(pygame.mouse.get_pos())
+            draw_button(screen, rect, play_modes[i], hovered)
+
     info_font = pygame.font.Font(Config.get_assets(key="font"), 12)
     info_text = info_font.render("Presque pas Minecraft 1.16", True, (220, 220, 220))
     screen.blit(info_text, (20, screen.get_height() - 20))
@@ -180,7 +199,8 @@ def handle_click(pos: Tuple[int]):
     """
     Handle click on the main menu.
     """
-    global selected, credits_open, screen
+    # ajouter play_options_open ici pour éviter UnboundLocalError
+    global selected, credits_open, screen, play_options_open
 
     if credits_open:
         credits_open = False
@@ -190,19 +210,35 @@ def handle_click(pos: Tuple[int]):
     #    option_open = False
     #    return True
 
-    for i, rect in enumerate(button_rects):
-        if rect.collidepoint(pos):
-            selected = i
-            if menu_items[selected] == menu_items[0]:  # Play
-                print("Play")
-                return_to_menu = game_manager.main(screen)
+    # Si le sous-menu Play est ouvert, gérer ses clics
+    if play_options_open:
+        # clic sur une option de jeu
+        for i, rect in enumerate(play_option_rects):
+            if rect.collidepoint(pos):
+                SoundSystem.play_button_clicked()
+                chosen = play_modes[i]
+                if chosen == play_modes[0]:  # Joueur vs IA
+                    return_to_menu = game_manager.main(screen, ia_mode="jcia")
+                else:  # IA vs IA
+                    return_to_menu = game_manager.main(screen, ia_mode="iacia")
+
+                play_options_open = False
                 if return_to_menu:
-                    screen = pygame.display.set_mode(
-                        option.current_resolution, option.flags
-                    )
-                    apply_display_settings()
+                    screen = pygame.display.set_mode((800, 600))
                     return True
                 return False
+        # clic hors des options ferme le sous-menu
+        play_options_open = False
+        return True
+
+    for i, rect in enumerate(button_rects):
+        if rect.collidepoint(pos):
+            SoundSystem.play_button_clicked()
+            selected = i
+            if menu_items[selected] == menu_items[0]:  # Play
+                # ouvrir le sous-menu Play au lieu de lancer directement
+                play_options_open = True
+                return True
             elif menu_items[selected] == menu_items[1]:  # Options ou Crédits
                 print("Credits opened")
                 credits_open = True
