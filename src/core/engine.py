@@ -123,25 +123,6 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     # Reset game state at the start
     dt = 0.05
 
-    # Clear Esper database before starting new game
-    esper.clear_database()
-    esper.clear_cache()
-
-    # Reset Services (important for timer and other global state)
-    Services.start_time = pygame.time.get_ticks()
-    Services.finish_time = None
-
-    # Clear DATA_BUS entries that need to be fresh
-    from enums.data_bus_key import DataBusKey
-
-    # Remove old game state from DATA_BUS
-    if DATA_BUS.has(DataBusKey.MAP):
-        del DATA_BUS._store[DataBusKey.MAP]
-    if DATA_BUS.has(DataBusKey.PLAYER_MANAGER):
-        del DATA_BUS._store[DataBusKey.PLAYER_MANAGER]
-    if DATA_BUS.has(DataBusKey.PLAYER_MOVEMENT_SYSTEM):
-        del DATA_BUS._store[DataBusKey.PLAYER_MOVEMENT_SYSTEM]
-
     screen = pygame.display.set_mode(
         option.current_resolution, option.flags | pygame.RESIZABLE
     )
@@ -266,7 +247,9 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     world.add_processor(SCPRAISystem())
 
     # Pause menu system (needs reference to game_hud for timer pause)
-    pause_menu_system = PauseMenuSystem(screen, font, game_hud)
+    pause_menu_system = option.OptionsMenuSystem(
+        screen, font
+    )  # PauseMenuSystem(screen, font, game_hud)
     world.add_processor(pause_menu_system)
 
     # Subscribe to quit to menu event
@@ -313,7 +296,7 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
 
         for event in pygame.event.get():
             # If paused, let pause menu handle events first
-            if pause_menu_system.is_paused:
+            if pause_menu_system.is_open:
                 if pause_menu_system.handle_event(event):
                     continue
 
@@ -325,13 +308,13 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
                     input_manager.handle_event(event)
 
         # Only process game if not paused
-        if not pause_menu_system.is_paused and not victory_handled:
+        if not pause_menu_system.is_open and not victory_handled:
             world.process(dt)
             world_perception.update()
 
         if not victory_handled:
             render.show_map()
-            if not pause_menu_system.is_paused:
+            if not pause_menu_system.is_open:
                 render.process(dt)
             arrow_system.process(dt)
             debug_render_system.process(dt)  # Debug après le rendu principal
