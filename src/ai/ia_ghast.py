@@ -48,11 +48,11 @@ class MAPIGhast(BaseAi):
         ally_base, enemy_base = self._get_bases(team.team_id)
 
         if not self.target_building or not self._entity_exists(self.target_building):
-            print("- Finding new target building")
+            # print("- Finding new target building")
             self.target_building = self._find_enemy_building(team.team_id)
 
         if not self.target_building:
-            print("- No target building found")
+            # print("- No target building found")
             return
 
         building_pos = esper.component_for_entity(self.target_building, Position)

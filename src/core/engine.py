@@ -192,7 +192,7 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     # Initialiser les joueurs
     update_loading(0.6, "Initializing players...")
 
-    player_manager = PlayerManager()
+    player_manager = PlayerManager(ai_player_1=(ia_mode == "iacia"), ai_player_2=True)
 
     DATA_BUS.register(DataBusKey.PLAYER_MANAGER, player_manager)
 
@@ -311,7 +311,8 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
 
         if not victory_handled:
             render.show_map()
-            render.process(dt)
+            if not pause_menu_system.is_paused:
+                render.process(dt)
             arrow_system.process(dt)
             debug_render_system.process(dt)  # Debug après le rendu principal
             selection_system.draw_selections(screen)

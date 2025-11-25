@@ -70,9 +70,9 @@ class UnitFactory:
                 esper.add_component(ent, AIController(ent, state, ADMABrute(state)))
             elif ai == "JEVA":
                 state = AiState(ent)
-                esper.add_component(ent, AIController(ent, state, JEVAGhast(state)))
+                esper.add_component(ent, AIController(ent, state, JEVAGhast(ent)))
             elif ai == "MAPI":
-                state = AiState(ent)
+                state = AiState()
                 esper.add_component(ent, AIController(ent, state, MAPIGhast(ent)))
         elif ai == "SCPR":
             from components.base.ai_flag import Ai_flag

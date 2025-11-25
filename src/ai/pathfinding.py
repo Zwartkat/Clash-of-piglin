@@ -1,6 +1,7 @@
 import heapq
 import itertools
 import math
+import random
 
 from components.base.position import Position
 from components.case import Case
@@ -99,8 +100,14 @@ def heuristic(a: tuple[int, int], b: tuple[int, int]) -> float:
     """
 
     tile_size = get_config().get("tile_size")
-    return math.hypot(
-        b[0] // tile_size - a[0] // tile_size, b[1] // tile_size - a[1] // tile_size
+    rd = 0
+    if random.randint(0, 5) == 1:
+        rd = -1
+    return (
+        math.hypot(
+            b[0] // tile_size - a[0] // tile_size, b[1] // tile_size - a[1] // tile_size
+        )
+        + rd
     )
 
 

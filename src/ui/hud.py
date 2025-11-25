@@ -2,7 +2,12 @@ from copy import deepcopy
 import esper
 import pygame
 from typing import Tuple
-from core.accessors import get_event_bus, get_played_time, get_player_manager
+from core.accessors import (
+    get_entity,
+    get_event_bus,
+    get_played_time,
+    get_player_manager,
+)
 from core.game.timer import Timer
 from core.game.player import Player
 from components.base.health import Health
@@ -303,16 +308,6 @@ class Hud:
         )
         self.screen.blit(time_surface, time_rect)
 
-    def get_bastion_health(self, player: Player) -> int:
-        """Récupère la vie du bastion d'un joueur"""
-        try:
-            if esper.has_component(player.bastion, Health):
-                health_component = esper.component_for_entity(player.bastion, Health)
-                return health_component.remaining
-        except:
-            pass
-        return 0
-
     def drawTeamHud(self, team_id: int):
         """Dessine le HUD d'une équipe spécifique"""
         if not get_player_manager() or team_id not in get_player_manager().players:
@@ -397,14 +392,19 @@ class Hud:
             self.screen.fill(self.gold_color, progress_rect)
 
         # Displaying in text the health of the player's bastion
-        bastion_health = self.get_bastion_health(player)
-        health_text = f"Bastion: {bastion_health}/1000"
+        bastion_health = 0
+        bastion_max_health = get_entity(EntityType.BASTION).get_component(Health).full
+        if esper.entity_exists(player.bastion):
+            health_component = esper.component_for_entity(player.bastion, Health)
+            bastion_health = health_component.remaining
+
+        health_text = f"Bastion: {bastion_health}/{bastion_max_health}"
         health_color = (255, 100, 100) if bastion_health < 300 else (100, 255, 100)
         health_surface = self.font_medium.render(health_text, True, health_color)
         self.screen.blit(health_surface, (hud_x + 15, info_y + 40))
 
         # Displaying a progress bar to show the health of the player's bastion
-        health_progress = bastion_health / 1000.0
+        health_progress = bastion_health / bastion_max_health
         health_bar_y = info_y + 60
 
         health_bar_rect = pygame.Rect(bar_x, health_bar_y, bar_width, bar_height)
