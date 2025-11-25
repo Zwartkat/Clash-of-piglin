@@ -1,8 +1,9 @@
 game_name: "Clash of Piglin"
 version: "1.0.0"
 
-menu_buttons : ["Play", "Crédits", "Quit"]
+menu_buttons : ["Play", "Crédits","Options", "Quit"]
 tile_size: 32
+
 
 assets_path:
   logo: "assets/images/logo.png"
