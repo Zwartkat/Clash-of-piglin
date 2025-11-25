@@ -1,6 +1,9 @@
 import esper
-from events.death_event import DeathEvent
+from core.accessors import get_audio_system
 from components.gameplay.target import Target
+from enums.entity.entity_type import EntityType
+from events.death_event import DeathEvent
+from enums.sounds import origin, reasons
 
 
 class DeathEventHandler:
@@ -28,3 +31,6 @@ class DeathEventHandler:
         for ent, target in esper.get_component(Target):
             if target.target_entity_id == dead_entity_id:
                 target.target_entity_id = None
+
+        entity_type = esper.component_for_entity(dead_entity_id, EntityType)
+        get_audio_system().play_sound(origin.ENTITY, entity_type, reasons.DEATH)

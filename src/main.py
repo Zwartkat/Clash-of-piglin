@@ -6,14 +6,17 @@ from core.debugger import Debugger
 from core.ecs.event_bus import EventBus
 from core.config import Config
 from enums.data_bus_key import DataBusKey
+from systems.audio_system import AudioSystem
 
 DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enabled=False))
 DATA_BUS.get_debugger().log("Démarrage du jeu")
 
 Config.load("config.yaml")
+audio_system = AudioSystem()
 
 DATA_BUS.register(DataBusKey.CONFIG, Config)
 DATA_BUS.register(DataBusKey.EVENT_BUS, EventBus.get_event_bus())
+DATA_BUS.register(DataBusKey.AUDIO_SYSTEM, audio_system)
 
 import core.engine as game_manager
 
@@ -36,9 +39,10 @@ pygame.display.set_icon(logo)
 menu_items = Config.get(key="menu_buttons")
 selected = 0
 
-# pygame.mixer.music.load("assets/audio/pigstep.mp3")
+# pygame.mixer.music.load("assets/audio/musics/pigstep.mp3")
 # pygame.mixer.music.set_volume(1)
 # pygame.mixer.music.play(-1)
+# pygame.mixer.Sound("assets/audio/sounds/pig.wav").play()
 
 credits_open = False
 credits_text = [

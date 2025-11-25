@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from core.game.camera import Camera
     from core.game.map import Map
     from systems.world.player_move_system import PlayerMoveSystem
+    from systems.audio_system import AudioSystem
 
     from core.game.player_manager import PlayerManager
 
@@ -31,6 +32,11 @@ def get_debugger() -> "Debugger":
 def get_event_bus() -> "EventBus":
     instance = DATA_BUS.get(DataBusKey.EVENT_BUS)
     return cast("EventBus", instance)
+
+
+def get_audio_system() -> AudioSystem:
+    instance = DATA_BUS.get(DataBusKey.AUDIO_SYSTEM)
+    return cast("AudioSystem", instance)
 
 
 def get_camera() -> "Camera":

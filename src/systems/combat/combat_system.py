@@ -1,8 +1,7 @@
 # src/systems/combat_system.py
 import esper
 from components.ai_controller import AIController
-from core.accessors import get_event_bus
-from core.ecs.event_bus import EventBus
+from core.accessors import get_event_bus, get_audio_system
 from events.attack_event import AttackEvent
 from events.death_event import DeathEvent
 from events.arrow_fired_event import ArrowFiredEvent
@@ -15,6 +14,7 @@ from components.base.position import Position
 from core.ecs.iterator_system import IteratingProcessor
 from components.base.cost import Cost
 from enums.entity.entity_type import EntityType
+from enums.sounds import origin, reasons
 
 
 class CombatSystem(IteratingProcessor):
@@ -83,7 +83,10 @@ class CombatSystem(IteratingProcessor):
 
         components = esper.components_for_entity(ent)
 
-        if esper.has_component(ent, AIController) and EntityType.GHAST not in components:
+        if (
+            esper.has_component(ent, AIController)
+            and EntityType.GHAST not in components
+        ):
             return
 
         if not target.target_entity_id:
@@ -112,10 +115,7 @@ class CombatSystem(IteratingProcessor):
                     break
 
                 # Fire fireball if attacker is a Ghast
-                if (
-                    isinstance(component, EntityType)
-                    and component == EntityType.GHAST
-                ):
+                if isinstance(component, EntityType) and component == EntityType.GHAST:
                     get_event_bus().emit(FireballFiredEvent(ent, pos, target_pos))
                     break
 
@@ -146,6 +146,9 @@ class CombatSystem(IteratingProcessor):
         target_health: Health = esper.component_for_entity(target_id, Health)
 
         target_health.remaining = max(0, target_health.remaining - atk.damage)
+
+        entity_type = esper.component_for_entity(target_id, EntityType)
+        get_audio_system().play_sound(origin.ENTITY, entity_type, reasons.ATTACK)
 
         if target_health.remaining == 0:
             team = esper.component_for_entity(attacker_id, Team)

@@ -35,8 +35,8 @@ from systems.combat.combat_system import CombatSystem
 from systems.crossbowman_ai_system_enemy import CrossbowmanAISystemEnemy
 from systems.pathfinding_system import PathfindingSystem
 from systems.death_event_handler import DeathEventHandler
+from systems.sound_event_handler import SoundEventHandler
 from systems.combat.combat_system import CombatSystem
-from systems.death_event_handler import DeathEventHandler
 from systems.world.movement_system import MovementSystem
 from components.base.position import Position
 from core.game.player_manager import PlayerManager
@@ -228,6 +228,7 @@ def main(screen: pygame.Surface, map_size=24):
     world.add_processor(player_movement_system)
     world.add_processor(EconomySystem(get_event_bus()))
     death_handler = DeathEventHandler(get_event_bus())
+    sound_handler = SoundEventHandler(get_event_bus())
     targeting_system = TargetingSystem()
     world.add_processor(targeting_system)
     world.add_processor(CombatSystem())
