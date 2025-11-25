@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Clash-of-piglin - Clash of piglin</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../css/brands.min.css" rel="stylesheet">
+        <link href="../css/solid.min.css" rel="stylesheet">
+        <link href="../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">Clash of piglin</a>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#clash-of-piglin" class="nav-link">Clash-of-piglin</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#tutoriels" class="nav-link">Tutoriels</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#core" class="nav-link">Core</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#composants" class="nav-link">Composants</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#systemes" class="nav-link">Systèmes</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="clash-of-piglin">Clash-of-piglin</h1>
+<h2 id="tutoriels">Tutoriels</h2>
+<p>...</p>
+<h3 id="afficher-un-element-dans-la-map">Afficher un élement dans la map</h3>
+<p>Les coordonnées traitées en arrière plan sont les coordonnées de l'élément <strong>dans le monde</strong>, celui n'est cependant pas afficher à cet emplacement.
+Pour afficher un élément sur la carte, il est impératif de passer par la <a href="#caméra"><code>Camera</code></a>.</p>
+<p>Il n'est pas nécessaire d'accéder directement à la caméra pour afficher l'élément souhaité. La classe <a href="#rendersystem"><code>RenderSystem</code></a> permet directement de passer l'élément souhaité pour l'afficher dans la carte</p>
+<p>Pour cela, on doit récupérer l'instance de <code>RenderSystem</code> est utiliser les méthodes suivantes:
+- <code>draw_surface</code> : pour afficher une Surface pygame
+- <code>draw_rect</code> : pour dessiner un Rect de pygame 
+- <code>draw_polygon</code> : pour dessiner un Polygon de pygame </p>
+<pre><code class="language-py">
+from systems.rendersystem import RenderSystem
+
+screen : pygame.Surface
+map : Map
+sprites : dict[CaseType,pygame.Surface]
+
+render = RenderSystem(screen,map,sprites)
+
+frame = sprite.get_frame()
+render.draw_surface(frame, x, y)
+
+render.draw_rect((x, y, width, height), color)
+
+diamond_points: list[tuple[int]] = [
+            (x, y - 10),  # Top
+            (x + 2, y - 8),  # right
+            (x, y - 6),  # bottom
+            (x - 2, y - 8),  # left
+        ]
+render.draw_polygon(diamond_points, color)
+
+</code></pre>
+<h3 id="animer-une-entite">Animer une entité</h3>
+<p>L'animation d'une entité dépend du composant <a href="#sprite"><code>Sprite</code></a> à sa création. </p>
+<p>La frame courante peut ensuite être récupérée à partir de la méthode <code>get_frame</code>.<br>
+La méthode <code>set_animation</code> permet de définir l'animation et la direction à afficher. Elle est généralement utilisée dans des méthodes appelées par l'émission d'un <code>Event</code>.<br> <a href="#eventbus">Voir EventBus</a> <br></p>
+<p>Le Sprite est mis à jour via la méthode <code>update</code>, qui utilise le <code>delta_time</code> pour décider du changement de frame. Le <a href="#rendersystem"><code>RenderSystem</code></a> permet d'effectuer automatiquement la mise à jour de la frame à afficher</p>
+<h2 id="core">Core</h2>
+<h3 id="eventbus">EventBus</h3>
+<p>L'EventBus est un système permettant de transmettre des événements à n'importe quelle méthode de classe abonné <br>
+Cette classe est sous la forme d'un singleton et peut être récupérée avec <code>EventBus.get_event_bus()</code>. <br>
+La méthode <code>subscribe</code> permet en fournissant une classe <code>Event</code> et une méthode sous forme de <code>Callable</code>. Pour désabonner, il faut utiliser <code>unsubcribe</code>. <br>
+Pour émettre un événement, il doit être donné à la méthode <code>emit</code> qui exécutera toutes les objets méthodes abonnés. Ces méthodes doivent posséder en argument l'event qui lui sera transmis<br></p>
+<pre><code class="language-py">from core.ecs.event_bus import EventBus
+
+render = RenderSystem()
+
+event_bus : EventBus = EventBus.get_event_bus()
+
+event_bus.subscribe(MoveEvent, render.animate_move)
+
+class RenderSystem:
+
+    def __init__(self):
+        pass
+
+    ...
+
+    def animate_move(self, event : MoveEvent):
+        print(event.pos_x,event.pos_y)
+</code></pre>
+<h3 id="iteratingprocessor">IteratingProcessor</h3>
+<p>La classe <code>IteratingProcessor</code> est une classe abstraite qui permet d'effectuer une action à définir dans la classe fille. Elle permet d'executer cette action pour toutes les entités qui possèdent les <code>Component</code> fournis à l'instanciation de la classe par l'intermédiaire de la méthode <code>process_entity</code>.<br> 
+Celle-ci fournit les données suivantes:
+- <code>ent</code> (int) : l'identifiant de l'entité dans esper
+- <code>dt</code> (float) : le delta_time 
+- <code>*comps</code> (Component) : le ou les components fournis à la création de la classe fille</p>
+<p>Exemple </p>
+<pre><code class="language-py">from component.component1 import Component1
+from component.component2 import Component2
+
+class ExempleSystem(IteratingProcessor):
+    def __init__(self):
+        super().__init__(Component1,Component2)
+
+    def process_entity(self, ent : int, dt : float, comp1: Component1, comp2 : Component2):
+        pass
+</code></pre>
+<h3 id="camera">Caméra</h3>
+<p>La caméra affiche uniquement les éléments aux coordonnées correspondant au delta x et y de la caméra (le décalage de la caméra par rapport au monde)</p>
+<p>Pour utiliser la caméra, il est impératif d'executer ces deux fonctions : <code>set_size</code> et <code>set_world_size</code></p>
+<pre><code class="language-py">
+from core.game.camera import CAMERA
+
+CAMERA.set_size(300,300)
+CAMERA.set_world_size(700,800)
+</code></pre>
+<h2 id="composants">Composants</h2>
+<p>Toutes les entités sont définis par des composants, ceux-ci servent de stockage de données. Ils dépendent tous de <code>Component</code>.</p>
+<h3 id="attack">Attack</h3>
+<h3 id="case">Case</h3>
+<p>L'entité <code>Case</code> permet de créer des cases, qui en nombre composent la carte de jeu (<code>Map</code>).<br> <br>
+On peut en créer sans communiquer de paramètres. La case sera alors créée avec des coordonnées (<code>Position</code>) et un type (<code>CaseType</code>) par défaut.
+On peut cependant également créer une <code>Case</code> à partir d'une autre (la nouvelle copiera alors les coordonnées et le type du modèle) via la méthode <code>initFromModel</code>.</p>
+<p>Les propriétés d'une <code>Case</code> sont : <br></p>
+<ul>
+<li><code>coordonnees</code> (Position) : La position de la case. Sera utilisée pour déterminer son placement dans le <code>tab</code> de la carte de jeu, ainsi que pour l'affichage de ladite carte.</li>
+<li><code>type</code> (CaseType) : Le type de la case. Sera notamment utilisé dans la carte de jeu afin de permettre toute sortes d'opérations, dont la vérification de la génération d'une carte valide. Si la case est de type <code>LAVA</code>, elle reçoit un composant <code>Sprite</code> qui sera utilisé pour gérer une animation lors de l'affichage. </li>
+</ul>
+<p>Les fonctions d'une carte sont : <br></p>
+<ul>
+<li><code>getPosition</code> () -&gt; Position : retourne les coordonnées de la case.</li>
+<li><code>getType</code> () -&gt; CaseType : retourne le type de la case.</li>
+<li><code>setPosition</code> (modèle : Position) -&gt; None : copie la position fourni dans les coordonnees de la case.</li>
+<li><code>setType</code> (modèle : CaseType) -&gt; None : copie le type fourni dans le type de la case.</li>
+<li><code>__str__</code> () -&gt; str : méthode permettant d'afficher une case comme une chaîne de caractères décrivant sa position et son type.</li>
+</ul>
+<p>Exemple d'implémentation d'une carte : </p>
+<pre><code class="language-py">
+from components.case import Case
+
+case = Case()
+print(carte)
+</code></pre>
+<h3 id="collider">Collider</h3>
+<h3 id="cost">Cost</h3>
+<h3 id="effects">Effects</h3>
+<h3 id="fly">Fly</h3>
+<h3 id="health">Health</h3>
+<h3 id="map">Map</h3>
+<p>Le composant <code>Map</code> permet de créer des cartes de jeu, représentées par des tables de <code>Case</code>.<br> <br>
+On peut en créer sans communiquer de paramètres. Le tableau représentant le contenu de la carte sera alors initialisé comme vide.
+On peut cependant également créer une carte à partir d'une autre (la nouvelle copiera alors le tableau du modèle) via la méthode <code>initFromModel</code>, ou créer une carte à partir d'un tableau (list[list[CaseType]) (la carte utilisera le tableau pour initialiser le sien) via la méthode <code>initFromTab</code>.</p>
+<p>Les propriétés d'une carte sont : <br></p>
+<ul>
+<li><code>tab</code> (list[list[Case]]) : Le tableau représentant le contenu de la carte.</li>
+<li><code>index</code> (int) : Un index généré à partir d'un compteur statique, permettant d'identifier la carte. </li>
+</ul>
+<p>Les propriétés statiques des cartes sont :</p>
+<ul>
+<li><code>counter</code> (int) : compteur statique s'incrémentant à chaque création de carte, utilisé pour déterminer l'index des cartes créée.</li>
+<li><code>list_frequencies</code> (dict[CaseType, int]) : liste statique définissant la fréquence des différents type de cases sur la carte.</li>
+<li><code>generate_on_base</code> (list[CaseType]) : liste statique définissant les types de case à générer sous les emplacements des bastions.</li>
+<li><code>restricted_cases</code> (list[CaseType]) : liste statique définissant les types de case dont la génération doit être contrôlée, de sorte que toutes les cases de la carte n'étant pas d'un des types présent dans <code>restricted_cases</code> soient accessibles sans passer par une case d'un des types présent dans <code>restricted_cases</code>.</li>
+<li><code>default_block</code> (CaseType) : type de case statique qui sera utilisé pour générer la carte avant l'ajout des autres types de cases.</li>
+<li><code>limit_of_generation_for_type</code> (int) : nombre statique représentant la limite supérieure du nombre de groupe de cases possible pour chaque type de case (Si <code>limit_of_generation_for_type</code> vaut 2, pour chaque type de cases généré dans la fonction <code>generate</code>, les cases de ce type peuvent être réparties en 1 à 2 groupes de tailles identiques).</li>
+</ul>
+<h3 id="money">Money</h3>
+<h3 id="position">Position</h3>
+<h3 id="selection">Selection</h3>
+<h3 id="sprite">Sprite</h3>
+<p>Le component <code>Sprite</code> permet d'ajouter un sprite à une entité.<br> <a href="#animer-une-entité">Voir Animer une entité</a><br><br>
+Les paramètres à fournir sont :</p>
+<ul>
+<li><code>sprite_sheet</code> (str) : La feuille de sprite à utiliser pour l'animation.  </li>
+<li><code>width</code> (int) : La largeur des frames sur la feuille de sprite.  </li>
+<li><code>height</code> (int) : La hauteur des frames sur la feuille de sprite.  </li>
+<li><code>animations</code> (dict) : Le détail des animations (voir ci-dessous).  </li>
+<li><code>frame_duration</code> (float) : La durée en secondes d'une frame.  </li>
+<li><code>spritesheet_direction</code> (Orientation) : Orientation des frames dans la feuille (HORIZONTAL ou VERTICAL). Défaut = <code>HORIZONTAL</code>.  </li>
+<li><code>default_animation</code> (Animation) : L'animation par défaut de l'entité. Défaut = <code>IDLE</code>.  </li>
+<li><code>default_direction</code> (Direction) : La direction par défaut de l'entité. Défaut = <code>DOWN</code>.  </li>
+</ul>
+<p>Le paramètre <code>animations</code> est un dictionnaire qui associe pour chaque type d'animation et pour chaque direction, une liste d'entiers correspondant aux indices des frames sur la feuille de sprite (la première frame = 0).</p>
+<p>Exemple de paramètre animation: </p>
+<pre><code class="language-py">{
+    Animation.IDLE: {
+        Direction.DOWN: [1, 5],
+        Direction.UP: [3, 7],
+        Direction.LEFT: [2, 6],
+        Direction.RIGHT: [0, 4],
+    },
+    Animation.WALK: {
+        Direction.DOWN: [1, 10, 1, 11],
+        Direction.UP: [3, 14, 3, 15],
+        Direction.LEFT: [2, 12, 2, 13],
+        Direction.RIGHT: [0, 8, 0, 9],
+    },
+}
+</code></pre>
+<h3 id="squad">Squad</h3>
+<h3 id="stats">Stats</h3>
+<h3 id="structure">Structure</h3>
+<h3 id="target">Target</h3>
+<h3 id="team">Team</h3>
+<h3 id="velocity">Velocity</h3>
+<h2 id="systemes">Systèmes</h2>
+<p>...</p>
+<h3 id="rendersystem">RenderSystem</h3>
+<p>RenderSystem est une classe qui gère de façon globale l'affichage. Elle hérite de <a href="#iteratingprocessor"><code>IteratingProcessor</code></a> ce qui permet d'effectuer des actions sur chaque entités possédant un composant <code>Position</code> et <code>Sprite</code>.<br><br>
+Avant l'exécution du <code>process_entity</code>, les entités sont triés par <code>Layer</code> définie par la propriété <code>priority</code> de Sprite <br><br>
+Son <code>process_entity</code> va afficher les entités concernées et également mettre à jour l'animation. <br><br>
+Lorsque le type d'animation ne vaut pas <code>None</code>, l'entité est considéré comme un personnage jouable. Dans ce cas, une barre de vie lui ai ajouté au dessus du sprite ainsi qu'un point avec une couleur réprésentant son équipe et son état de sélection.</p>
+<p>A sa création <code>RenderSystem</code> a besoin des 3 éléments suivants : 
+- une Surface issue de pygame
+- une <a href="#map"><code>Map</code></a>
+- un dictionnaire de sprite pour les cases : <code>dict[CaseType,pygame.Surface]</code></p>
+<p>Méthodes : 
+- <code>show_map</code> : affiche la carte (carte définie à l'instanciation)
+- <code>animate_move</code> : méthode qui passe les animations de sprite des entités fournit par <code>EventMoveTo</code>
+- <code>draw_surface</code> : Dessine une surface pygame sur le screen du RenderSystem
+- <code>draw_rect</code> : Dessine une surface pygame sur le screen du RenderSystem
+- <code>draw_polygon</code> : Dessine une surface pygame sur le screen du RenderSystem</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js"></script>
+        <script src="../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
