@@ -23,7 +23,7 @@ class CombatSystem(IteratingProcessor):
 
     def __init__(self):
         super().__init__(Attack, Target, Position, Team)
-        self.frame_count = 0
+        self.last_hit: dict[int, float] = {}
         get_event_bus().subscribe(AttackEvent, self.perform_attack)
 
     def can_attack(
@@ -42,11 +42,14 @@ class CombatSystem(IteratingProcessor):
             bool: True if entity can attack target now
         """
         if not esper.entity_exists(ent_target_id):
+            del self.last_hit[ent]
+            return False
+
+        if ent not in self.last_hit:
             return False
 
         # Check attack cooldown based on attack speed
-        frames_per_attack = max(1, int(60 * attack.attack_speed))
-        if self.frame_count - attack.last_attack < frames_per_attack:
+        if self.last_hit[ent] < attack.attack_speed:
             return False
 
         # Check if target is in attack range
@@ -80,7 +83,6 @@ class CombatSystem(IteratingProcessor):
             pos: Attacker position on map
             team: Attacker team for death event
         """
-        self.frame_count += 1
 
         components = esper.components_for_entity(ent)
 
@@ -92,6 +94,9 @@ class CombatSystem(IteratingProcessor):
 
         if not target.target_entity_id:
             return
+
+        if ent not in self.last_hit:
+            self.last_hit[ent] = attack.attack_speed
 
         if self.can_attack(ent, attack, target.target_entity_id, pos):
             if not esper.has_component(target.target_entity_id, Health):
@@ -122,8 +127,8 @@ class CombatSystem(IteratingProcessor):
 
             # Apply damage to target
             get_event_bus().emit(AttackEvent(ent, target.target_entity_id))
-
-            attack.last_attack = self.frame_count
+        else:
+            self.last_hit[ent] += dt
 
     def perform_attack(self, event: AttackEvent):
         """
@@ -147,6 +152,8 @@ class CombatSystem(IteratingProcessor):
         target_health: Health = esper.component_for_entity(target_id, Health)
 
         target_health.remaining = max(0, target_health.remaining - atk.damage)
+
+        self.last_hit[attacker_id] = 0
 
         if target_health.remaining == 0:
             team = esper.component_for_entity(attacker_id, Team)
