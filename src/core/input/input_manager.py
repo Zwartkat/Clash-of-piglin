@@ -22,13 +22,13 @@ class InputManager(esper.Processor):
 
         self.mouse_down = {1: False}
 
-        # Les touches qui seront utiles si on les presse
+        # Keys useful when pressed
         self.key_bindings_press = self._load_keybinds_press()
 
-        # Les touches qui seront utiles si on les release
+        # Keys useful when released
         self.key_bindings_release = {}
 
-        # Les touches qui seront utiles si on les maintient
+        # Keys useful when held down
         self.key_bindings_hold = self._load_keybinds_hold()
 
         self.mouse_bindings_press = {
