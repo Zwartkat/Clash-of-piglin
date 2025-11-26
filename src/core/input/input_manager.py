@@ -46,10 +46,15 @@ class InputManager(esper.Processor):
             pygame.K_LCTRL: InputAction.SWITCH_TROOP,
             pygame.K_RCTRL: InputAction.SWITCH_TROOP,
             pygame.K_SPACE: InputAction.CAMERA_RESET,
-            pygame.K_F3: InputAction.DEBUG_TOGGLE,
-            pygame.K_g: InputAction.GIVE_GOLD,
-            pygame.K_k: InputAction.SWITCH_CONTROL,
+            pygame.K_F3: InputAction.DEBUG_TOGGLE,  # Debug only, not in options menu
+            pygame.K_g: InputAction.GIVE_GOLD,  # Debug only, not in options menu
             pygame.K_ESCAPE: InputAction.PAUSE,
+            pygame.K_1: InputAction.SPAWN_T1_CROSSBOWMAN,
+            pygame.K_2: InputAction.SPAWN_T1_BRUTE,
+            pygame.K_3: InputAction.SPAWN_T1_GHAST,
+            pygame.K_7: InputAction.SPAWN_T2_CROSSBOWMAN,
+            pygame.K_8: InputAction.SPAWN_T2_BRUTE,
+            pygame.K_9: InputAction.SPAWN_T2_GHAST,
         }
 
         try:
@@ -58,17 +63,24 @@ class InputManager(esper.Processor):
                     data = json.load(f)
                     if "keybinds" in data:
                         loaded = {}
+                        # Keep debug keys in defaults
+                        loaded[pygame.K_F3] = InputAction.DEBUG_TOGGLE
+                        loaded[pygame.K_g] = InputAction.GIVE_GOLD
+
                         for action_name, key_code in data["keybinds"].items():
                             try:
                                 action = InputAction[action_name]
-                                # Only load press keybinds (not hold ones)
+                                # Only load press keybinds (not hold ones, not debug ones)
                                 if action in [
                                     InputAction.SWITCH_TROOP,
                                     InputAction.CAMERA_RESET,
-                                    InputAction.DEBUG_TOGGLE,
-                                    InputAction.GIVE_GOLD,
-                                    InputAction.SWITCH_CONTROL,
                                     InputAction.PAUSE,
+                                    InputAction.SPAWN_T1_CROSSBOWMAN,
+                                    InputAction.SPAWN_T1_BRUTE,
+                                    InputAction.SPAWN_T1_GHAST,
+                                    InputAction.SPAWN_T2_CROSSBOWMAN,
+                                    InputAction.SPAWN_T2_BRUTE,
+                                    InputAction.SPAWN_T2_GHAST,
                                 ]:
                                     loaded[key_code] = action
                             except (KeyError, ValueError):

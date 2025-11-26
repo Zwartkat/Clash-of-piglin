@@ -36,21 +36,19 @@ class OptionsMenu:
 
     # Human-readable names for actions
     ACTION_NAMES = {
-        InputAction.START_SELECT: "Commencer sélection",
-        InputAction.STOP_SELECT: "Arrêter sélection",
-        InputAction.SELECT: "Sélectionner",
-        InputAction.MOVE_ORDER: "Ordre de mouvement",
         InputAction.SWITCH_TROOP: "Changer de troupe",
         InputAction.CAMERA_UP: "Caméra haut",
         InputAction.CAMERA_DOWN: "Caméra bas",
         InputAction.CAMERA_LEFT: "Caméra gauche",
         InputAction.CAMERA_RIGHT: "Caméra droite",
         InputAction.CAMERA_RESET: "Réinitialiser caméra",
-        InputAction.ZOOM: "Zoom",
         InputAction.PAUSE: "Pause",
-        InputAction.DEBUG_TOGGLE: "Debug",
-        InputAction.GIVE_GOLD: "Donner or",
-        InputAction.SWITCH_CONTROL: "Changer contrôle",
+        InputAction.SPAWN_T1_CROSSBOWMAN: "Équipe 1 - Arbalétrier",
+        InputAction.SPAWN_T1_BRUTE: "Équipe 1 - Brute",
+        InputAction.SPAWN_T1_GHAST: "Équipe 1 - Ghast",
+        InputAction.SPAWN_T2_CROSSBOWMAN: "Équipe 2 - Arbalétrier",
+        InputAction.SPAWN_T2_BRUTE: "Équipe 2 - Brute",
+        InputAction.SPAWN_T2_GHAST: "Équipe 2 - Ghast",
     }
 
     def __init__(self, initial_resolution: Tuple[int, int], initial_flags: int):
@@ -140,14 +138,17 @@ class OptionsMenu:
         return {
             InputAction.SWITCH_TROOP: pygame.K_LCTRL,
             InputAction.CAMERA_RESET: pygame.K_SPACE,
-            InputAction.DEBUG_TOGGLE: pygame.K_F3,
-            InputAction.GIVE_GOLD: pygame.K_g,
-            InputAction.SWITCH_CONTROL: pygame.K_k,
             InputAction.PAUSE: pygame.K_ESCAPE,
             InputAction.CAMERA_UP: pygame.K_UP,
             InputAction.CAMERA_DOWN: pygame.K_DOWN,
             InputAction.CAMERA_LEFT: pygame.K_LEFT,
             InputAction.CAMERA_RIGHT: pygame.K_RIGHT,
+            InputAction.SPAWN_T1_CROSSBOWMAN: pygame.K_1,
+            InputAction.SPAWN_T1_BRUTE: pygame.K_2,
+            InputAction.SPAWN_T1_GHAST: pygame.K_3,
+            InputAction.SPAWN_T2_CROSSBOWMAN: pygame.K_7,
+            InputAction.SPAWN_T2_BRUTE: pygame.K_8,
+            InputAction.SPAWN_T2_GHAST: pygame.K_9,
         }
 
     def _load_ai_config(self) -> Dict:
@@ -190,7 +191,13 @@ class OptionsMenu:
                         for action_name, key_code in data["keybinds"].items():
                             try:
                                 action = InputAction[action_name]
-                                self.key_bindings[action] = key_code
+                                # Skip debug-only and removed actions
+                                if action not in [
+                                    InputAction.DEBUG_TOGGLE,
+                                    InputAction.GIVE_GOLD,
+                                    InputAction.SWITCH_CONTROL,
+                                ]:
+                                    self.key_bindings[action] = key_code
                             except (KeyError, ValueError):
                                 pass
 
@@ -270,10 +277,13 @@ class OptionsMenu:
                         if action in [
                             InputAction.SWITCH_TROOP,
                             InputAction.CAMERA_RESET,
-                            InputAction.DEBUG_TOGGLE,
-                            InputAction.GIVE_GOLD,
-                            InputAction.SWITCH_CONTROL,
                             InputAction.PAUSE,
+                            InputAction.SPAWN_T1_CROSSBOWMAN,
+                            InputAction.SPAWN_T1_BRUTE,
+                            InputAction.SPAWN_T1_GHAST,
+                            InputAction.SPAWN_T2_CROSSBOWMAN,
+                            InputAction.SPAWN_T2_BRUTE,
+                            InputAction.SPAWN_T2_GHAST,
                         ]:
                             processor.key_bindings_press[key_code] = action
                         elif action in [
@@ -320,10 +330,12 @@ class OptionsMenu:
             # Navigation
             if event.key == pygame.K_UP:
                 self.selected_index = max(0, self.selected_index - 1)
+                self._adjust_scroll()
                 return True
             elif event.key == pygame.K_DOWN:
                 max_index = self._get_max_index()
                 self.selected_index = min(max_index, self.selected_index + 1)
+                self._adjust_scroll()
                 return True
             elif event.key == pygame.K_LEFT:
                 self._handle_left()
@@ -345,7 +357,36 @@ class OptionsMenu:
         elif event.type == pygame.MOUSEMOTION and self.dragging_volume:
             self._handle_volume_drag(event.pos)
 
+        elif event.type == pygame.MOUSEWHEEL:
+            # Scroll with mouse wheel in Controls tab
+            if self.current_tab == OptionsTab.CONTROLS:
+                max_scroll = max(
+                    0, len(self.key_bindings) + 2 - 10
+                )  # +2 for Reset and Back buttons, -10 visible items
+                if event.y > 0:  # Scroll up
+                    self.scroll_offset = max(0, self.scroll_offset - 1)
+                elif event.y < 0:  # Scroll down
+                    self.scroll_offset = min(max_scroll, self.scroll_offset + 1)
+                return True
+
         return True
+
+    def _adjust_scroll(self):
+        """Adjust scroll offset to keep selected item visible."""
+        if self.current_tab == OptionsTab.CONTROLS:
+            # Calculate visible items (approximately 10-12 items visible at once)
+            visible_items = 10
+
+            # If selected item is below visible area, scroll down
+            if self.selected_index >= self.scroll_offset + visible_items:
+                self.scroll_offset = self.selected_index - visible_items + 1
+
+            # If selected item is above visible area, scroll up
+            elif self.selected_index < self.scroll_offset:
+                self.scroll_offset = self.selected_index
+
+            # Ensure scroll_offset is never negative
+            self.scroll_offset = max(0, self.scroll_offset)
 
     def _get_max_index(self) -> int:
         """Get maximum selectable index for current tab."""

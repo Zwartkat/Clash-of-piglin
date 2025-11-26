@@ -19,3 +19,11 @@ class InputAction(Enum):
     DEBUG_TOGGLE = auto()
     GIVE_GOLD = auto()
     PAUSE = auto()
+    # Spawn units Team 1
+    SPAWN_T1_CROSSBOWMAN = auto()
+    SPAWN_T1_BRUTE = auto()
+    SPAWN_T1_GHAST = auto()
+    # Spawn units Team 2
+    SPAWN_T2_CROSSBOWMAN = auto()
+    SPAWN_T2_BRUTE = auto()
+    SPAWN_T2_GHAST = auto()
