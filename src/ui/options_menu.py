@@ -757,7 +757,7 @@ class OptionsMenu:
 
         # Team 2
         team2_y = y + 180
-        team2_title = font.render("Équipe 2 (Verte)", True, (100, 255, 100))
+        team2_title = font.render("Équipe 2 (Bleue)", True, (100, 100, 255))
         screen.blit(team2_title, (x, team2_y))
 
         for i, (unit_type, unit_name) in enumerate(unit_types):

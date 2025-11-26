@@ -74,14 +74,17 @@ scroll_speed = 0
 def draw_credits():
     global scroll_offset
 
-    overlay = pygame.Surface((option.current_resolution), pygame.SRCALPHA)
+    overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 200))
     screen.blit(overlay, (0, 0))
 
+    screen_width = screen.get_width()
     start_y = 50 - scroll_offset
     for line in credits_text:
         text_surf = font.render(line, True, (255, 255, 255))
-        screen.blit(text_surf, (400 - text_surf.get_width() // 2, start_y))
+        screen.blit(
+            text_surf, (screen_width // 2 - text_surf.get_width() // 2, start_y)
+        )
         start_y += 40
 
     scroll_offset += scroll_speed
@@ -139,12 +142,13 @@ def draw_menu():
         draw_button(screen, rect, menu_items[i], hovered)
 
     if play_options_open:
-        overlay = pygame.Surface((800, 600), pygame.SRCALPHA)
+        overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 180))
         screen.blit(overlay, (0, 0))
 
+        screen_width = screen.get_width()
         title_surf = font.render("Choisir le mode de jeu", True, (255, 255, 255))
-        screen.blit(title_surf, (400 - title_surf.get_width() // 2, 150))
+        screen.blit(title_surf, (screen_width // 2 - title_surf.get_width() // 2, 150))
 
         for i, rect in enumerate(play_option_rects):
             hovered = rect.collidepoint(pygame.mouse.get_pos())
@@ -164,7 +168,7 @@ def apply_display_settings():
     Rescale background, logo and recreate button_rects proportionally to current screen size.
     Does not decide the display mode (set_mode should be called by caller if needed).
     """
-    global screen, background, logo, button_rects
+    global screen, background, logo, button_rects, play_option_rects
 
     w, h = screen.get_size()
     base_w, base_h = 800, 600
@@ -189,6 +193,17 @@ def apply_display_settings():
     button_rects = [
         pygame.Rect(start_x, start_y + i * gap, btn_w, btn_h)
         for i in range(len(menu_items))
+    ]
+
+    # Play options buttons: centered horizontally
+    play_btn_w = max(1, int(300 * w / base_w))
+    play_btn_h = max(1, int(60 * h / base_h))
+    play_start_x = (w - play_btn_w) // 2  # Centered
+    play_start_y = int(250 * h / base_h)
+    play_gap = int(100 * h / base_h)
+    play_option_rects = [
+        pygame.Rect(play_start_x, play_start_y + i * play_gap, play_btn_w, play_btn_h)
+        for i in range(len(play_modes))
     ]
 
 
