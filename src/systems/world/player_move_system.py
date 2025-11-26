@@ -1,4 +1,5 @@
 import esper
+from ai.ai_state import BruteAiState
 from ai.behaviors.brute_actions import MovementManager
 from components.ai_controller import AIController
 from components.base.position import Position
@@ -59,7 +60,7 @@ class PlayerMoveSystem(IteratingProcessor):
             ctrl = esper.component_for_entity(ent, AIController)
 
         if ent in self.target:
-            if ctrl:
+            if ctrl and isinstance(ctrl.state, BruteAiState):
                 x, y = self.target[ent][0], self.target[ent][1]
                 if ctrl.state.destination:
                     x, y = ctrl.state.destination[0], ctrl.state.destination[1]

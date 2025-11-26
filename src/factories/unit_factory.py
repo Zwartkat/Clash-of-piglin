@@ -69,7 +69,7 @@ class UnitFactory:
                 state = BruteAiState(ent)
                 esper.add_component(ent, AIController(ent, state, ADMABrute(state)))
             elif ai == "JEVA":
-                state = AiState(ent)
+                state = AiState()
                 esper.add_component(ent, AIController(ent, state, JEVAGhast(ent)))
             elif ai == "MAPI":
                 state = AiState()

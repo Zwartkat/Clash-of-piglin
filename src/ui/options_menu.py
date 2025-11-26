@@ -6,9 +6,11 @@ import os
 from typing import Dict, Tuple, List, Optional
 from enum import Enum
 
+from core.accessors import get_event_bus
 from core.config import Config
 from enums.input_actions import InputAction
 from enums.entity.entity_type import EntityType
+from events.pause_events import ResumeGameEvent
 
 
 class OptionsTab(Enum):
@@ -346,6 +348,8 @@ class OptionsMenu:
             elif event.key == pygame.K_RETURN:
                 return self._handle_select()
             elif event.key == pygame.K_ESCAPE:
+
+                get_event_bus().emit(ResumeGameEvent())
                 return False  # Exit menu
 
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:

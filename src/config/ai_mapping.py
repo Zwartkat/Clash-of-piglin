@@ -2,8 +2,8 @@ from enums.entity.entity_type import EntityType
 
 IA_MAP = {
     EntityType.BRUTE: {1: "ADMA", 2: "ADMA"},
-    EntityType.CROSSBOWMAN: {1: "SCPR", 2: "LOVA"},
-    EntityType.GHAST: {1: "MAPI", 2: "JEVA"},
+    EntityType.CROSSBOWMAN: {1: "LOVA", 2: "LOVA"},
+    EntityType.GHAST: {1: "JEVA", 2: "JEVA"},
 }
 
 IA_MAP_JCJ = {

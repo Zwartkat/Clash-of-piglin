@@ -120,6 +120,8 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
 
     reset()
 
+    SoundSystem.pause_music()
+
     # Reset game state at the start
     dt = 0.05
 
@@ -235,7 +237,9 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     # Charger les systèmes de rendu
     update_loading(0.85, "Loading rendering systems...")
 
-    DATA_BUS.register(DataBusKey.NOTIFICATION_MANAGER, NotificationManager())
+    DATA_BUS.register(
+        DataBusKey.NOTIFICATION_MANAGER, NotificationManager(game_hud.hud)
+    )
     input_manager = InputManager()
     render = RenderSystem(screen, map, sprites)
     victory_system = VictorySystem()
@@ -298,6 +302,8 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     )
 
     DATA_BUS.register(DataBusKey.WORLD_PERCEPTION, world_perception)
+
+    SoundSystem.reset_music()
 
     while game_state["running"]:
 

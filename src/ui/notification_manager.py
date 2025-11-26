@@ -1,14 +1,17 @@
 from core.accessors import get_event_bus, get_player_manager
 from events.spawn_unit_event import SpawnUnitEvent
+from ui.hud import Hud
 from ui.notification import Notification
 
 
 class NotificationManager:
-    def __init__(self):
+    def __init__(self, hud):
         self.notifications: list[Notification] = []
         player_manager = get_player_manager()
         self.player_1_color = player_manager.players[1].color
         self.player_2_color = player_manager.players[2].color
+
+        self.hud: Hud = hud
         get_event_bus().subscribe(SpawnUnitEvent, self.spawn_entity_notification)
 
     def spawn_entity_notification(self, event: SpawnUnitEvent):
@@ -22,7 +25,9 @@ class NotificationManager:
         self, text: str, duration: int = 2500, color: tuple[int] = (255, 255, 255)
     ):
         """Ajoute une notification à afficher"""
-        self.notifications.append(Notification(text, duration, color))
+        self.notifications.append(
+            Notification(text, duration, color, self.hud.hud_width)
+        )
 
     def draw(self, surface):
         """Dessine toutes les notifications encore actives"""

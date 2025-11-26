@@ -1,15 +1,15 @@
 {
   "display": {
-    "volume": 0.05000000000000002,
+    "volume": 0.7500000000000002,
     "vsync": true,
     "borderless": false,
     "windowed_resolution": [
-      1280,
-      720
+      800,
+      600
     ]
   },
   "keybinds": {
-    "SWITCH_TROOP": 1073742048,
+    "SWITCH_TROOP": 118,
     "CAMERA_RESET": 32,
     "PAUSE": 27,
     "CAMERA_UP": 1073741906,
@@ -26,7 +26,7 @@
   "ai": {
     "1": {
       "BRUTE": "ADMA",
-      "CROSSBOWMAN": "SCPR",
+      "CROSSBOWMAN": "LOVA",
       "GHAST": "MAPI"
     },
     "2": {

@@ -20,7 +20,7 @@ class EconomySystem(esper.Processor):
         event_bus.subscribe(GiveGoldEvent, self.give_gold)
 
         self.creation_time = pygame.time.get_ticks()
-        self.generation_speed = 2  # Valeur de base pour 0-1 minute
+        self.generation_speed = 1  # Valeur de base pour 0-1 minute
 
     def buy(self, event):
         player: Player = event.player
@@ -47,6 +47,7 @@ class EconomySystem(esper.Processor):
         if esper.has_component(entity, Cost):
             entity_cost = esper.component_for_entity(entity, Cost)
         else:
+            get_debugger().warning(f"{entity} n'a pas de coût")
             entity_cost = Cost(0)
         player: Player = get_player_manager().players[player_team.team_id]
 
@@ -68,13 +69,13 @@ class EconomySystem(esper.Processor):
 
         # Changement de la vitesse de génération en fonction du temps
         if 60000 < time_elapsed < 120000:
-            self.generation_speed = 0.167
+            self.generation_speed = 1.15
         elif 120000 < time_elapsed < 180000:
-            self.generation_speed = 0.2
+            self.generation_speed = 1.25
         elif 180000 < time_elapsed < 240000:
-            self.generation_speed = 0.25
+            self.generation_speed = 1.35
         elif time_elapsed > 240000:
-            self.generation_speed = 0.3
+            self.generation_speed = 1.5
 
         players: dict[int, Player] = get_player_manager().players
         # Ajout de la thune aux comptes des joueurs

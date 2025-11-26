@@ -5,6 +5,7 @@ from components.base.team import Team
 from components.base.velocity import Velocity
 from components.gameplay.attack import Attack
 from components.gameplay.structure import Structure
+from core.accessors import get_player_manager
 from enums.entity.entity_type import EntityType
 
 from enum import Enum, auto
@@ -24,7 +25,11 @@ class JeromeGhast:
         team = esper.component_for_entity(self.ent, Team).team_id
         team_adverse = 1 if team == 2 else 2
         pos = esper.component_for_entity(self.ent, Position)
-        bastion_adverse = esper.get_component(Structure)[-team][0]
+        bastion_adverse = get_player_manager().get_enemy_player(team).bastion
+
+        if esper.entity_exists(bastion_adverse) is False:
+            return
+
         bastion_adverse_pos = esper.component_for_entity(bastion_adverse, Position)
         velocity = esper.component_for_entity(self.ent, Velocity)
         portee = esper.component_for_entity(self.ent, Attack).range

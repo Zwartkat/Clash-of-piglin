@@ -1,6 +1,6 @@
 import esper
 import pygame
-from core.accessors import get_event_bus
+from core.accessors import get_debugger, get_event_bus
 from events.arrow_fired_event import ArrowFiredEvent
 from events.fireball_fired_event import FireballFiredEvent
 from events.death_event import DeathEvent
@@ -67,11 +67,15 @@ class SoundSystem(esper.Processor):
                 pygame.mixer.music.play(-1)
                 SoundSystem.IS_MUSIC_PLAYED = True
         else:
-            print("Musique non chargée")
+            get_debugger().error("Aucune musique n'a été chargée")
 
     @staticmethod
     def pause_music(event=None):
         pygame.mixer.music.pause()
+
+    @staticmethod
+    def reset_music():
+        pygame.mixer.music.play(loops=-1, start=0.0)
 
     @staticmethod
     def set_music_volume(value: int):

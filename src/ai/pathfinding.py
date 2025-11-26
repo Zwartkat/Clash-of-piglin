@@ -101,8 +101,8 @@ def heuristic(a: tuple[int, int], b: tuple[int, int]) -> float:
 
     tile_size = get_config().get("tile_size")
     rd = 0
-    if random.randint(0, 5) == 1:
-        rd = -1
+    if random.randint(0, 4) == 1:
+        rd = 2
     return (
         math.hypot(
             b[0] // tile_size - a[0] // tile_size, b[1] // tile_size - a[1] // tile_size

@@ -14,7 +14,7 @@ import core.engine as game_manager
 import core.options as option
 from ui.options_menu import OptionsMenu
 
-DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enable_warn=True, enable_error=True))
+DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enable_warn=False, enable_error=False))
 DATA_BUS.get_debugger().log("Démarrage du jeu")
 
 Config.load("config.yaml")
@@ -316,7 +316,6 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            print(running)
             running = handle_click(event.pos)
 
     pygame.display.flip()
