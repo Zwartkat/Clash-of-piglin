@@ -1,5 +1,7 @@
 import pygame
 import esper
+import json
+import os
 
 from core.accessors import get_event_bus
 from core.game.camera import CAMERA
@@ -20,27 +22,14 @@ class InputManager(esper.Processor):
 
         self.mouse_down = {1: False}
 
-        # Les touches qui seront utiles si on les presse
-        self.key_bindings_press = {
-            pygame.K_LCTRL: InputAction.SWITCH_TROOP,
-            pygame.K_RCTRL: InputAction.SWITCH_TROOP,
-            pygame.K_SPACE: InputAction.CAMERA_RESET,
-            pygame.K_F3: InputAction.DEBUG_TOGGLE,
-            pygame.K_g: InputAction.GIVE_GOLD,
-            pygame.K_k: InputAction.SWITCH_CONTROL,
-            pygame.K_ESCAPE: InputAction.PAUSE,
-        }
+        # Keys useful when pressed
+        self.key_bindings_press = self._load_keybinds_press()
 
-        # Les touches qui seront utiles si on les release
+        # Keys useful when released
         self.key_bindings_release = {}
 
-        # Les touches qui seront utiles si on les maintient
-        self.key_bindings_hold = {
-            pygame.K_UP: InputAction.CAMERA_UP,
-            pygame.K_DOWN: InputAction.CAMERA_DOWN,
-            pygame.K_LEFT: InputAction.CAMERA_LEFT,
-            pygame.K_RIGHT: InputAction.CAMERA_RIGHT,
-        }
+        # Keys useful when held down
+        self.key_bindings_hold = self._load_keybinds_hold()
 
         self.mouse_bindings_press = {
             1: InputAction.START_SELECT,
@@ -50,6 +39,96 @@ class InputManager(esper.Processor):
         self.mouse_bindings_release = {1: InputAction.STOP_SELECT}
 
         self.mouse_bindings_hold = {1: InputAction.SELECT}
+
+    def _load_keybinds_press(self):
+        """Load press keybinds from settings file or use defaults."""
+        defaults = {
+            pygame.K_LCTRL: InputAction.SWITCH_TROOP,
+            pygame.K_RCTRL: InputAction.SWITCH_TROOP,
+            pygame.K_SPACE: InputAction.CAMERA_RESET,
+            pygame.K_F3: InputAction.DEBUG_TOGGLE,  # Debug only, not in options menu
+            pygame.K_g: InputAction.GIVE_GOLD,  # Debug only, not in options menu
+            pygame.K_ESCAPE: InputAction.PAUSE,
+            pygame.K_1: InputAction.SPAWN_T1_CROSSBOWMAN,
+            pygame.K_2: InputAction.SPAWN_T1_BRUTE,
+            pygame.K_3: InputAction.SPAWN_T1_GHAST,
+            pygame.K_7: InputAction.SPAWN_T2_CROSSBOWMAN,
+            pygame.K_8: InputAction.SPAWN_T2_BRUTE,
+            pygame.K_9: InputAction.SPAWN_T2_GHAST,
+        }
+
+        try:
+            if os.path.exists("settings.json"):
+                with open("settings.json", "r") as f:
+                    data = json.load(f)
+                    if "keybinds" in data:
+                        loaded = {}
+                        # Keep debug keys in defaults
+                        loaded[pygame.K_F3] = InputAction.DEBUG_TOGGLE
+                        loaded[pygame.K_g] = InputAction.GIVE_GOLD
+
+                        for action_name, key_code in data["keybinds"].items():
+                            try:
+                                action = InputAction[action_name]
+                                # Only load press keybinds (not hold ones, not debug ones)
+                                if action in [
+                                    InputAction.SWITCH_TROOP,
+                                    InputAction.CAMERA_RESET,
+                                    InputAction.PAUSE,
+                                    InputAction.SPAWN_T1_CROSSBOWMAN,
+                                    InputAction.SPAWN_T1_BRUTE,
+                                    InputAction.SPAWN_T1_GHAST,
+                                    InputAction.SPAWN_T2_CROSSBOWMAN,
+                                    InputAction.SPAWN_T2_BRUTE,
+                                    InputAction.SPAWN_T2_GHAST,
+                                ]:
+                                    loaded[key_code] = action
+                            except (KeyError, ValueError):
+                                pass
+                        if loaded:
+                            return loaded
+        except Exception as e:
+            print(f"Error loading keybinds: {e}")
+
+        return defaults
+
+    def _load_keybinds_hold(self):
+        """Load hold keybinds from settings file or use defaults."""
+        defaults = {
+            pygame.K_UP: InputAction.CAMERA_UP,
+            pygame.K_DOWN: InputAction.CAMERA_DOWN,
+            pygame.K_LEFT: InputAction.CAMERA_LEFT,
+            pygame.K_RIGHT: InputAction.CAMERA_RIGHT,
+        }
+
+        try:
+            if os.path.exists("settings.json"):
+                with open("settings.json", "r") as f:
+                    data = json.load(f)
+                    if "keybinds" in data:
+                        loaded = {}
+                        for action_name, key_code in data["keybinds"].items():
+                            try:
+                                action = InputAction[action_name]
+                                # Only load hold keybinds
+                                if action in [
+                                    InputAction.CAMERA_UP,
+                                    InputAction.CAMERA_DOWN,
+                                    InputAction.CAMERA_LEFT,
+                                    InputAction.CAMERA_RIGHT,
+                                ]:
+                                    loaded[key_code] = action
+                                    # Update keys_down tracking
+                                    if key_code not in self.keys_down:
+                                        self.keys_down[key_code] = False
+                            except (KeyError, ValueError):
+                                pass
+                        if loaded:
+                            return loaded
+        except Exception as e:
+            print(f"Error loading keybinds: {e}")
+
+        return defaults
 
     def process(self, dt):
         # for event in pygame.event.get():
