@@ -41,8 +41,21 @@ pygame.display.set_icon(logo)
 menu_items = Config.get(key="menu_buttons")
 selected = 0
 
+# Load volume from settings
+saved_volume = 0.1  # Default volume
+try:
+    import json
+    import os
+
+    if os.path.exists("settings.json"):
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+            saved_volume = data.get("display", {}).get("volume", 0.1)
+except Exception:
+    pass
+
 SoundSystem.set_music(SoundSystem.MUSICS["pigstep"])
-SoundSystem.set_music_volume(0.1)
+SoundSystem.set_music_volume(saved_volume)
 SoundSystem.play_music()
 
 play_options_open = False
