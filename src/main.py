@@ -12,6 +12,7 @@ from enums.data_bus_key import DataBusKey
 from systems.sound_system import SoundSystem
 import core.engine as game_manager
 import core.options as option
+from ui.options_menu import OptionsMenu
 
 DATA_BUS.replace(DataBusKey.DEBUGGER, Debugger(enable_warn=True, enable_error=True))
 DATA_BUS.get_debugger().log("Démarrage du jeu")
@@ -224,7 +225,13 @@ def handle_click(pos: Tuple[int]):
 
                 play_options_open = False
                 if return_to_menu:
-                    screen = pygame.display.set_mode((800, 600))
+                    # Get current screen instead of creating new one
+                    screen = pygame.display.get_surface()
+                    if screen is None:
+                        screen = pygame.display.set_mode(
+                            option.current_resolution, option.flags
+                        )
+                    apply_display_settings()
                     return True
                 return False
         # clic hors des options ferme le sous-menu
@@ -245,11 +252,23 @@ def handle_click(pos: Tuple[int]):
             elif menu_items[selected] == menu_items[2]:  # Options
                 print("Options")
                 option_open = True
-                return_to_menu = option.main()
+                options_menu = OptionsMenu(option.current_resolution, option.flags)
+                return_to_menu, new_res, new_flags = options_menu.run(screen)
                 if return_to_menu:
-                    screen = pygame.display.set_mode(
-                        option.current_resolution, option.flags
-                    )
+                    option.current_resolution = new_res
+                    option.flags = new_flags
+                    # Only recreate display if settings changed
+                    if new_res != screen.get_size() or new_flags != (
+                        screen.get_flags() & pygame.FULLSCREEN
+                    ):
+                        try:
+                            screen = pygame.display.set_mode(new_res, new_flags)
+                        except Exception as e:
+                            print(f"Failed to apply display settings: {e}")
+                            # Fallback to current settings
+                            screen = pygame.display.get_surface()
+                    else:
+                        screen = pygame.display.get_surface()
                     apply_display_settings()
                     return True
             elif menu_items[selected] == menu_items[3]:  # Quit

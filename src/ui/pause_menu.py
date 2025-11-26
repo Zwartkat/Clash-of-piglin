@@ -7,6 +7,7 @@ from core.accessors import get_event_bus
 from events.pause_events import PauseToggleEvent, ResumeGameEvent, QuitToMenuEvent
 from core.config import Config
 import core.options as option
+from ui.options_menu import OptionsMenu
 
 
 class PauseMenuSystem(esper.Processor):
@@ -141,8 +142,14 @@ class PauseMenuSystem(esper.Processor):
                 self.hud_system.hud.on_resume()
             event_bus.emit(ResumeGameEvent())
         elif self.menu_items[self.selected_index] == "Options":
-            return_to_menu = option.main()
+            options_menu = OptionsMenu(option.current_resolution, option.flags)
+            return_to_menu, new_res, new_flags = options_menu.run(self.screen)
             if return_to_menu:
+                option.current_resolution = new_res
+                option.flags = new_flags
+                # Get current screen reference (may have been recreated)
+                self.screen = pygame.display.get_surface()
+                # Resume the game after closing options
                 self.is_paused = False
                 if self.hud_system:
                     self.hud_system.hud.on_resume()

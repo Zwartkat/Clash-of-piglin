@@ -1,0 +1,35 @@
+{
+  "display": {
+    "volume": 0.5,
+    "vsync": true,
+    "borderless": false,
+    "windowed_resolution": [
+      1280,
+      720
+    ]
+  },
+  "keybinds": {
+    "SWITCH_TROOP": 1073742048,
+    "CAMERA_RESET": 32,
+    "DEBUG_TOGGLE": 1073741884,
+    "GIVE_GOLD": 103,
+    "SWITCH_CONTROL": 107,
+    "PAUSE": 27,
+    "CAMERA_UP": 1073741906,
+    "CAMERA_DOWN": 1073741905,
+    "CAMERA_LEFT": 1073741904,
+    "CAMERA_RIGHT": 1073741903
+  },
+  "ai": {
+    "1": {
+      "BRUTE": "ADMA",
+      "CROSSBOWMAN": "SCPR",
+      "GHAST": "MAPI"
+    },
+    "2": {
+      "BRUTE": "ADMA",
+      "CROSSBOWMAN": "LOVA",
+      "GHAST": "JEVA"
+    }
+  }
+}
