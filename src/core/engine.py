@@ -162,22 +162,22 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
             pygame.event.pump()  # Garde la fenêtre responsive
 
     # === DÉBUT DU CHARGEMENT ===
-    get_event_bus().emit(LoadingStartEvent("Initializing game..."))
-    update_loading(0.0, "Initializing game...")
+    get_event_bus().emit(LoadingStartEvent("Initialisation du jeu..."))
+    update_loading(0.0, "Initialisation du jeu...")
 
     # Charger la map
-    update_loading(0.2, "Generating map...")
+    update_loading(0.2, "Génération de la carte...")
     map: Map = Map()
     map.generate(map_size)
     DATA_BUS.register(DataBusKey.MAP, map)
     DATA_BUS.register(DataBusKey.CAMERA, CAMERA)
 
-    update_loading(0.4, "Loading sprites...")
+    update_loading(0.4, "Chargement des sprites...")
     tile_size: int = DATA_BUS.get(DataBusKey.CONFIG).get(ConfigKey.TILE_SIZE, 32)
     sprites = load_terrain_sprites(tile_size)
     game_hud = HudManager(screen)
 
-    update_loading(0.5, "Rendering map...")
+    update_loading(0.5, "Rendu de la carte...")
     map_width, map_height = resize(screen, map_size, game_hud.hud.hud_width)
 
     from config.ai_mapping import IA_MAP
@@ -206,14 +206,14 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     case_size = get_config().get(ConfigKey.TILE_SIZE, 32)
 
     # Initialiser les joueurs
-    update_loading(0.6, "Initializing players...")
+    update_loading(0.6, "Initialisation des joueurs...")
 
     player_manager = PlayerManager(ai_player_1=(ia_mode == "iacia"), ai_player_2=True)
 
     DATA_BUS.register(DataBusKey.PLAYER_MANAGER, player_manager)
 
     # Charger les systèmes principaux
-    update_loading(0.75, "Loading systems...")
+    update_loading(0.75, "Chargement des systèmes...")
 
     movement_system = MovementSystem()
     font = pygame.font.Font(Config.get_assets(key="font"), 18)
@@ -235,7 +235,7 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     world.add_processor(CameraSystem(get_camera()))
 
     # Charger les systèmes de rendu
-    update_loading(0.85, "Loading rendering systems...")
+    update_loading(0.85, "Chargement du rendu...")
 
     DATA_BUS.register(
         DataBusKey.NOTIFICATION_MANAGER, NotificationManager(game_hud.hud)
@@ -280,12 +280,12 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     world.add_processor(QuitSystem(get_event_bus(), game_state))
 
     # Finaliser
-    update_loading(0.95, "Finalizing...")
+    update_loading(0.95, "Finalisation...")
 
     pygame.transform.set_smoothscale_backend("GENERIC")
 
     # Chargement terminé
-    update_loading(1.0, "Ready ! ")
+    update_loading(1.0, "Prêt ! ")
     pygame.time.wait(500)  # Pause brève pour voir "Ready!"
     get_event_bus().emit(LoadingFinishEvent(success=True))
 

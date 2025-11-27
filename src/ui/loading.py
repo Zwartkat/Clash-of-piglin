@@ -33,7 +33,7 @@ class LoadingUISystem(esper.Processor):
         self.active = False
         self.progress = 0.0
         self.target_progress = 0.0
-        self.message = "Loading..."
+        self.message = "Chargement..."
         self.animation_time = 0.0
 
         event_bus = EventBus.get_event_bus()
@@ -70,7 +70,7 @@ class LoadingUISystem(esper.Processor):
             event: LoadingFinishEvent indicating success or failure
         """
         self.target_progress = 1.0
-        self.message = "Complete!" if event.success else "Failed"
+        self.message = "Terminé!" if event.success else "Échoué"
 
     def process(self, dt: float):
         """Render the loading screen with animated progress.

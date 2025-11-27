@@ -16,6 +16,7 @@ class PlayerManager:
     def __init__(self, ai_player_1: bool = False, ai_player_2: bool = True):
 
         self.players: dict[int, Player] = {}
+        self.ai_player_1 = ai_player_1  # Track if player 1 is AI
 
         map: Map = get_map()
         tile_size: int = get_config().get("tile_size", 32)
@@ -70,6 +71,9 @@ class PlayerManager:
         return player
 
     def switch_player(self):
+        # In Player vs IA mode (player 1 is human), prevent switching to team 2
+        if not self.ai_player_1 and self.current_player == 1:
+            return  # Stay on team 1
 
         self.current_player = (self.current_player % len(self.players)) + 1
 
@@ -87,7 +91,7 @@ class PlayerManager:
             return self.players[1]
         else:
             get_debugger().error(
-                f"Player manager : Unknown team id for 'get_enemy_player()'"
+                f"Gestionnaire de joueurs : ID d'équipe inconnue pour 'get_enemy_player()'"
             )
 
     def get_current_player_number(self) -> int:
