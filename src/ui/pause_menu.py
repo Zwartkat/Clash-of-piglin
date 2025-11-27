@@ -153,6 +153,14 @@ class PauseMenuSystem(esper.Processor):
             if return_to_menu:
                 option.current_resolution = new_res
                 option.flags = new_flags
+                # Recreate the display if settings changed
+                if new_res != self.screen.get_size() or new_flags != (
+                    self.screen.get_flags() & pygame.FULLSCREEN
+                ):
+                    try:
+                        pygame.display.set_mode(new_res, new_flags)
+                    except Exception as e:
+                        print(f"Failed to apply display settings: {e}")
                 # Get current screen reference (may have been recreated)
                 self.screen = pygame.display.get_surface()
                 # Emit resize event to update all game systems if resolution changed
