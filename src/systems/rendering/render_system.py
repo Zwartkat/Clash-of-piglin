@@ -26,6 +26,7 @@ from enums.entity.direction import *
 
 from events.attack_event import AttackEvent
 from events.event_move import EventMoveTo
+from events.pause_events import PauseToggleEvent, ResumeGameEvent
 from events.resize_event import ResizeEvent
 
 import esper
@@ -47,15 +48,26 @@ class RenderSystem(IteratingProcessor):
         self.map: list[list[Case]] = map.tab
         self.sprites: dict[CaseType, pygame.Surface] = sprites
         self.entities = []
+        self.paused = False
 
         get_event_bus().subscribe(StopEvent, self.animate_idle)
         get_event_bus().subscribe(EventMoveTo, self.animate_move)
         get_event_bus().subscribe(AttackEvent, self.animate_attack)
         get_event_bus().subscribe(ResizeEvent, self._on_resize)
+        get_event_bus().subscribe(PauseToggleEvent, self._on_pause)
+        get_event_bus().subscribe(ResumeGameEvent, self._on_resume)
 
     def _on_resize(self, event: ResizeEvent):
         """Update screen reference when display is resized."""
         self.screen = pygame.display.get_surface()
+
+    def _on_pause(self, event: PauseToggleEvent):
+        """Handle pause toggle event."""
+        self.paused = True
+
+    def _on_resume(self, event: ResumeGameEvent):
+        """Handle resume game event."""
+        self.paused = False
 
     def process(self, dt):
 
@@ -91,7 +103,8 @@ class RenderSystem(IteratingProcessor):
         #    if not state.in_combat and sprite.current_animation == Animation.ATTACK:
         #        self._set_animation(ent, Animation.IDLE)
 
-        sprite.update(dt)
+        if not self.paused:
+            sprite.update(dt)
 
         if frame:
             x = position.x

@@ -9,7 +9,7 @@
     ]
   },
   "keybinds": {
-    "SWITCH_TROOP": 118,
+    "SWITCH_TROOP": 1073742048,
     "CAMERA_RESET": 32,
     "PAUSE": 27,
     "CAMERA_UP": 1073741906,
@@ -26,7 +26,7 @@
   "ai": {
     "1": {
       "BRUTE": "ADMA",
-      "CROSSBOWMAN": "LOVA",
+      "CROSSBOWMAN": "SCPR",
       "GHAST": "MAPI"
     },
     "2": {

@@ -49,7 +49,7 @@ class FireballSystem(IteratingProcessor):
         """
 
         fireball_component = Fireball(
-            event.start_pos, event.target_pos, speed=400.0, lifetime=3.0
+            event.start_pos, event.target_pos, speed=100.0, lifetime=3.0
         )
         position_component = Position(event.start_pos.x, event.start_pos.y)
         EntityFactory.create(fireball_component, position_component)
