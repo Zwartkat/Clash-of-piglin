@@ -20,6 +20,7 @@ from factories.unit_factory import UnitFactory
 from components.base.team import Team
 from events.spawn_unit_event import SpawnUnitEvent
 from events.button_clicked_event import ButtonClickedEvent
+from enums.input_actions import InputAction
 
 # from components.rendering.sprite import Sprite
 
@@ -435,22 +436,88 @@ class Hud:
 
         # Instructions pour les raccourcis (seulement équipe 1)
         if team_id == 1:
+            # Get actual keybinds from InputManager
+            input_mgr = self._get_input_manager()
+            instructions = ["CONTROLES:"]
 
-            instructions = [
-                "CONTROLES:",
-                "K - Basculer IA/Joueur",
-                "CTRL - Changer joueur",
-                "1/2/3 - Acheter unite",
-                "Clic - Selectionner",
-                "Clic droit - Deplacer",
-            ]
+            if input_mgr:
+                # Get key names for each action
+                key_map = {}
+                for key, action in input_mgr.key_bindings_press.items():
+                    # Better key name formatting
+                    key_name = pygame.key.name(key).upper()
+                    # Replace common key names for better display
+                    key_name = key_name.replace("LEFT ", "").replace("RIGHT ", "")
+                    if key_name == "SPACE":
+                        key_name = "ESPACE"
+                    elif key_name == "RETURN":
+                        key_name = "ENTREE"
+                    elif key_name == "ESCAPE":
+                        key_name = "ECHAP"
+                    key_map[action] = key_name
 
-            y_start = self.hud_y + self.hud_height - 120
+                # Build instructions list with actual keys
+                # Player switch (only in IA vs IA mode)
+                pm = get_player_manager()
+                if pm and pm.ai_player_1:  # Show only in IA vs IA mode
+                    switch_key = key_map.get(InputAction.SWITCH_TROOP, "CTRL")
+                    instructions.append(f"{switch_key} - Changer joueur")
+
+                # Unit spawns
+                spawn_keys = []
+                if InputAction.SPAWN_T1_CROSSBOWMAN in key_map:
+                    spawn_keys.append(key_map[InputAction.SPAWN_T1_CROSSBOWMAN])
+                if InputAction.SPAWN_T1_BRUTE in key_map:
+                    spawn_keys.append(key_map[InputAction.SPAWN_T1_BRUTE])
+                if InputAction.SPAWN_T1_GHAST in key_map:
+                    spawn_keys.append(key_map[InputAction.SPAWN_T1_GHAST])
+
+                if spawn_keys:
+                    keys_str = "/".join(spawn_keys[:3])  # Show up to 3 keys
+                    instructions.append(f"{keys_str} - Acheter unite")
+
+                # Camera controls
+                cam_key = key_map.get(InputAction.CAMERA_RESET, "ESPACE")
+                instructions.append(f"{cam_key} - Recentrer camera")
+
+                # Pause
+                pause_key = key_map.get(InputAction.PAUSE, "ECHAP")
+                instructions.append(f"{pause_key} - Pause")
+            else:
+                # Fallback if InputManager not available
+                instructions.extend(
+                    [
+                        "1/2/3 - Acheter unite",
+                        "ESPACE - Recentrer camera",
+                        "ECHAP - Pause",
+                    ]
+                )
+
+            # Mouse controls (always the same)
+            instructions.extend(
+                [
+                    "Clic - Selectionner",
+                    "Clic droit - Deplacer",
+                ]
+            )
+
+            y_start = (
+                self.hud_y + self.hud_height - 140
+            )  # Adjusted for fewer instructions
             for i, instruction in enumerate(instructions):
                 color = self.gold_color if i == 0 else (200, 200, 200)
                 font = self.font_small
                 inst_surface = font.render(instruction, True, color)
                 self.screen.blit(inst_surface, (hud_x + 10, y_start + (i * 18)))
+
+    def _get_input_manager(self):
+        """Get InputManager from esper processors."""
+        from core.input.input_manager import InputManager
+
+        for processor in esper._processors:
+            if isinstance(processor, InputManager):
+                return processor
+        return None
 
     def draw_unit_buttons(self, team_id: int):
         """Dessine les boutons d'achat d'unités pour une équipe"""

@@ -87,7 +87,9 @@ class EconomySystem(esper.Processor):
 
     def give_gold(self, event: GiveGoldEvent):
         # Read config to determine if give-gold debug is enabled and amount
-        debug_cfg = get_config().get("debug", {}) if get_config() else {}
+        from core.config import Config
+
+        debug_cfg = Config.get("debug", {})
         give_cfg = debug_cfg.get("give_gold", {})
         enabled = give_cfg.get("enabled", False)
         amount = give_cfg.get("amount", 300)

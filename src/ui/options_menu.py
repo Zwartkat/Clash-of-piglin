@@ -6,11 +6,9 @@ import os
 from typing import Dict, Tuple, List, Optional
 from enum import Enum
 
-from core.accessors import get_event_bus
 from core.config import Config
 from enums.input_actions import InputAction
 from enums.entity.entity_type import EntityType
-from events.pause_events import ResumeGameEvent
 
 
 class OptionsTab(Enum):
@@ -348,8 +346,6 @@ class OptionsMenu:
             elif event.key == pygame.K_RETURN:
                 return self._handle_select()
             elif event.key == pygame.K_ESCAPE:
-
-                get_event_bus().emit(ResumeGameEvent())
                 return False  # Exit menu
 
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -442,7 +438,16 @@ class OptionsMenu:
                 if not self.fullscreen:
                     self.flags = pygame.NOFRAME if self.borderless else 0
                     try:
-                        pygame.display.set_mode(self.current_resolution, self.flags)
+                        new_screen = pygame.display.set_mode(
+                            self.current_resolution, self.flags
+                        )
+                        # Emit resize event to update game systems
+                        from core.ecs.event_bus import EventBus
+                        from events.resize_event import ResizeEvent
+
+                        EventBus.get_event_bus().emit(
+                            ResizeEvent(self.current_resolution)
+                        )
                     except Exception as e:
                         print(f"Failed to change resolution: {e}")
                 return True
@@ -469,7 +474,14 @@ class OptionsMenu:
                     self.flags = pygame.FULLSCREEN
 
                 try:
-                    pygame.display.set_mode(self.current_resolution, self.flags)
+                    new_screen = pygame.display.set_mode(
+                        self.current_resolution, self.flags
+                    )
+                    # Emit resize event to update game systems
+                    from core.ecs.event_bus import EventBus
+                    from events.resize_event import ResizeEvent
+
+                    EventBus.get_event_bus().emit(ResizeEvent(self.current_resolution))
                 except Exception as e:
                     print(f"Failed to toggle fullscreen: {e}")
                 return True
@@ -491,7 +503,14 @@ class OptionsMenu:
                     self.flags = pygame.NOFRAME
 
                 try:
-                    pygame.display.set_mode(self.current_resolution, self.flags)
+                    new_screen = pygame.display.set_mode(
+                        self.current_resolution, self.flags
+                    )
+                    # Emit resize event to update game systems
+                    from core.ecs.event_bus import EventBus
+                    from events.resize_event import ResizeEvent
+
+                    EventBus.get_event_bus().emit(ResizeEvent(self.current_resolution))
                 except Exception as e:
                     print(f"Failed to toggle borderless: {e}")
                 return True
@@ -512,6 +531,10 @@ class OptionsMenu:
                 return True
             elif self.selected_index == len(self.key_bindings):  # Reset to defaults
                 self.key_bindings = self._load_default_keybinds()
+                # Apply keybinds to InputManager in real-time
+                self._apply_keybinds_realtime()
+                # Save to file
+                self.save_settings()
                 return True
             else:  # Back
                 return False
@@ -584,12 +607,39 @@ class OptionsMenu:
                     return self._handle_select()
 
         elif self.current_tab == OptionsTab.CONTROLS:
-            max_items = len(self.key_bindings) + 1  # +1 for back
-            for i in range(max_items):
-                item_rect = pygame.Rect(50, content_y + i * 45, 800, 40)
+            # Take scroll_offset into account for clicks
+            actions = list(self.key_bindings.items())
+
+            # Check clicks on visible keybinds
+            visible_index = 0
+            for i in range(len(actions)):
+                if i < self.scroll_offset:
+                    continue
+                visible_y = content_y + visible_index * 45
+                item_rect = pygame.Rect(50, visible_y, 800, 40)
                 if item_rect.collidepoint(pos):
                     self.selected_index = i
                     return self._handle_select()
+                visible_index += 1
+                # Don't allow too many items (prevent overflow at bottom of screen)
+                if visible_y > 500:
+                    break
+
+            # Reset button - positioned after last visible keybind
+            reset_index = len(actions)
+            reset_y = content_y + visible_index * 45 + 20
+            reset_rect = pygame.Rect(50, reset_y, 400, 40)
+            if reset_rect.collidepoint(pos):
+                self.selected_index = reset_index
+                return self._handle_select()
+
+            # Back button
+            back_index = len(actions) + 1
+            back_y = reset_y + 45
+            back_rect = pygame.Rect(50, back_y, 200, 40)
+            if back_rect.collidepoint(pos):
+                self.selected_index = back_index
+                return self._handle_select()
 
         elif self.current_tab == OptionsTab.AI:
             # Team 1 items

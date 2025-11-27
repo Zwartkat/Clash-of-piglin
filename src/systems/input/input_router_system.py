@@ -52,6 +52,20 @@ class InputRouterSystem(esper.Processor):
         }
 
     def handle_events(self, event: EventInput):
+        # Skip spawn actions - they are handled by HudManager
+        if event.action in [
+            InputAction.SPAWN_T1_CROSSBOWMAN,
+            InputAction.SPAWN_T1_BRUTE,
+            InputAction.SPAWN_T1_GHAST,
+            InputAction.SPAWN_T2_CROSSBOWMAN,
+            InputAction.SPAWN_T2_BRUTE,
+            InputAction.SPAWN_T2_GHAST,
+        ]:
+            return
+
+        if event.action not in self.action_bindings:
+            return  # Ignore unknown actions
+
         if event.data:
             get_event_bus().emit(self.action_bindings[event.action](event.data))
         else:
