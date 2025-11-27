@@ -4,7 +4,7 @@
 class LoadingStartEvent:
     """Emitted when loading starts."""
 
-    def __init__(self, message: str = "Loading..."):
+    def __init__(self, message: str = "Chargement..."):
         self.message = message
 
 

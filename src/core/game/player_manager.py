@@ -87,7 +87,7 @@ class PlayerManager:
             return self.players[1]
         else:
             get_debugger().error(
-                f"Player manager : Unknown team id for 'get_enemy_player()'"
+                f"Gestionnaire de joueurs : ID d'équipe inconnue pour 'get_enemy_player()'"
             )
 
     def get_current_player_number(self) -> int:
