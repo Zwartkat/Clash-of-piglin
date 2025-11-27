@@ -5,6 +5,7 @@ import esper
 
 from core.accessors import get_event_bus
 from events.pause_events import PauseToggleEvent, ResumeGameEvent, QuitToMenuEvent
+from events.resize_event import ResizeEvent
 from core.config import Config
 import core.options as option
 from ui.options_menu import OptionsMenu
@@ -36,6 +37,11 @@ class PauseMenuSystem(esper.Processor):
 
         event_bus = get_event_bus()
         event_bus.subscribe(PauseToggleEvent, self._on_pause_toggle)
+        event_bus.subscribe(ResizeEvent, self._on_resize)
+
+    def _on_resize(self, event: ResizeEvent):
+        """Update screen reference when display is resized."""
+        self.screen = pygame.display.get_surface()
 
     def _on_pause_toggle(self, event: PauseToggleEvent):
         """Toggle pause state and notify HUD system.
@@ -149,6 +155,10 @@ class PauseMenuSystem(esper.Processor):
                 option.flags = new_flags
                 # Get current screen reference (may have been recreated)
                 self.screen = pygame.display.get_surface()
+                # Emit resize event to update all game systems if resolution changed
+                from events.resize_event import ResizeEvent
+
+                event_bus.emit(ResizeEvent(new_res))
                 # Resume the game after closing options
                 self.is_paused = False
                 if self.hud_system:

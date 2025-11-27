@@ -6,7 +6,7 @@ from enums.input_actions import InputAction
 
 
 class HudManager:
-    """Système gérant l'interface utilisateur du jeu"""
+    """System managing the game user interface"""
 
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
@@ -29,17 +29,17 @@ class HudManager:
         self.hud.draw(dt)
 
     def process_event(self, event):
-        """Traite les événements liés à l'interface"""
+        """Process interface-related events"""
         if event.type == pygame.MOUSEMOTION:
             self.hud.handle_mouse_motion(event.pos)
-            return False  # Laisser passer les mouvements de souris
+            return False  # Let mouse movements pass through
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            # Vérifier si le clic est sur l'interface
+            # Check if click is on interface
             if self.hud.is_click_on_hud(event.pos):
                 return self.hud.handle_mouse_click(event.pos)
-            return False  # Laisser passer les clics sur la map
+            return False  # Let map clicks pass through
         elif event.type == pygame.KEYDOWN:
-            # Gestion des raccourcis clavier pour l'achat d'unités via InputManager
+            # Handle keyboard shortcuts for unit purchase via InputManager
             input_mgr = self._get_input_manager()
             if input_mgr and event.key in input_mgr.key_bindings_press:
                 action = input_mgr.key_bindings_press[event.key]
@@ -60,7 +60,8 @@ class HudManager:
 
             return False
         if event.type == pygame.VIDEORESIZE:
-            # Recréer le HUD avec les nouvelles dimensions
+            # Update screen reference and recreate HUD with new dimensions
+            self.screen = pygame.display.get_surface()
             self.hud = Hud(self.screen)
             return False
         return False

@@ -2,6 +2,8 @@ import esper
 import pygame
 from systems.pathfinding_system import PATHFINDING_SYSTEM_INSTANCE
 from core.game.camera import CAMERA
+from core.accessors import get_event_bus
+from events.resize_event import ResizeEvent
 
 
 class DebugRenderSystem(esper.Processor):
@@ -42,6 +44,13 @@ class DebugRenderSystem(esper.Processor):
         self.target_color = (255, 100, 100)  # Rouge pour cible actuelle
         self.destination_color = (100, 255, 100)  # Vert pour destination finale
         self.trail_color = (255, 0, 255)  # Magenta pour ligne directe
+
+        # Subscribe to resize events
+        get_event_bus().subscribe(ResizeEvent, self._on_resize)
+
+    def _on_resize(self, event: ResizeEvent):
+        """Update screen reference when display is resized."""
+        self.screen = pygame.display.get_surface()
 
     def configure_path_display(
         self, refresh_interval=None, max_waypoints=None, show_trail=None

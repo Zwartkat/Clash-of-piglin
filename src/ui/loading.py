@@ -8,6 +8,7 @@ from events.loading_events import (
     LoadingProgressEvent,
     LoadingFinishEvent,
 )
+from events.resize_event import ResizeEvent
 
 
 class LoadingUISystem(esper.Processor):
@@ -40,6 +41,11 @@ class LoadingUISystem(esper.Processor):
         event_bus.subscribe(LoadingStartEvent, self._on_start)
         event_bus.subscribe(LoadingProgressEvent, self._on_progress)
         event_bus.subscribe(LoadingFinishEvent, self._on_finish)
+        event_bus.subscribe(ResizeEvent, self._on_resize)
+
+    def _on_resize(self, event: ResizeEvent):
+        """Update screen reference when display is resized."""
+        self.screen = pygame.display.get_surface()
 
     def _on_start(self, event: LoadingStartEvent):
         """Handle loading start event.

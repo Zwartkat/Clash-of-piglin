@@ -26,6 +26,7 @@ from enums.entity.direction import *
 
 from events.attack_event import AttackEvent
 from events.event_move import EventMoveTo
+from events.resize_event import ResizeEvent
 
 import esper
 import pygame
@@ -50,6 +51,11 @@ class RenderSystem(IteratingProcessor):
         get_event_bus().subscribe(StopEvent, self.animate_idle)
         get_event_bus().subscribe(EventMoveTo, self.animate_move)
         get_event_bus().subscribe(AttackEvent, self.animate_attack)
+        get_event_bus().subscribe(ResizeEvent, self._on_resize)
+
+    def _on_resize(self, event: ResizeEvent):
+        """Update screen reference when display is resized."""
+        self.screen = pygame.display.get_surface()
 
     def process(self, dt):
 
