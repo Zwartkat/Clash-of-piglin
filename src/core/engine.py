@@ -10,6 +10,7 @@ from core.data_bus import DATA_BUS
 from core.accessors import (
     get_camera,
     get_config,
+    get_economy_system,
     get_entity,
     get_event_bus,
     get_notification_manager,
@@ -228,7 +229,8 @@ def main(screen: pygame.Surface, map_size=24, ia_mode="jcia"):
     player_movement_system = PlayerMoveSystem()
     DATA_BUS.register(DataBusKey.PLAYER_MOVEMENT_SYSTEM, player_movement_system)
     world.add_processor(player_movement_system)
-    world.add_processor(EconomySystem(get_event_bus()))
+    DATA_BUS.register(DataBusKey.ECONOMY_SYSTEM, EconomySystem(get_event_bus()))
+    world.add_processor(get_economy_system())
     death_handler = DeathEventHandler(get_event_bus())
     targeting_system = TargetingSystem()
     world.add_processor(targeting_system)
@@ -383,6 +385,7 @@ def reset():
     DATA_BUS.remove(DataBusKey.NOTIFICATION_MANAGER)
     DATA_BUS.remove(DataBusKey.PLAYER_MOVEMENT_SYSTEM)
     DATA_BUS.remove(DataBusKey.WORLD_PERCEPTION)
+    DATA_BUS.remove(DataBusKey.ECONOMY_SYSTEM)
 
     esper.clear_database()
     esper.clear_cache()

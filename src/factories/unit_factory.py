@@ -10,7 +10,7 @@ from components.base.cost import Cost
 from components.gameplay.effects import OnTerrain
 from components.base.position import Position
 from components.base.team import Team
-from core.accessors import get_ai_mapping, get_debugger, get_entity
+from core.accessors import get_ai_mapping, get_debugger, get_entity, get_player_manager
 from core.ecs.entity import Entity
 from enums.entity.entity_type import EntityType
 from events.spawn_unit_event import SpawnUnitEvent
@@ -81,7 +81,15 @@ class UnitFactory:
 
     @staticmethod
     def create_unit_event(event: SpawnUnitEvent):
-        UnitFactory.create_unit(event.entity_type, event.team, event.position)
+        player_manager = get_player_manager()
+
+        cost: Cost = get_entity(event.entity_type).get_component(Cost)
+
+        if not cost:
+            return
+
+        if player_manager.players[event.team.team_id].money >= cost.amount:
+            UnitFactory.create_unit(event.entity_type, event.team, event.position)
 
     @staticmethod
     def create_squad(entity_type: EntityType, positions: list[Position], team: Team):

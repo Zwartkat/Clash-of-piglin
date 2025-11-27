@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from core.game.map import Map
     from core.game.timer import Timer
 
+    from systems.world.economy_system import EconomySystem
     from systems.world.player_move_system import PlayerMoveSystem
 
     from core.game.player_manager import PlayerManager
@@ -81,3 +82,8 @@ def get_ai_mapping() -> "dict[EntityType,dict[str,str]]":
 def get_world_perception() -> "WorldPerception":
     instance = DATA_BUS.get(DataBusKey.WORLD_PERCEPTION)
     return cast("WorldPerception", instance)
+
+
+def get_economy_system() -> "EconomySystem":
+    instance = DATA_BUS.get(DataBusKey.ECONOMY_SYSTEM)
+    return cast("EconomySystem", instance)
