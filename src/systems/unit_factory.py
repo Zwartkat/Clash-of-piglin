@@ -9,6 +9,8 @@ from core.entity import Entity
 from enums.entity_type import EntityType
 from events.spawn_unit_event import SpawnUnitEvent
 from systems.entity_factory import EntityFactory
+from core.event_bus import EventBus
+from events.spawned_unit_event import SpawnedUnitEvent
 
 
 class UnitFactory:
@@ -51,6 +53,7 @@ class UnitFactory:
         components.append(OnTerrain())  # Required for terrain effects
 
         ent: int = EntityFactory.create(*components)
+        EventBus.get_event_bus().emit(SpawnedUnitEvent(ent))
 
         return ent
 

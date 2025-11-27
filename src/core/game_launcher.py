@@ -39,6 +39,7 @@ from systems.camera_system import CameraSystem
 from systems.hud_system import HudSystem
 from systems.victory_system import VictorySystem
 from systems.arrow_system import ArrowSystem
+from ai.common_state_brute_ai import CommonState
 
 tile_size = Config.TILE_SIZE()
 
@@ -136,6 +137,9 @@ def main(screen: pygame.Surface, map_size=24):
 
     Services.player_manager = player_manager
 
+    # initialising the common_state
+    common_state = CommonState()
+
     from config.units import UNITS
 
     entities_1 = []
@@ -157,22 +161,12 @@ def main(screen: pygame.Surface, map_size=24):
 
     entities_2 = []
 
-    entities_2.append(
-        EntityFactory.create(
-            *UNITS[EntityType.CROSSBOWMAN].get_all_components(),
-            Position(100, 200),
-            Team(2),
-            OnTerrain(),
+    for i in range(2):
+        entities_2.append(
+            UnitFactory.create_unit(
+                EntityType.CROSSBOWMAN, Team(2), Position(100 + 100 * i, 200 + 100 * i)
+            )
         )
-    )
-    entities_2.append(
-        EntityFactory.create(
-            *UNITS[EntityType.GHAST].get_all_components(),
-            Position(300, 200),
-            Team(2),
-            OnTerrain(),
-        )
-    )
 
     for i in range(6):
         entities_1.append(

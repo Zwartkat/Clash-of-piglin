@@ -1,43 +1,39 @@
 import pygame
 import random
+import esper
 from components.position import Position
 from core.entity import Entity
 from enums.entity_type import EntityType
+from ai.common_state_brute_ai import CommonState
 
 
 class BruteAi:
 
-    def __init__(self, entity, entity_list, map):
-        self.entity: Entity = entity
-        self.entity_list: list[Entity] = entity_list
+    def __init__(self, common_state: CommonState, entity_id: int, map):
+        self.common_state: CommonState = common_state
+        self.entity_id = entity_id
         self.map = map
+        self.group = None
 
-    def groupFriendlyEntities(self):
-        list_entities_to_treat = [
-            e
-            for e in self.entity_list
-            if e.team == self.entity.team and e != self.entity
-        ]
-        list_groups = []
-        current_group = []
+    def add_to_group(self, group: int):
+        self.common_state.groups[group].append(self.entity_id)
+        self.group = group
 
-        while list_entities_to_treat != []:
-            entity = list_entities_to_treat[
-                random.randint(0, len(list_entities_to_treat))
-            ]
-            current_group.append(entity)
-            list_units_to_search_neighbours = [entity]
-            while list_entities_to_treat != []:
-                entity_for_search = list_units_to_search_neighbours[
-                    random.randint(0, len(list_units_to_search_neighbours))
-                ]
-                for entity in list_entities_to_treat:
-                    entity_X = entity.get_component(Position).getX()
-                    entity_Y = entity.get_component(Position).getY()
-                    if (
-                        entity.get_component(Position).getX()
-                        <= entity_for_search.get_component(Position).getX()
-                    ):
-                        ...
+    def count_in_group(group: list[int], entity_type: EntityType):
+        return sum(
+            1
+            for ent in group
+            if esper.component_for_entity(ent, EntityType) == entity_type
+        )
 
-    def process(self): ...
+    def process(self):
+        group_members = self.common_state.groups.get(self.group, [])
+        count_crossbow = self.count_in_group(group_members, EntityType.CROSSBOWMAN)
+        count_brute = self.count_in_group(group_members, EntityType.BRUTE)
+
+        if self.group == None or count_crossbow == 0:
+            for group in self.common_state.groups:
+                if self.count_in_group(
+                    group, EntityType.CROSSBOWMAN
+                ) > self.count_in_group(group, EntityType.BRUTE):
+                    self.common_state.groups[group].append(self.entity_id)
